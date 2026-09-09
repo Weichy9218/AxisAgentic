@@ -376,6 +376,12 @@ def build_orchestrator(
         context_token_estimator = _build_context_token_estimator(args, [tool.to_tool_definition() for tool in tools])
     if context_token_estimator is not None and hasattr(model_client, "set_context_token_estimator"):
         cast("Any", model_client).set_context_token_estimator(context_token_estimator)
+    skill_text: str | None = None
+    skill_path = getattr(args, "skill_file", None)
+    if skill_path:
+        # Fatal rather than skipped: a run that silently drops its skill reports
+        # itself as the skill arm and produces a number that looks like one.
+        skill_text = Path(skill_path).read_text(encoding="utf-8")
     system_prompt = generate_system_prompt(
         getattr(args, "system_prompt_date", None),
         prompt_profile=prompt_profile,
@@ -383,6 +389,7 @@ def build_orchestrator(
         scrape_enabled=getattr(args, "scrape_enabled", True),
         # Stated once, and only when the run actually enforces one.
         t_cut=boundary.T_cut.isoformat() if boundary is not None and boundary.T_cut is not None else None,
+        skill=skill_text,
     )
     format_error = FormatErrorConfig(strategy=FormatErrorStrategy.IGNORE, keywords=[])
     max_output_tokens = getattr(args, "max_output_tokens", DEFAULT_MAX_OUTPUT_TOKENS)
@@ -1685,6 +1692,13 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:  # noqa: PL
     parser.add_argument("--base_url", required=True)
     parser.add_argument("--api_key_env", default="OPENAI_API_KEY")
     parser.add_argument("--endpoint_profile", default=None)
+    parser.add_argument(
+        "--skill_file",
+        default=None,
+        help="Path to a skill.md appended to the forecast system prompt. Absent means no skill; "
+        "the rendered prompt is written to system_prompt.txt either way, so which skill a run "
+        "carried is recoverable from the run directory.",
+    )
     parser.add_argument(
         "--prompt_profile",
         choices=["default", "deepsearchqa", "livebrowsecomp", "livebrowsecomp_notools", "forecast"],

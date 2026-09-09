@@ -358,6 +358,8 @@ def _runner_args(config: WebSearchEvalConfig, run_dir: Path) -> list[str]:  # no
         args.extend(["--max_tool_calls_per_task", str(config.agent.max_tool_calls_per_task)])
     args.extend(["--scrape_backend", config.tools.scrape.backend])
     forecast = config.agent.forecast
+    if config.agent.skill_file:
+        args.extend(["--skill_file", str(_resolve_path(config.agent.skill_file, label="agent.skill_file"))])
     args.extend(["--forecast_temporal_policy", forecast.temporal_policy])
     args.extend(["--forecast_search_provider", forecast.search_provider])
     if forecast.delta_days is not None:

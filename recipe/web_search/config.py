@@ -304,6 +304,9 @@ class ForecastConfig(StrictConfigModel):
 class AgentConfig(StrictConfigModel):
     prompt_profile: Literal["default", "deepsearchqa", "livebrowsecomp", "livebrowsecomp_notools", "forecast"] = "default"
     system_prompt_date: str | None = None
+    #: Skill file appended to the forecast system prompt. ``None`` is the control
+    #: arm; the two arms of a skill experiment differ in this key alone.
+    skill_file: str | None = None
     max_turns: int = 300
     #: Total tool calls one task may make, across all tools. ``None`` means the
     #: turn budget is the only bound, which lets a hard question spend every turn

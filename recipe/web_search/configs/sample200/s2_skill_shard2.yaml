@@ -1,0 +1,163 @@
+schema_version: 1
+
+# sample200 — gpt-5.6-sol on the 200-question stratified subset of offline_0901.
+#
+# Paired with the other arm: both read the same shard files, in the same order,
+# under identical settings. The subset is a fixed file rather than
+# `max_tasks: 200` because `BenchmarkDataset` truncates by line index and
+# `shuffle_tasks` reorders only what was already loaded, so `max_tasks` +
+# `shuffle_tasks` would take the first 200 lines — and this cohort's load order
+# opens with 27 consecutive NUMERIC rows.
+#
+# Built by scripts/benchmark/sample_offline_subset.py --n 200 --seed 20260908,
+# stratified by task_type then scoring_group: 73 BINARY, 80 MULTIPLE_CHOICE,
+# 47 NUMERIC across all 14 scoring groups.
+#
+# Score with the Milkyway scorer against
+# data/benchmarks/offline_0901/sample200/offline_forecast_sample200.jsonl so both
+# arms are graded by one implementation.
+
+run:
+  output_dir: axis_log://offline_forecast/s2_skill/shard2
+  num_runs: 1
+  resume: true
+  model_request_logging: false
+  system_prompt_render_template: auto
+  env_file: .envs/.env.gpt56
+  log_level: INFO
+
+model:
+  # Model id, gateway and key come from the env file above, so this yaml is
+  # identical across arms and carries no credential.
+  openai_model: null
+  openai_base_url: null
+  api_key_env: OPENAI_API_KEY
+  endpoint_profile: null
+  preserve_reasoning_content: true
+  parse_embedded_thinking: true
+  # Not turned on: the runtime executes a batch of tool calls in a sequential
+  # loop, so this would only reduce turn count, never fetch two pages at once.
+  parallel_tool_calls: false
+  temperature: 1.0
+  top_p: 1.0
+  max_output_tokens: 16384
+  request_extra_body:
+    reasoning_effort: high
+  transport:
+    timeout:
+      total_seconds: 600
+    retry:
+      retryable_status_codes: [408, 429, 500, 502, 503, 504]
+      backoff_base_seconds: 10
+      backoff_multiplier: 3
+      backoff_max_seconds: 180
+      jitter: true
+      respect_retry_after: true
+      retry_on_timeout: true
+      retry_on_connection_error: true
+      exit_after_seconds: 600
+  context:
+    max_context_length: 262144
+    safety_margin: 0
+    estimator: cheap
+    limit_detection: provider_error
+    token_estimation_chars_per_token: 3.0
+  response_retry:
+    wait_seconds: 10
+    max_attempts: 5
+
+benchmark:
+  name: offline_forecast
+  data_path: axis_data://offline_forecast/sample200b/offline_forecast_sample200_shard2.jsonl
+  # Both null on purpose: the subset is the file, not a runtime truncation.
+  max_tasks: null
+  shuffle_tasks: false
+  shuffle_seed: null
+  max_concurrent: 8
+
+agent:
+  prompt_profile: forecast
+  skill_file: /home/dataset-local/wcy/AxisAgentic/skills/forecast_v1.md
+  max_turns: 70
+  max_tool_calls_per_task: 50
+  keep_tool_result: -1
+  tool_result_role: tool
+  forecast:
+    temporal_policy: strict
+    delta_days: 7
+    observation_time: '2026-09-01'
+    search_provider: serper
+    as_of_judge:
+      enabled: true
+      judge_page_prose: true
+  retry:
+    max_task_retries: 0
+    include_failure_summary: false
+    max_final_answer_attempts: 1
+    attempt_budget_sweep_enabled: false
+    generation_limit_recovery:
+      non_final_attempt: retry
+      final_attempt: rollback
+  context_compression:
+    enabled: false
+  self_verification:
+    enabled: false
+  discard_all:
+    enabled: false
+
+tools:
+  disable_all: false
+  serper_base_url: null
+  jina_base_url: null
+  max_content_length: 409600
+  summary_llm:
+    base_url: null
+    model_name: null
+    api_key_env: SUMMARY_LLM_API_KEY
+    chunked_extraction: true
+    chunk_strategy: single
+    global_anchor_enabled: false
+    chunk_envelope_mode: strict_caveat
+    csv_layer_b_enabled: false
+    retry:
+      max_attempts: 3
+      backoff_base_seconds: 2
+      backoff_multiplier: 2
+      backoff_max_seconds: 20
+      retryable_status_codes: [408, 429]
+      jitter: true
+      respect_retry_after: true
+  scrape:
+    enabled: true
+    backend: serper
+    timeout:
+      connect_seconds: 10
+      read_seconds: 30
+    retry:
+      max_attempts: 2
+      backoff_base_seconds: 1
+      backoff_multiplier: 2
+      backoff_max_seconds: 4
+      retryable_status_codes: [408, 429]
+      retry_on_server_errors: false
+    fallback_max_attempts: 1
+  search:
+    timeout:
+      total_seconds: 30
+    retry:
+      max_attempts: 3
+      backoff_base_seconds: 4
+      backoff_multiplier: 2
+      backoff_max_seconds: 10
+      retryable_status_codes: [408, 429]
+  code_exec:
+    enabled: false
+
+judge:
+  online: false
+  request_logging: false
+  judge_model: null
+  judge_base_url: null
+  api_key_env: JUDGE_API_KEY
+  dsqa_f1_verify:
+    enabled: false

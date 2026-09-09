@@ -334,6 +334,20 @@ def _forecast_boundary_line(t_cut: str | None) -> str:
     )
 
 
+#: Header for an appended skill block. It states the contract the skill is held
+#: to, so a rule that smuggles in a fact about some question contradicts the
+#: paragraph directly above it.
+FORECAST_SKILL_HEADER = """
+
+# Learned procedure
+
+The notes below were distilled from earlier runs of this same task family. They
+describe how to search, read and reason with these tools. They are procedure,
+not evidence: they contain no facts about any question's outcome, and nothing in
+them relaxes the information boundary stated above.
+"""
+
+
 def generate_system_prompt(
     date: str | None = None,
     *,
@@ -341,6 +355,7 @@ def generate_system_prompt(
     code_exec_enabled: bool = False,
     t_cut: str | None = None,
     scrape_enabled: bool = True,
+    skill: str | None = None,
 ) -> str:
     """Render the system prompt for *prompt_profile*.
 
@@ -356,9 +371,12 @@ def generate_system_prompt(
     """
     if prompt_profile == "forecast":
         scrape_rule = _FORECAST_SCRAPE_TOOL_RULE if scrape_enabled else _FORECAST_SEARCH_ONLY_RULE
-        return FORECAST_SYSTEM_PROMPT_TEMPLATE.replace("{boundary_line}", _forecast_boundary_line(t_cut)).replace(
+        rendered = FORECAST_SYSTEM_PROMPT_TEMPLATE.replace("{boundary_line}", _forecast_boundary_line(t_cut)).replace(
             "{scrape_tool_rule}", scrape_rule
         )
+        if skill and skill.strip():
+            rendered = rendered.rstrip() + FORECAST_SKILL_HEADER + "\n" + skill.strip() + "\n"
+        return rendered
     date = _resolve_prompt_date(date)
     if prompt_profile == "deepsearchqa":
         return DEEPSEARCHQA_SYSTEM_PROMPT_TEMPLATE.replace("{date}", date)
