@@ -4,8 +4,10 @@
 from __future__ import annotations
 
 import asyncio
+import hashlib
 import json
 import logging
+import re
 import threading
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
@@ -20,6 +22,30 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 _UTC8 = timezone(timedelta(hours=8))
+
+#: Most Linux filesystems cap a single path component at 255 bytes. A task id is
+#: whatever the benchmark chose to call the row, and some benchmarks choose a
+#: URL-encoded query string — one FutureX row's id is 190 characters of
+#: percent-encoded JSON, which overflows the limit once ``.json`` and the
+#: percent-escapes are counted. Truncating alone would collide two ids that share
+#: a prefix, so the digest of the full id is appended and uniqueness is preserved.
+_MAX_FILENAME_STEM_BYTES = 200
+_UNSAFE_FILENAME_CHARS = re.compile(r"[^A-Za-z0-9._-]")
+
+
+def _safe_filename_stem(task_id: str) -> str:
+    """A filesystem-safe, collision-free stem for *task_id*.
+
+    The id itself is always recorded inside the file, so a shortened name loses
+    nothing: it is an index, not the data.
+    """
+    cleaned = _UNSAFE_FILENAME_CHARS.sub("_", task_id)
+    if len(cleaned.encode("utf-8")) <= _MAX_FILENAME_STEM_BYTES:
+        return cleaned
+    digest = hashlib.sha256(task_id.encode("utf-8")).hexdigest()[:16]
+    keep = _MAX_FILENAME_STEM_BYTES - len(digest) - 1
+    head = cleaned.encode("utf-8")[:keep].decode("utf-8", errors="ignore")
+    return f"{head}-{digest}"
 
 
 @dataclass
@@ -138,7 +164,7 @@ class BatchEvaluator:
 
         out_dir = self._eval_dir / eval_name
         out_dir.mkdir(parents=True, exist_ok=True)
-        output_path = out_dir / f"{task_id}.json"
+        output_path = out_dir / f"{_safe_filename_stem(task_id)}.json"
 
         content = json.dumps(record, indent=2, ensure_ascii=False)
         with self._lock:

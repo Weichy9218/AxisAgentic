@@ -18,6 +18,7 @@ base backoff, which is the mitigation for summary-endpoint 429 storms.
 from __future__ import annotations
 
 from dataclasses import replace
+from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -193,6 +194,19 @@ def default_search_retry() -> RetryConfig:
 class ScrapeToolConfig(_StrictModel):
     """Timeout/retry for the Jina fetch and the direct-HTTP fallback."""
 
+    #: Register the scrape tool at all. Set false where page fetching cannot
+    #: work — an egress-restricted host, for instance — so the agent is not
+    #: offered a tool whose every call ends in a connection timeout. The cost of
+    #: leaving it registered is not just the failures: each one burns the full
+    #: Jina retry ladder plus the fallback ladder before returning, which on a
+    #: measured run was ~170s per call.
+    enabled: bool = True
+    #: Who fetches the page. ``jina`` fetches from this process, with a
+    #: Content-Type probe and a direct-HTTP fallback. ``serper`` asks the search
+    #: provider to fetch, which is the only option that works where outbound
+    #: access to arbitrary hosts is blocked, and it costs 2 Serper credits a call
+    #: against the same quota search spends.
+    backend: Literal["jina", "serper"] = "jina"
     timeout: TimeoutConfig = Field(default_factory=default_scrape_timeout)
     retry: RetryConfig = Field(default_factory=default_scrape_retry)
     fallback_max_attempts: int = Field(default=3, ge=1)

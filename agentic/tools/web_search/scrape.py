@@ -21,10 +21,21 @@ import os
 import threading
 import time
 from dataclasses import dataclass
+from datetime import date
 from typing import TYPE_CHECKING, Any
 from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
 from agentic.contracts.messages import ToolResultStatus
+from agentic.tools.as_of import (
+    AS_OF_STAMP_KEY,
+    blocked_payload,
+    chunk_document_text,
+    is_after_cut,
+    prune_post_cutoff_records,
+    screen_units,
+    stamp,
+)
+from agentic.tools.as_of.units import CHANNEL_PAGE, EvidenceUnit
 from agentic.tools.base import CallableTool, ToolResult
 from agentic.tools.web_search._scrape_utils import (
     DEFAULT_CHUNK_ENVELOPE_MODE,
@@ -43,6 +54,7 @@ from agentic.tools.web_search._scrape_utils import (
     scrape_with_jina,
 )
 from agentic.tools.web_search._utils import DEFAULT_HTTP_LIMITS, create_async_client, is_banned_url
+from agentic.tools.web_search.serper_scrape import DEFAULT_SERPER_SCRAPE_URL, scrape_with_serper
 
 logger = logging.getLogger(__name__)
 
@@ -136,6 +148,13 @@ class ScrapeBackendOptions:
     # (JSON/CSV/XML) is fetched directly (Jina renders such data APIs as empty HTML
     # forms). HTML/PDF/other still go through Jina. Routed purely by Content-Type.
     content_type_routing: bool = True
+    #: Who does the fetching. ``jina`` and the direct-HTTP fallback both fetch
+    #: from this process, which fails on an egress-restricted host. ``serper``
+    #: fetches from the provider's network, so a page is reachable whenever the
+    #: search provider is. See :mod:`agentic.tools.web_search.serper_scrape`.
+    backend: str = "jina"
+    serper_api_key: str | None = None
+    serper_scrape_url: str | None = None
 
 
 @dataclass(frozen=True)
@@ -263,6 +282,65 @@ def _is_cacheable_raw_scrape_result(result: ToolResult) -> bool:
     return result.status == ToolResultStatus.SUCCESS and result.metadata.get("success") is True and bool(result.content.strip())
 
 
+async def apply_page_as_of_gates(
+    *,
+    content: str,
+    url: str,
+    page_date: str | None,
+    t_cut: date,
+    judge_prose: bool,
+) -> tuple[str | None, dict[str, Any]]:
+    """Run the three gates over one fetched page body.
+
+    Returns ``(content, stamp_counts)``. A ``None`` content means the document was
+    refused whole; the caller must replace it rather than pass a truncated
+    version, because a rewrite is an assertion about which half was safe.
+
+    The gates differ from the search channel in what Gate 2 does. On a page it
+    *truncates*: a long page is mostly prose the boundary has no quarrel with,
+    and refusing the document over one late row was measured upstream to cost
+    more evidence than it protects. On a short search card the same finding
+    blocks the card, because there is no safe half of a snippet.
+
+    Gate 3 is optional here and off by default. Chunking a full page and judging
+    every leading chunk is the expensive part of this design, and on a run whose
+    pages are short it buys little. When it is off, that residue is real: a page
+    published after the boundary that states the outcome in prose and prints no
+    date anywhere is not caught by Gates 1 or 2, by construction.
+    """
+    counts: dict[str, Any] = {"pages": 1}
+
+    # Gate 1: the publisher's own declared date, when the page states one at all.
+    probe = EvidenceUnit(ordinal=0, channel=CHANNEL_PAGE, text="", stated_date=page_date, url=url)
+    if page_date and is_after_cut(probe, t_cut):
+        counts["blocked_provider_date"] = 1
+        return None, counts
+    counts["blocked_provider_date"] = 0
+
+    # Gate 2: arithmetic on anything with its own dates. Truncating, not blocking.
+    pruned, pruned_counts = prune_post_cutoff_records({"text": content}, T_cut=t_cut)
+    if pruned_counts is not None:
+        content = str(pruned.get("text") or "")
+        counts["pruned_lines"] = pruned_counts["lines"]
+        counts["pruned_structured"] = pruned_counts["structured"]
+    else:
+        counts["pruned_lines"] = 0
+        counts["pruned_structured"] = 0
+
+    if not judge_prose or not content.strip():
+        counts["judged"] = 0
+        return content, counts
+
+    # Gate 3: the only gate that can see a leak with no date in it.
+    units = chunk_document_text(content, url=url, stated_date=page_date)
+    outcome = await screen_units(units, T_cut=t_cut)
+    counts.update({key: value for key, value in outcome.counts.items() if key != "units"})
+    counts["chunks"] = len(units)
+    if not outcome.kept:
+        return None, counts
+    return "\n\n".join(unit.text for unit in outcome.kept), counts
+
+
 def _validate_raw_scrape_cache_options(options: RawScrapeCacheOptions) -> None:
     if options.scope != "task":
         msg = f"Unsupported raw scrape cache scope: {options.scope!r}"
@@ -351,11 +429,13 @@ def create_jina_scrape_tool(
     retry: RetryConfig | None = None,
     fallback_retry: RetryConfig | None = None,
     content_type_routing: bool = True,
+    backend: str = "jina",
+    serper_api_key: str | None = None,
+    serper_scrape_url: str | None = None,
 ) -> CallableTool:
-    """Create a raw-content scraping tool backed by the Jina Reader API.
+    """Create a raw-content scraping tool.
 
     The tool fetches web page content (HTML, PDF, code files) and converts it to clean Markdown text.
-    When Jina fails it falls back to a direct HTTP GET with a browser-like User-Agent.
 
     Args:
         name: Tool name exposed to the model.
@@ -371,15 +451,68 @@ def create_jina_scrape_tool(
         retry: Primary scrape retry configuration.
         fallback_retry: Direct HTTP fallback retry configuration.
         content_type_routing: Try structured-data direct fetch before Jina.
+        backend: ``jina`` fetches from this process, with a direct-HTTP fallback
+            and a Content-Type probe ahead of it. ``serper`` asks the search
+            provider to fetch instead, which is the only option that works where
+            outbound access to arbitrary hosts is blocked; it skips both the
+            probe and the fallback, since those need the same egress Jina does.
+        serper_api_key: Serper key for the ``serper`` backend. Falls back to
+            ``SERPER_API_KEY`` env.
+        serper_scrape_url: Serper scrape endpoint override.
     """
     api_key = jina_api_key or os.environ.get("JINA_API_KEY", "")
     base_url = jina_base_url or os.environ.get("JINA_BASE_URL", DEFAULT_JINA_BASE_URL)
+    resolved_backend = (backend or "jina").strip().lower()
+    resolved_serper_key = serper_api_key or os.environ.get("SERPER_API_KEY", "")
+    resolved_serper_url = serper_scrape_url or os.environ.get("SERPER_SCRAPE_URL", DEFAULT_SERPER_SCRAPE_URL)
     shared_client = create_async_client(follow_redirects=True, limits=DEFAULT_HTTP_LIMITS)
+
+    async def _serper_backend(url: str) -> ToolResult:
+        t0 = time.perf_counter()
+        result = await scrape_with_serper(
+            url,
+            client=shared_client,
+            api_key=resolved_serper_key,
+            base_url=resolved_serper_url,
+            max_chars=max_content_length,
+            timeout=timeout,
+            retry=retry,
+        )
+        elapsed = round((time.perf_counter() - t0) * 1000.0, 1)
+        meta: dict[str, Any] = {"timing_ms": {"serper_scrape": elapsed, "total": elapsed}, "scrape_backend": "serper"}
+        if not result["success"]:
+            error = str(result.get("error") or "serper scrape failed")
+            return ToolResult(
+                content=error,
+                status=ToolResultStatus.FAILED,
+                metadata={**meta, "success": False, "url": url, "error": error},
+            )
+        return ToolResult(
+            content=result["content"],
+            metadata={
+                **meta,
+                "success": True,
+                "url": url,
+                "total_chars": result.get("total_chars", 0),
+                "total_lines": result.get("total_lines", 0),
+                "truncated": result.get("truncated", False),
+                # Usually absent: no sampled page exposed a date in metadata, and
+                # only some carry JSON-LD. An absent date is admitted, not dropped.
+                "page_date": result.get("page_date"),
+                "serper_credits": result.get("credits"),
+            },
+        )
 
     async def _jina_scrape(
         url: str,
         custom_headers: dict[str, str] | None = None,
     ) -> ToolResult:
+        if resolved_backend == "serper":
+            # Skips the Content-Type probe and the direct-HTTP fallback on
+            # purpose: both need the outbound access this backend exists to work
+            # without, so trying them first would only spend their retry ladders.
+            return await _serper_backend(url)
+
         t0 = time.perf_counter()
         timing: dict[str, float] = {}
 
@@ -785,6 +918,8 @@ def create_scrape_and_extract_tool(  # noqa: D417, PLR0913, PLR0915
     llm_extraction_options: LLMExtractionOptions | None = None,
     raw_scrape_cache_options: RawScrapeCacheOptions | None = None,
     output_options: ScrapeAndExtractOutputOptions | None = None,
+    t_cut: date | None = None,
+    judge_page_prose: bool = False,
 ) -> CallableTool:
     """Create a combined scrape-then-extract tool.
 
@@ -848,6 +983,9 @@ def create_scrape_and_extract_tool(  # noqa: D417, PLR0913, PLR0915
         retry=scrape_options.retry,
         fallback_retry=scrape_options.fallback_retry,
         content_type_routing=scrape_options.content_type_routing,
+        backend=scrape_options.backend,
+        serper_api_key=scrape_options.serper_api_key,
+        serper_scrape_url=scrape_options.serper_scrape_url,
     )
     _llm_tool = create_llm_extract_tool(
         llm_base_url=llm_options.base_url,
@@ -956,6 +1094,33 @@ def create_scrape_and_extract_tool(  # noqa: D417, PLR0913, PLR0915
             "truncated": scrape_result.metadata.get("truncated", False),
         }
 
+        # --- Step 1b: the as-of gates, before extraction and before caching ---
+        #
+        # Placement matters more than the gates do. Downstream of the extraction
+        # LLM there would be two documents: what the extractor read and what the
+        # model sees. Downstream of the raw cache, a blocked page would still be
+        # replayable from the cache on the next call. Here there is one document.
+        as_of_meta: dict[str, Any] = {}
+        if t_cut is not None:
+            gate_t0 = time.perf_counter()
+            guarded, gate_counts = await apply_page_as_of_gates(
+                content=raw_content,
+                url=url,
+                page_date=scrape_result.metadata.get("page_date"),
+                t_cut=t_cut,
+                judge_prose=judge_page_prose,
+            )
+            timing["as_of_gates"] = round((time.perf_counter() - gate_t0) * 1000.0, 1)
+            as_of_meta[AS_OF_STAMP_KEY] = stamp(gate_counts, T_cut=t_cut, scope="page_body")
+            if guarded is None:
+                refusal = blocked_payload(tool_name=name, T_cut=t_cut)
+                return ToolResult(
+                    content=str(refusal["error"]),
+                    status=ToolResultStatus.FAILED,
+                    metadata={**_meta(backend=backend), **raw_cache_meta, **as_of_meta, "success": False, "url": url},
+                )
+            raw_content = guarded
+
         # --- Step 2: optionally call llm_extract sub-tool ---
         if llm_enabled and info_to_extract:
             llm_t0 = time.perf_counter()
@@ -980,6 +1145,7 @@ def create_scrape_and_extract_tool(  # noqa: D417, PLR0913, PLR0915
                 metadata={
                     **_meta(backend=backend),
                     **raw_cache_meta,
+                    **as_of_meta,
                     "success": extract_meta.get("success", False),
                     "url": url,
                     "error": extract_meta.get("error", ""),
@@ -1005,6 +1171,7 @@ def create_scrape_and_extract_tool(  # noqa: D417, PLR0913, PLR0915
                 metadata={
                     **_meta(backend=backend),
                     **raw_cache_meta,
+                    **as_of_meta,
                     "success": False,
                     "url": url,
                     "error": "No content retrieved from the page.",
@@ -1022,6 +1189,7 @@ def create_scrape_and_extract_tool(  # noqa: D417, PLR0913, PLR0915
             metadata={
                 **_meta(backend=backend),
                 **raw_cache_meta,
+                **as_of_meta,
                 "success": True,
                 "url": url,
                 "scrape_stats": scrape_stats,

@@ -1,0 +1,217 @@
+schema_version: 1
+
+# offline_forecast — AxisAgentic on the Milkyway offline_0901 question set.
+#
+# WHAT THIS ARM IS. 1969 resolved forecasting questions (689 BINARY, 762
+# MULTIPLE_CHOICE, 518 NUMERIC), every one with a ground truth. The agent answers
+# from the live web; correctness is a probabilistic quantity and is NOT computed
+# here. The run is exported with
+# `python -m recipe.web_search.runners.export_galaxy_run_dir` and graded by the
+# benchmark's own scorer, so both systems under comparison are scored by the same
+# code rather than by two implementations of the same protocol.
+#
+# THE SUBMISSION CONTRACT. Each question body already carries its own
+# answer-instruction block. The `forecast` prompt profile adds only the wrapper
+# this runtime needs: `\boxed{<answer>}` plus, when the question asks for one, a
+# final `Confidence: <0..1>` line. A choice row with no Confidence line is
+# excluded by the scorer rather than scored, so the profile is not optional —
+# the config validator enforces it.
+#
+# THIS FILE IS THE UNFILTERED CONTROL ARM. `temporal_policy: disabled_control`
+# says so explicitly, because an absent field is not a policy: a run that
+# searches open-book while being reported as a backtest produces a number that
+# looks valid and is not. The filtered arm sets `strict` with a `delta_days`.
+
+run:
+  output_dir: axis_log://offline_forecast/axis_nocut
+  num_runs: 1
+  resume: false
+  model_request_logging: false
+  system_prompt_render_template: auto
+  env_file: .envs/.env
+  log_level: INFO
+
+model:
+  # Left null so the values come from `.envs/.env` (OPENAI_MODEL / OPENAI_BASE_URL)
+  # and no credential or gateway address lands in a tracked file.
+  #
+  # Pin the model to the same snapshot the comparison arm uses. That is not a
+  # preference: the reference cohort chose gpt-5.4 because 0 of these questions
+  # had resolved by its training cutoff, where later snapshots had 17% and 68%.
+  # Changing it reopens a parametric leakage channel that no search-side boundary
+  # can close. The gateway differs from the reference arm's (that one is capacity
+  # exhausted) but the model does not; the env file records which upstream serves it.
+  openai_model: null
+  openai_base_url: null
+  api_key_env: OPENAI_API_KEY
+  # Not in the model-asset manifest, so it resolves to the generic profile.
+  endpoint_profile: null
+  preserve_reasoning_content: true
+  parallel_tool_calls: false
+  parse_embedded_thinking: true
+  temperature: 0.2
+  top_p: 0.95
+  repetition_penalty: 1.0
+  max_output_tokens: 12800
+  transport:
+    timeout:
+      total_seconds: 600
+    retry:
+      retryable_status_codes: [408, 429, 500, 502, 503, 504]
+      backoff_base_seconds: 30
+      backoff_multiplier: 2
+      backoff_max_seconds: 300
+      jitter: true
+      respect_retry_after: true
+      retry_on_timeout: true
+      retry_on_connection_error: true
+      exit_after_seconds: 1800
+  # Matches the comparison arm's inference setting. Verified accepted on this
+  # gateway: reasoning_tokens goes 0 -> non-zero when it is set.
+  request_extra_body:
+    reasoning_effort: medium
+  context:
+    max_context_length: 262144
+    safety_margin: 0
+    estimator: cheap
+    limit_detection: provider_error
+    token_estimation_chars_per_token: 3.0
+  response_retry:
+    wait_seconds: 30
+    max_attempts: 10
+
+benchmark:
+  name: offline_forecast
+  # Absolute on purpose: the question set lives in the other repository, and
+  # copying it here would create a second copy that can drift from the one the
+  # scorer reads.
+  data_path: /home/dataset-local/wcy/Milkyway-Harness-Agent/data/benchmarks/offline_0901/offline_forecast_20260401_20260829.jsonl
+  max_tasks: null
+  shuffle_tasks: false
+  shuffle_seed: null
+  # The reference gateway serves roughly 5-8 concurrent requests per API key, so
+  # raising this past the key's capacity converts throughput into 429s.
+  max_concurrent: 6
+
+agent:
+  prompt_profile: forecast
+  # Turns bound the conversation; the tool budget bounds the effort.
+  #
+  # WHY 50 AND NOT THE REFERENCE ARM'S 30. Matching the integer was the wrong
+  # target. Measured over the reference arm's own 1966 recorded tasks, its tool
+  # use is mean 14.4 / median 12 / p90 26 / max 53, and its declared cap of 30
+  # binds on 3.2% of them — it is a safety net. A cap of 30 here bound 59% of
+  # tasks, making it the main constraint instead, so the same number described
+  # two different experiments. Against the smoke run (the only observation of
+  # this agent with no tool budget at all) a cap of 50 leaves 87% of tasks
+  # unbound, which is the same regime.
+  #
+  # This agent does spend more calls than the reference arm, and part of that is
+  # a real capability gap rather than thrash: the reference arm's tool mix
+  # includes read_artifact / read / grep over evidence it already fetched (4573
+  # calls across the cohort), so it can re-read a page it has, where this one
+  # must search again. Report that alongside any score difference.
+  max_turns: 70
+  max_tool_calls_per_task: 50
+  keep_tool_result: -1
+  tool_result_role: tool
+  forecast:
+    # 'disabled_control' (this file) or 'strict'. No default; the validator refuses
+    # a missing value.
+    temporal_policy: disabled_control
+    # Ignored under disabled_control; the filtered arm sets both. delta_days: 7
+    # matches the reference cohort, and observation_time is read once here rather
+    # than from the clock so a replay filters identically.
+    delta_days: null
+    observation_time: null
+    search_provider: serper
+  retry:
+    max_task_retries: 0
+    include_failure_summary: false
+    max_final_answer_attempts: 1
+    attempt_budget_sweep_enabled: false
+    generation_limit_recovery:
+      non_final_attempt: retry
+      final_attempt: rollback
+  context_compression:
+    enabled: false
+  # Off for this benchmark. Self-verification re-answers a question the agent has
+  # already committed to, and a forecast's probability is a statement about that
+  # commitment; re-deriving it would report a confidence for a different answer
+  # than the one being scored.
+  self_verification:
+    enabled: false
+  discard_all:
+    enabled: false
+
+tools:
+  disable_all: false
+  serper_base_url: null
+  jina_base_url: null
+  max_content_length: 409600
+  summary_llm:
+    base_url: null
+    model_name: null
+    api_key_env: SUMMARY_LLM_API_KEY
+    chunked_extraction: true
+    chunk_strategy: single
+    global_anchor_enabled: false
+    chunk_envelope_mode: strict_caveat
+    csv_layer_b_enabled: false
+    retry:
+      max_attempts: 5
+      backoff_base_seconds: 30
+      backoff_multiplier: 2
+      backoff_max_seconds: 1200
+      retryable_status_codes: [408, 429]
+      jitter: true
+      respect_retry_after: true
+  scrape:
+    # Off on this machine. Measured egress here: r.jina.ai, api.jina.ai,
+    # reuters.com, en.wikipedia.org, polymarket.com and manifold.markets all
+    # answer "Network is unreachable", while google.serper.dev, the model
+    # gateway, openai.com and example.com connect fine. So this is selective
+    # host reachability, not a Jina outage, and no fetch backend fixes it.
+    #
+    # Leaving the tool registered is worse than removing it: the model keeps
+    # calling it, and each call spends the Jina retry ladder and then the
+    # direct-HTTP fallback ladder before failing. A smoke run measured ~170s per
+    # failed call, which is why 4 tasks reached turn 17 in 11 minutes.
+    #
+    # THE COST IS REAL AND MUST BE REPORTED. Search snippets become the agent's
+    # only evidence, which is a weaker harness than the comparison arm had. Turn
+    # this back on wherever egress permits.
+    enabled: false
+    timeout:
+      connect_seconds: 20
+      read_seconds: 60
+    retry:
+      max_attempts: 4
+      backoff_base_seconds: 1
+      backoff_multiplier: 2
+      backoff_max_seconds: 8
+      retryable_status_codes: [408, 409, 425, 429]
+    fallback_max_attempts: 3
+  search:
+    timeout:
+      total_seconds: 30
+    retry:
+      max_attempts: 3
+      backoff_base_seconds: 4
+      backoff_multiplier: 2
+      backoff_max_seconds: 10
+      retryable_status_codes: [408, 429]
+  code_exec:
+    enabled: false
+
+judge:
+  # Required false for this benchmark, and enforced by the config validator: the
+  # A/B LLM judge has no prompt template for it, and grading happens in the
+  # benchmark's own probabilistic scorer instead.
+  online: false
+  request_logging: false
+  judge_model: null
+  judge_base_url: null
+  api_key_env: JUDGE_API_KEY
+  dsqa_f1_verify:
+    enabled: false

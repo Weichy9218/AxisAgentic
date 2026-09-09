@@ -10,6 +10,7 @@ import yaml
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from agentic.model_clients.openai_client import DEFAULT_REASONING_RESPONSE_FIELDS
+from agentic.temporal import TEMPORAL_POLICIES, TEMPORAL_POLICY_STRICT
 from recipe.common.retry_config import (
     ModelResponseRetryConfig,
     ModelTransportConfig,
@@ -169,7 +170,7 @@ class ModelRuntimeConfig(StrictConfigModel):
 
 
 class BenchmarkConfig(StrictConfigModel):
-    name: Literal["browsecomp", "browsecomp_zh", "gaia", "hle", "deepsearchqa", "livebrowsecomp"] = "browsecomp"
+    name: Literal["browsecomp", "browsecomp_zh", "gaia", "hle", "deepsearchqa", "livebrowsecomp", "offline_forecast"] = "browsecomp"
     data_path: str | None = "axis_data://browsecomp/standardized_data.jsonl"
     max_tasks: int | None = None
     shuffle_tasks: bool = True
@@ -241,10 +242,75 @@ class DiscardAllConfig(StrictConfigModel):
     max_tool_calls: int = Field(default=1800, ge=1)
 
 
+class AsOfJudgeConfig(StrictConfigModel):
+    """Gate 3 of the as-of screen: a small model on its own route.
+
+    Off by default. Gates 1 and 2 are deterministic and free; this one costs a
+    request per tool call whose evidence the cheap gates cannot vouch for, and it
+    is the only gate that can see a leak with no date in it.
+
+    The route is deliberately separate from the forecasting model's. Judging must
+    not consume the capacity the rollout needs, and the judge is shown neither
+    ``T_cut`` nor the question — it returns dates, and the comparison happens in
+    code. Endpoint values are read from the environment so no credential lands in
+    a tracked file.
+    """
+
+    enabled: bool = False
+    model_env: str = "AS_OF_JUDGE_MODEL"
+    base_url_env: str = "AS_OF_JUDGE_BASE_URL"
+    api_key_env: str = "AS_OF_JUDGE_API_KEY"
+    #: Units sent on suspicion alone per tool call. Overflow here is *kept*.
+    budget_per_call: int = Field(default=12, ge=1)
+    #: Ceiling on units whose own text names a post-cutoff date. Overflow here is
+    #: *blocked*, the same fail-closed rule that governs an unreachable judge.
+    hard_cap_per_call: int = Field(default=24, ge=1)
+    timeout_seconds: float = Field(default=40.0, gt=0)
+    #: Also judge fetched page bodies, not just search cards. Expensive: a page
+    #: chunks into many units. Leaving it off leaves a real residue — a page that
+    #: leaks in prose and prints no date is caught by no other gate.
+    judge_page_prose: bool = False
+
+
+class ForecastConfig(StrictConfigModel):
+    """Per-task information boundary for backtest-style forecasting benchmarks.
+
+    ``T_cut`` is derived per task as ``end_time - delta_days`` (clamped forward
+    to the question's ``start_time``), so sweeping the horizon is a config change
+    rather than a dataset regeneration. See :mod:`agentic.temporal.window`.
+
+    ``temporal_policy`` deliberately has no usable default. An absent field must
+    not be the way a run says it is unfiltered: an unfiltered arm has to declare
+    ``disabled_control`` so no downstream reader mistakes it for a temporally
+    valid backtest.
+    """
+
+    temporal_policy: str = ""
+    #: Forecast horizon in days. Required under ``strict`` unless ``cutoff_override``
+    #: is set. ``0`` is refused upstream because it would silently mean "forecast on
+    #: the day the outcome is known".
+    delta_days: int | None = Field(default=None, ge=0)
+    #: When this run is considered to take place. Required under ``strict``; there is
+    #: no clock fallback, so replaying a task on a later day filters identically.
+    observation_time: str | None = None
+    #: Pins ``T_cut`` directly, bypassing the derivation. For reproducing a fixed arm.
+    cutoff_override: str | None = None
+    #: Which provider's date syntax the boundary compiles to. Only the search backend
+    #: this repository ships has a compilation rule.
+    search_provider: Literal["serper"] = "serper"
+    as_of_judge: AsOfJudgeConfig = Field(default_factory=AsOfJudgeConfig)
+
+
 class AgentConfig(StrictConfigModel):
-    prompt_profile: Literal["default", "deepsearchqa", "livebrowsecomp", "livebrowsecomp_notools"] = "default"
+    prompt_profile: Literal["default", "deepsearchqa", "livebrowsecomp", "livebrowsecomp_notools", "forecast"] = "default"
     system_prompt_date: str | None = None
     max_turns: int = 300
+    #: Total tool calls one task may make, across all tools. ``None`` means the
+    #: turn budget is the only bound, which lets a hard question spend every turn
+    #: on a tool call. Set it when a comparison arm declares its own cap, so the
+    #: two agents are allowed the same amount of effort rather than one of them
+    #: quietly working several times harder.
+    max_tool_calls_per_task: int | None = Field(default=None, ge=1)
     keep_tool_result: int = 5
     tool_result_role: Literal["tool", "user"] = "tool"
     retry: AgentRetryConfig = Field(default_factory=AgentRetryConfig)
@@ -253,6 +319,7 @@ class AgentConfig(StrictConfigModel):
     context_compression: ContextCompressionConfig = Field(default_factory=ContextCompressionConfig)
     self_verification: SelfVerificationConfig = Field(default_factory=SelfVerificationConfig)
     discard_all: DiscardAllConfig = Field(default_factory=DiscardAllConfig)
+    forecast: ForecastConfig = Field(default_factory=ForecastConfig)
 
     @model_validator(mode="after")
     def _validate_context_management_mutual_exclusion(self) -> AgentConfig:
@@ -396,6 +463,68 @@ class WebSearchEvalConfig(StrictConfigModel):
                 "discard-all can reset the trajectory."
             )
             raise ValueError(msg)
+        return self
+
+    @model_validator(mode="after")
+    def _validate_forecast_boundary_is_declarable(self) -> WebSearchEvalConfig:
+        # Fail at second zero, not on task 47. A run that searches open-book while
+        # reporting itself as time-truncated produces a number that looks valid.
+        forecast = self.agent.forecast
+        declared = str(forecast.temporal_policy or "").strip()
+
+        if self.benchmark.name != "offline_forecast":
+            if declared:
+                msg = (
+                    f"agent.forecast.temporal_policy is set to {declared!r} but "
+                    f"benchmark.name is {self.benchmark.name!r}; the boundary would be "
+                    "computed and never used. Remove the block or set "
+                    "benchmark.name='offline_forecast'."
+                )
+                raise ValueError(msg)
+            return self
+
+        if not declared:
+            msg = (
+                "benchmark.name='offline_forecast' requires an explicit "
+                f"agent.forecast.temporal_policy (one of {list(TEMPORAL_POLICIES)}). "
+                "An absent field is not a policy: declare 'disabled_control' if the "
+                "unfiltered control arm is what you want."
+            )
+            raise ValueError(msg)
+        if declared not in TEMPORAL_POLICIES:
+            msg = f"agent.forecast.temporal_policy {declared!r} is not one of {list(TEMPORAL_POLICIES)}."
+            raise ValueError(msg)
+
+        if self.judge.online:
+            msg = (
+                "benchmark.name='offline_forecast' requires judge.online=false. This benchmark is "
+                "graded by a probabilistic scorer over the exported run directory, not by the A/B "
+                "LLM judge, which has no prompt template for it."
+            )
+            raise ValueError(msg)
+
+        if self.agent.prompt_profile != "forecast":
+            msg = (
+                f"benchmark.name='offline_forecast' expects agent.prompt_profile='forecast', got "
+                f"{self.agent.prompt_profile!r}. The other profiles do not ask for the Confidence "
+                "line the submission needs, so every choice row would be excluded."
+            )
+            raise ValueError(msg)
+
+        if declared == TEMPORAL_POLICY_STRICT:
+            if forecast.delta_days is None and not forecast.cutoff_override:
+                msg = (
+                    "agent.forecast.temporal_policy='strict' requires agent.forecast.delta_days "
+                    "(the forecast horizon) unless agent.forecast.cutoff_override pins T_cut directly."
+                )
+                raise ValueError(msg)
+            if not forecast.observation_time:
+                msg = (
+                    "agent.forecast.temporal_policy='strict' requires agent.forecast.observation_time. "
+                    "It is captured once and threaded down; there is no clock fallback, because a "
+                    "clock read would make the same task filter differently when replayed."
+                )
+                raise ValueError(msg)
         return self
 
 

@@ -248,7 +248,117 @@ Treat COMPLETENESS and PRECISION as equally important:
 - Do not call tools while producing the final answer."""
 
 
-def generate_system_prompt(date: str | None = None, *, prompt_profile: str = "default", code_exec_enabled: bool = False) -> str:
+# System prompt for the "forecast" profile (backtest-style forecasting benchmarks).
+#
+# Two things are deliberately absent.
+#
+# There is no "Today is:" line. On a backtest the wall clock is not the agent's
+# vantage point, and naming it invites the model to reason from a date it is not
+# standing on. The information boundary is stated once, by _forecast_boundary_line,
+# and only when the run actually has one.
+#
+# The block does not enumerate legal answers or repeat the option list. The
+# dataset's own question body already carries its answer-instruction block
+# (which outcome to pick, the unit, the rounding, whether to state a
+# probability), and restating it here would put the model between two wordings.
+# What this template adds is only the wrapper AxisAgentic needs to extract a
+# submission: \boxed{} plus an optional Confidence line.
+FORECAST_SYSTEM_PROMPT_TEMPLATE = """\
+You are a forecasting research agent with access to native structured tools.
+{boundary_line}The question asks about an outcome that had not yet occurred, so the answer is not retrievable. \
+Gather the evidence that constrains it, then commit to a forecast.
+
+# Tool-Use Rules
+
+- Use the function-calling interface to invoke tools. Do not write tool calls as plain text.
+- Call at most ONE tool per assistant turn. The next message will contain that tool's result; use it to decide your next step.
+- Only use tools declared in the provided tools schema.
+- Use web_search to find the latest reported value of the quantity the question turns on, and the sources that report it.
+{scrape_tool_rule}- Prefer focused searches and focused extraction requests. Avoid repeating the same query or URL unless the previous result was unusable.
+
+# Method
+
+- Find the anchor first: the most recent reported value, rate, or standing of whatever the question measures. A correct anchor matters more than a longer chain of reasoning.
+- Read the resolution criteria exactly as the question writes them: the threshold, the direction, the unit, the rounding, and the deadline.
+- Prefer primary sources and any publisher the question names. Record conflicts rather than averaging them away.
+- Do not refuse to answer. A low-confidence answer with the uncertainty stated is a valid submission; a refusal is not.
+
+# Answering
+
+- When you have sufficient evidence, stop calling tools and give the final answer wrapped in \\boxed{}.
+- Put ONLY the answer inside \\boxed{}: one outcome written exactly as the question lists it, or digits only for a numeric target. No units, no currency symbol, no percent sign, no thousands separator, no probability, no explanation.
+- If the question asks you to state a probability, add one final line after the boxed answer:
+  Confidence: <a number between 0 and 1>
+  It is the probability that the answer you put in \\boxed{} is correct. It is not the probability of any particular outcome, so it does not change when you switch answers.
+- Do not output a final response without \\boxed{}.
+"""
+
+FORECAST_SUMMARY_PROMPT_TEMPLATE = """\
+Stop researching and submit your forecast now. Do NOT call any tools.
+
+The original question is repeated here for reference:
+
+"{task_description}"
+
+Give the answer wrapped in \\boxed{{}}, containing ONLY the answer: one outcome written exactly as the \
+question lists it, or digits only for a numeric target. No units, no percent sign, no probability, no explanation.
+
+If the question asks you to state a probability, add one final line after the boxed answer:
+Confidence: <a number between 0 and 1>
+
+Do not refuse and do not say you cannot predict the future. If the evidence is thin, give your best \
+estimate and say so through a low Confidence value.
+"""
+
+
+_FORECAST_SCRAPE_TOOL_RULE = "- Use scrape_and_extract_info to read a specific URL or extract focused facts from a page.\n"
+
+_FORECAST_SEARCH_ONLY_RULE = (
+    "- There is no page-fetching tool in this run. Search result titles and snippets are the whole of "
+    "what you can read, so make each query specific enough that its snippet carries the value you need, "
+    "and do not plan to open a link.\n"
+)
+
+
+def _forecast_boundary_line(t_cut: str | None) -> str:
+    """State the information boundary once, or say nothing.
+
+    An unfiltered run must not carry a sentence claiming a boundary it does not
+    enforce, and a filtered run must not state it twice in different words.
+    """
+    if not t_cut:
+        return ""
+    return (
+        f"Your tools return only sources published before {t_cut}; anything dated on or after that day "
+        "has been withheld from you.\n"
+    )
+
+
+def generate_system_prompt(
+    date: str | None = None,
+    *,
+    prompt_profile: str = "default",
+    code_exec_enabled: bool = False,
+    t_cut: str | None = None,
+    scrape_enabled: bool = True,
+) -> str:
+    """Render the system prompt for *prompt_profile*.
+
+    ``t_cut`` and ``scrape_enabled`` apply only to the ``forecast`` profile. That
+    profile carries no ``Today is:`` line: on a backtest the wall clock is not
+    the agent's vantage point. The boundary is stated once when the run has one,
+    and not at all when it does not.
+
+    ``scrape_enabled=False`` replaces the page-fetching rule rather than deleting
+    it. A prompt that simply omits the tool leaves the model to discover by
+    trial that it cannot open a link; saying so redirects it into writing
+    queries whose snippets carry the answer.
+    """
+    if prompt_profile == "forecast":
+        scrape_rule = _FORECAST_SCRAPE_TOOL_RULE if scrape_enabled else _FORECAST_SEARCH_ONLY_RULE
+        return FORECAST_SYSTEM_PROMPT_TEMPLATE.replace("{boundary_line}", _forecast_boundary_line(t_cut)).replace(
+            "{scrape_tool_rule}", scrape_rule
+        )
     date = _resolve_prompt_date(date)
     if prompt_profile == "deepsearchqa":
         return DEEPSEARCHQA_SYSTEM_PROMPT_TEMPLATE.replace("{date}", date)
@@ -261,12 +371,17 @@ def generate_system_prompt(date: str | None = None, *, prompt_profile: str = "de
 
 
 def generate_user_prompt_template(*, prompt_profile: str = "default") -> str:
-    if prompt_profile in ("deepsearchqa", "livebrowsecomp", "livebrowsecomp_notools"):
+    # The forecast dataset's question body already carries its own
+    # answer-instruction block, so appending a second wording here would put the
+    # model between two of them.
+    if prompt_profile in ("deepsearchqa", "livebrowsecomp", "livebrowsecomp_notools", "forecast"):
         return "{task}"
     return "{task}\nFollow the request's format instructions strictly and wrap the final answer in \\boxed{{}}."
 
 
 def generate_summary_prompt(task_description: str, *, prompt_profile: str = "default") -> str:
+    if prompt_profile == "forecast":
+        return FORECAST_SUMMARY_PROMPT_TEMPLATE.format(task_description=task_description)
     if prompt_profile in ("deepsearchqa", "livebrowsecomp", "livebrowsecomp_notools"):
         return TOOL_PROFILE_SUMMARY_PROMPT_TEMPLATE.format(task_description=task_description)
     return SUMMARY_PROMPT_TEMPLATE.format(task_description=task_description)

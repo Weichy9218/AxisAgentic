@@ -10,6 +10,7 @@ Key capabilities beyond a naive wrapper:
 
 * Automatic retry with exponential back-off on transient HTTP errors.
 * Quote-retry logic: when the initial query yields no organic results and contains double-quotes, a second attempt strips the quotes automatically.
+* site:-retry ladder: a still-empty query whose ``site:`` token carries a URL path retries against the bare domain, then without ``site:`` at all. Models paste whole URLs after ``site:``, which Google matches against indexed page URLs and therefore cannot satisfy.
 * Filtering of banned URLs (e.g. HuggingFace dataset/spaces pages that leak benchmark answers).
 * Safe URL-decoding that preserves RFC 3986 reserved characters.
 * Rich metadata (per-attempt timing, request count, decode latency).
@@ -21,13 +22,43 @@ import asyncio
 import json
 import logging
 import os
+import re
 import time
+from datetime import date
 from typing import Any
 from urllib.parse import unquote
 
 import httpx
 
+
+#: ``site:`` token, captured so the ladder can rewrite just that part.
+_SITE_TOKEN_RE = re.compile(r"\bsite:(\S+)")
+
+
+def _site_token_has_path(query: str) -> bool:
+    """True when a ``site:`` token carries anything past the host."""
+    match = _SITE_TOKEN_RE.search(query)
+    return bool(match) and "/" in match.group(1)
+
+
+def _site_query_bare_domain(query: str) -> str:
+    """Reduce every ``site:host/path?query`` to ``site:host``.
+
+    Models routinely paste a full URL after ``site:``. Google matches that token
+    against indexed page URLs, so an API endpoint or a query string matches
+    nothing at all — the restriction is not merely narrow, it is unsatisfiable.
+    """
+    return _SITE_TOKEN_RE.sub(lambda m: "site:" + m.group(1).split("/")[0], query)
+
+
+def _site_query_dropped(query: str) -> str:
+    """Remove ``site:`` tokens entirely, keeping the remaining keywords."""
+    return re.sub(r"\bsite:\S+\s*", "", query).strip()
+
+
 from agentic.contracts.messages import ToolResultStatus
+from agentic.temporal import ProviderTimeFilter, compile_provider_time_filter
+from agentic.tools.as_of import AS_OF_STAMP_KEY, ScreenOutcome, screen_units, stamp, units_from_search_cards
 from agentic.tools.base import CallableTool, ToolResult
 from agentic.tools.web_search._retry import (
     RetryConfig,
@@ -162,6 +193,7 @@ def _build_payload(
     time_range: str | None,
     page: int | None,
     autocorrect: bool | None,
+    time_filter: ProviderTimeFilter | None = None,
 ) -> dict[str, Any]:
     payload: dict[str, Any] = {
         "q": query.strip(),
@@ -177,18 +209,56 @@ def _build_payload(
         payload["page"] = page
     if autocorrect is not None:
         payload["autocorrect"] = autocorrect
+    if time_filter is not None and time_filter.request_params:
+        # Assignment, never setdefault: the run owns the information boundary and
+        # a model-supplied recency filter must not be able to widen it.
+        payload.update(time_filter.request_params)
     return payload
 
 
-def _filter_organic(data: dict[str, Any]) -> tuple[list[dict[str, Any]], int]:
+async def _screen_organic(
+    data: dict[str, Any],
+    *,
+    t_cut: date | None,
+    judge_enabled: bool,
+) -> tuple[list[dict[str, Any]], int, ScreenOutcome | None]:
+    """Filter organic results, at the first moment they exist.
+
+    Two filters, in this order:
+
+    1. Banned URLs — sources that would leak a benchmark's own answer key.
+    2. The as-of screen, when the run declares a boundary.
+
+    This runs on the raw provider response, before deduplication, before ``num``
+    truncation and before any formatting, so a blocked card cannot occupy a slot
+    a usable source needed, and the trace and the model's context cannot end up
+    disagreeing about which cards existed.
+    """
     organic: list[dict[str, Any]] = []
-    filtered = 0
+    banned = 0
     for item in data.get("organic", []):
         if is_banned_url(item.get("link", "")):
-            filtered += 1
+            banned += 1
             continue
         organic.append(item)
-    return organic, filtered
+
+    if t_cut is None or not organic:
+        return organic, banned, None
+
+    outcome = await screen_units(units_from_search_cards(organic), T_cut=t_cut, judge_enabled=judge_enabled)
+    blocked = outcome.blocked_ordinals
+    return [card for index, card in enumerate(organic) if index not in blocked], banned, outcome
+
+
+def _label_undated(cards: list[dict[str, Any]]) -> None:
+    """Say "undated" out loud on the cards that carry no date.
+
+    A dated card needs no label — the date is the label. An undated one silently
+    reads as current, which is exactly the wrong default under a boundary.
+    """
+    for card in cards:
+        if not str(card.get("date") or "").strip():
+            card["date"] = "undated"
 
 
 def _format_results_text(data: dict[str, Any]) -> str:
@@ -323,6 +393,9 @@ def create_web_search_tool(
     retry: RetryConfig | None = None,
     output_format: str = "json",
     include_search_parameters_in_content: bool = False,
+    t_cut: date | None = None,
+    search_provider: str = "serper",
+    as_of_judge_enabled: bool = True,
 ) -> CallableTool:
     """Create a web search tool backed by the Serper Google Search API.
 
@@ -342,12 +415,24 @@ def create_web_search_tool(
             timeouts, and the configured retryable status codes (no longer every 4xx).
         output_format: ``"json"`` returns structured JSON, ``"text"`` returns human-readable text.
         include_search_parameters_in_content: Include Serper's ``searchParameters`` in JSON output.
+        t_cut: Exclusive information boundary for this task. When set, the request
+            carries the provider's own date bound and the results are screened
+            before they are formatted. **It is not in the tool schema and must not
+            be**: the run owns the boundary, and a model that could set it could
+            widen it. Compiled per task by the caller, so a shared tool instance
+            is never the right way to pass it.
+        search_provider: Which provider's date syntax the boundary compiles to.
+            Compilation fails closed for a provider with no rule, before any
+            request is sent.
     """
     api_key = serper_api_key or os.environ.get("SERPER_API_KEY", "")
     base_url = serper_base_url or os.environ.get("SERPER_BASE_URL", _DEFAULT_SERPER_BASE_URL)
     resolved_timeout = coerce_timeout(timeout) or default_search_timeout()
     resolved_retry = retry or default_search_retry()
     shared_client = create_async_client(timeout=resolved_timeout.to_httpx(), limits=DEFAULT_HTTP_LIMITS)
+    # Compiled once at construction, so an unencodable boundary fails when the
+    # tool is built rather than on the task's first search.
+    time_filter = compile_provider_time_filter(search_provider, T_cut=t_cut)
 
     async def _serper_request(payload: dict[str, Any], headers: dict[str, str]) -> httpx.Response:
         for attempt in range(1, resolved_retry.max_attempts + 1):
@@ -383,7 +468,7 @@ def create_web_search_tool(
         time_range: str | None,
         page: int | None,
         autocorrect: bool | None,
-    ) -> tuple[list[dict[str, Any]], dict[str, Any], dict[str, Any]]:
+    ) -> tuple[list[dict[str, Any]], dict[str, Any], dict[str, Any], ScreenOutcome | None]:
         payload = _build_payload(
             query,
             num=num,
@@ -393,6 +478,7 @@ def create_web_search_tool(
             time_range=time_range,
             page=page,
             autocorrect=autocorrect,
+            time_filter=time_filter,
         )
         headers = {"X-API-KEY": api_key, "Content-Type": "application/json"}
 
@@ -401,19 +487,23 @@ def create_web_search_tool(
         request_ms = (time.perf_counter() - t0) * 1000.0
 
         data = response.json()
-        organic, filtered = _filter_organic(data)
+        organic, banned, outcome = await _screen_organic(data, t_cut=t_cut, judge_enabled=as_of_judge_enabled)
 
-        return (
-            organic,
-            data.get("searchParameters", {}),
-            {
-                "query": query,
-                "request_ms": round(request_ms, 1),
-                "raw_organic_count": len(data.get("organic", [])),
-                "organic_count": len(organic),
-                "filtered_count": filtered,
-            },
-        )
+        attempt_meta = {
+            "query": query,
+            "request_ms": round(request_ms, 1),
+            "raw_organic_count": len(data.get("organic", [])),
+            "organic_count": len(organic),
+            "filtered_count": banned,
+        }
+        if outcome is not None:
+            attempt_meta["as_of_blocked_count"] = len(outcome.blocked)
+        # A weaker and more honest claim than "the provider filtered on it".
+        echoed = (data.get("searchParameters") or {}).get("tbs")
+        if echoed is not None:
+            attempt_meta["provider_echoed_tbs"] = echoed
+
+        return organic, data.get("searchParameters", {}), attempt_meta, outcome
 
     async def _search(
         query: str = "",
@@ -456,17 +546,41 @@ def create_web_search_tool(
             )
             attempts: list[dict[str, Any]] = []
             quote_retry = False
+            site_retry: str | None = None
 
-            organic, search_params, attempt_meta = await _do_search(query.strip(), **kwargs)
+            effective_query = query.strip()
+            organic, search_params, attempt_meta, outcome = await _do_search(effective_query, **kwargs)
             attempts.append(attempt_meta)
 
             # Quote-retry: strip double-quotes and retry when no results
-            if not organic and '"' in query:
-                stripped = query.replace('"', "").strip()
+            if not organic and '"' in effective_query:
+                stripped = effective_query.replace('"', "").strip()
                 if stripped:
                     quote_retry = True
-                    organic, search_params, retry_meta = await _do_search(stripped, **kwargs)
+                    effective_query = stripped
+                    organic, search_params, retry_meta, outcome = await _do_search(effective_query, **kwargs)
                     attempts.append(retry_meta)
+
+            # site:-retry, smallest loss of intent first. Only reached when the
+            # query still returned nothing, so a working query costs one request.
+            if not organic and _site_token_has_path(effective_query):
+                bare = _site_query_bare_domain(effective_query)
+                if bare != effective_query:
+                    site_retry = "bare_domain"
+                    effective_query = bare
+                    organic, search_params, retry_meta, outcome = await _do_search(effective_query, **kwargs)
+                    attempts.append(retry_meta)
+
+            if not organic and _SITE_TOKEN_RE.search(effective_query):
+                dropped = _site_query_dropped(effective_query)
+                if dropped and dropped != effective_query:
+                    site_retry = "dropped"
+                    effective_query = dropped
+                    organic, search_params, retry_meta, outcome = await _do_search(effective_query, **kwargs)
+                    attempts.append(retry_meta)
+
+            if t_cut is not None:
+                _label_undated(organic)
 
             response_data: dict[str, Any] = {
                 "organic": organic,
@@ -482,17 +596,27 @@ def create_web_search_tool(
                 content = json.dumps(response_data, ensure_ascii=False)
 
             total_ms = round((time.perf_counter() - search_started) * 1000.0, 1)
-            return ToolResult(
-                content=content,
-                metadata={
-                    "success": True,
-                    "timing_ms": total_ms,
-                    "search_parameters": search_params,
-                    "request_count": len(attempts),
-                    "quote_retry_used": quote_retry,
-                    "attempts": attempts,
-                },
-            )
+            metadata: dict[str, Any] = {
+                "success": True,
+                "timing_ms": total_ms,
+                "search_parameters": search_params,
+                "request_count": len(attempts),
+                "quote_retry_used": quote_retry,
+                "site_retry_used": site_retry,
+                "attempts": attempts,
+            }
+            if t_cut is not None:
+                # Stamped even when nothing was blocked: "yes, and it held
+                # nothing" is a different answer from silence, and only the
+                # first proves the gate was armed for this call.
+                counts = dict(outcome.counts) if outcome is not None else {"units": 0}
+                metadata[AS_OF_STAMP_KEY] = stamp(counts, T_cut=t_cut, scope="search_cards")
+                metadata.update(time_filter.as_provenance())
+                if outcome is not None and outcome.blocked:
+                    metadata["as_of_blocked"] = [
+                        {"gate": item.gate, "url": item.url or ""} for item in outcome.blocked[:10]
+                    ]
+            return ToolResult(content=content, metadata=metadata)
 
         except Exception as exc:
             logger.warning("Web search failed: %s", exc)

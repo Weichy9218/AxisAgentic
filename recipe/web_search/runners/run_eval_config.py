@@ -353,6 +353,21 @@ def _runner_args(config: WebSearchEvalConfig, run_dir: Path) -> list[str]:  # no
         args.extend(["--summary_llm_cache_enabled", "true"])
     args.extend(["--summary_llm_timeout_json", config.tools.summary_llm.timeout.to_runtime().to_json()])
     args.extend(["--summary_llm_retry_json", config.tools.summary_llm.retry.to_runtime().to_json()])
+    args.extend(["--scrape_enabled", str(config.tools.scrape.enabled).lower()])
+    if config.agent.max_tool_calls_per_task is not None:
+        args.extend(["--max_tool_calls_per_task", str(config.agent.max_tool_calls_per_task)])
+    args.extend(["--scrape_backend", config.tools.scrape.backend])
+    forecast = config.agent.forecast
+    args.extend(["--forecast_temporal_policy", forecast.temporal_policy])
+    args.extend(["--forecast_search_provider", forecast.search_provider])
+    if forecast.delta_days is not None:
+        args.extend(["--forecast_delta_days", str(forecast.delta_days)])
+    if forecast.observation_time:
+        args.extend(["--forecast_observation_time", forecast.observation_time])
+    if forecast.cutoff_override:
+        args.extend(["--forecast_cutoff_override", forecast.cutoff_override])
+    args.extend(["--as_of_judge_enabled", str(forecast.as_of_judge.enabled).lower()])
+    args.extend(["--as_of_judge_page_prose", str(forecast.as_of_judge.judge_page_prose).lower()])
     args.extend(["--scrape_timeout_json", config.tools.scrape.timeout.to_runtime().to_json()])
     args.extend(["--scrape_retry_json", config.tools.scrape.retry.to_runtime().to_json()])
     args.extend(["--scrape_fallback_retry_json", config.tools.scrape.fallback_retry_runtime().to_json()])
@@ -620,6 +635,43 @@ def _aggregate_runs_summary(config: WebSearchEvalConfig, output_dir: Path) -> No
     print(report, end="")
 
 
+def _export_as_of_judge_env(config: WebSearchEvalConfig) -> None:
+    """Publish the Gate 3 budgets into the environment the rollout inherits.
+
+    The judge reads its budgets from the environment rather than taking them as
+    arguments, because it is called from deep inside the tool layer where
+    threading three numbers through every caller would put run policy into five
+    signatures. Exporting them here keeps the config file the single place they
+    are declared.
+
+    The endpoint itself is not exported: the config names *which* environment
+    variables hold it, and the values stay in the env file, so no credential
+    passes through a config file or a command line.
+    """
+    judge = config.agent.forecast.as_of_judge
+    if not judge.enabled:
+        return
+    os.environ["AS_OF_JUDGE_BUDGET_PER_CALL"] = str(judge.budget_per_call)
+    os.environ["AS_OF_JUDGE_HARD_CAP_PER_CALL"] = str(judge.hard_cap_per_call)
+    os.environ["AS_OF_JUDGE_TIMEOUT_SECONDS"] = str(judge.timeout_seconds)
+    for standard, configured in (
+        ("AS_OF_JUDGE_MODEL", judge.model_env),
+        ("AS_OF_JUDGE_BASE_URL", judge.base_url_env),
+        ("AS_OF_JUDGE_API_KEY", judge.api_key_env),
+    ):
+        if configured != standard and os.environ.get(configured):
+            os.environ[standard] = os.environ[configured]
+    missing = [name for name in ("AS_OF_JUDGE_MODEL", "AS_OF_JUDGE_BASE_URL") if not os.environ.get(name)]
+    if missing:
+        msg = (
+            f"agent.forecast.as_of_judge.enabled is true but {', '.join(missing)} is unset. "
+            "Gate 3 fails closed, so every routed unit would be blocked and the run would "
+            "proceed with almost no evidence while still reporting itself as screened. "
+            "Set the endpoint or disable the judge."
+        )
+        raise ValueError(msg)
+
+
 def main(argv: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser(description="Run native web-search benchmark evaluation from YAML")
     parser.add_argument("--config", required=True)
@@ -664,6 +716,7 @@ def main(argv: list[str] | None = None) -> None:
     _write_run_config_files(config_path, resolved, output_dir)
     judge_process = _start_online_judge(resolved, output_dir, env_file)
     processes: list[subprocess.Popen[str]] = []
+    _export_as_of_judge_env(resolved)
     try:
         for idx in range(1, resolved.run.num_runs + 1):
             run_dir = output_dir / f"run_{idx}"

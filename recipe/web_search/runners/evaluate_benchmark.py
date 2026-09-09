@@ -21,7 +21,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any, cast
 
 from agentic.config import FormatErrorConfig, OrchestrationConfig, ToolArgumentRepairConfig, ToolManagerConfig
-from agentic.contracts import ConversationMessage, FormatErrorStrategy
+from agentic.contracts import ConversationMessage, FormatErrorStrategy, MessageRole
 from agentic.evaluation.evaluator import BatchEvaluator
 from agentic.model_assets import get_chat_template_render_config, normalize_openai_tool_call_arguments_for_chat_template, resolve_asset_uri
 from agentic.model_clients import ModelRequestLogger, OpenAICompatibleModelClient, OpenAICompatibleModelClientConfig, RetryingModelClient
@@ -29,6 +29,7 @@ from agentic.model_clients.openai_client import DEFAULT_TRANSIENT_ENDPOINT_ERROR
 from agentic.model_clients.sglang_client import _chat_template_messages
 from agentic.observability.task_logger import TaskLogger
 from agentic.orchestration.task_orchestrator import OrchestrationResult
+from agentic.temporal import ForecastWindow, TemporalPolicyError, resolve_forecast_time
 from agentic.tools import ToolManager
 from agentic.tools.code_sandbox import (
     DEFAULT_E2B_TEMPLATE_ID,
@@ -66,6 +67,7 @@ from recipe.web_search.config import (
     DEFAULT_SYSTEM_PROMPT_RENDER_TEMPLATE,
 )
 from recipe.web_search.eval.benchmark_dataset import BenchmarkDataset
+from recipe.web_search.eval.forecast_submission import parse_forecast_submission
 
 logger = logging.getLogger(__name__)
 
@@ -190,6 +192,7 @@ def build_web_search_tools(
     args: argparse.Namespace,
     *,
     summary_llm_request_logger: ModelRequestLogger | None = None,
+    boundary: ForecastWindow | None = None,
 ) -> list[Any]:
     if getattr(args, "disable_tools", False):
         return []
@@ -199,6 +202,7 @@ def build_web_search_tools(
         timeout=getattr(args, "scrape_timeout", None),
         retry=getattr(args, "scrape_retry", None),
         fallback_retry=getattr(args, "scrape_fallback_retry", None),
+        backend=getattr(args, "scrape_backend", "jina"),
     )
     llm_extraction_options = LLMExtractionOptions(
         base_url=args.summary_llm_base_url,
@@ -231,21 +235,40 @@ def build_web_search_tools(
         normalize_url=getattr(args, "raw_scrape_cache_normalize_url", False),
     )
     code_execs = _build_code_execs(args)
-    return [
+    # The boundary is a property of the task, not of the run, so it arrives here
+    # rather than being read from args. Tools are built per task (see
+    # build_orchestrator's call sites), which is why a closure is the right
+    # channel and a shared tool instance would not be.
+    t_cut = boundary.T_cut if boundary is not None else None
+    tools: list[Any] = [
         create_web_search_tool(
             parameters=SIMPLE_WEB_SEARCH_PARAMETERS,
             serper_base_url=args.serper_base_url,
             timeout=search_timeout,
             retry=search_retry,
-        ),
-        create_scrape_and_extract_tool(
-            parameters=SIMPLE_SCRAPE_AND_EXTRACT_PARAMETERS,
-            scrape_backend_options=scrape_backend_options,
-            llm_extraction_options=llm_extraction_options,
-            raw_scrape_cache_options=raw_scrape_cache_options,
-        ),
-        *code_execs,
+            t_cut=t_cut,
+            search_provider=getattr(args, "forecast_search_provider", "serper"),
+            as_of_judge_enabled=getattr(args, "as_of_judge_enabled", False),
+        )
     ]
+    # A registered scrape tool the network cannot reach is worse than an absent
+    # one: the model keeps calling it, and each call spends the full Jina retry
+    # ladder plus the direct-HTTP fallback ladder before failing.
+    if getattr(args, "scrape_enabled", True):
+        tools.append(
+            create_scrape_and_extract_tool(
+                parameters=SIMPLE_SCRAPE_AND_EXTRACT_PARAMETERS,
+                scrape_backend_options=scrape_backend_options,
+                llm_extraction_options=llm_extraction_options,
+                raw_scrape_cache_options=raw_scrape_cache_options,
+                t_cut=t_cut,
+                judge_page_prose=getattr(args, "as_of_judge_page_prose", False),
+            )
+        )
+    else:
+        logger.warning("tools.scrape.enabled=false: registering web_search only, with no page-fetching tool.")
+    tools.extend(code_execs)
+    return tools
 
 
 def _build_code_execs(args: argparse.Namespace) -> list[Any]:
@@ -282,15 +305,62 @@ def _build_code_execs(args: argparse.Namespace) -> list[Any]:
     ]
 
 
+def _forecast_boundary_for(item: Any, args: argparse.Namespace) -> ForecastWindow | None:
+    """Derive this task's information boundary, once, from the row and the run config.
+
+    ``None`` when the run declares no forecast policy at all — every benchmark
+    other than the forecast one. A declared ``disabled_control`` still returns a
+    window: it records the horizon it would have used, so a reader can tell an
+    unfiltered arm apart from one where no boundary was needed.
+    """
+    policy = str(getattr(args, "forecast_temporal_policy", "") or "").strip()
+    if not policy:
+        return None
+    metadata = getattr(item, "metadata", None) or {}
+    return resolve_forecast_time(
+        metadata.get("end_time"),
+        observation_time=getattr(args, "forecast_observation_time", None),
+        delta_days=getattr(args, "forecast_delta_days", None),
+        start_time=metadata.get("start_time"),
+        override=getattr(args, "forecast_cutoff_override", None),
+        policy=policy,
+    )
+
+
+def _validate_all_boundaries(dataset: Any, args: argparse.Namespace) -> None:
+    """Resolve every task's boundary before any task starts.
+
+    Fail at second zero, not on task 47, and report every offending id at once
+    rather than one per re-run. A run that cannot determine the boundary it
+    claims to enforce must not produce a number.
+    """
+    if not str(getattr(args, "forecast_temporal_policy", "") or "").strip():
+        return
+    failures: dict[str, str] = {}
+    for item in dataset.items:
+        source = json.loads(item.source) if isinstance(item.source, str) else item.source
+        task_id = str(source.get("task_id", "?") if isinstance(source, dict) else "?")
+        try:
+            _forecast_boundary_for(item, args)
+        except TemporalPolicyError as exc:
+            failures[task_id] = str(exc)
+    if failures:
+        listed = "\n".join(f"  {task_id}: {reason}" for task_id, reason in list(failures.items())[:10])
+        more = f"\n  ... and {len(failures) - 10} more" if len(failures) > 10 else ""
+        msg = f"{len(failures)} task(s) have no derivable information boundary:\n{listed}{more}"
+        raise TemporalPolicyError(msg)
+
+
 def build_orchestrator(
     model_client: ModelClient,
     task_logger: TaskLogger | None,
     args: argparse.Namespace,
     *,
     summary_llm_request_logger: ModelRequestLogger | None = None,
+    boundary: ForecastWindow | None = None,
 ) -> WebSearchTaskOrchestrator:
     prompt_profile = getattr(args, "prompt_profile", "default")
-    tools = build_web_search_tools(args, summary_llm_request_logger=summary_llm_request_logger)
+    tools = build_web_search_tools(args, summary_llm_request_logger=summary_llm_request_logger, boundary=boundary)
     # Discard-all's max-tool budget is handled by the orchestrator as the
     # boundary for entering the final no-discard attempt. It is not a hard
     # ToolManager cap: the batch that crosses the threshold is allowed to finish.
@@ -298,6 +368,7 @@ def build_orchestrator(
         tools=tools,
         config=ToolManagerConfig(
             argument_repair=ToolArgumentRepairConfig(enabled=True),
+            max_tool_calls_per_task=getattr(args, "max_tool_calls_per_task", None),
         ),
     )
     context_token_estimator = None
@@ -309,6 +380,9 @@ def build_orchestrator(
         getattr(args, "system_prompt_date", None),
         prompt_profile=prompt_profile,
         code_exec_enabled=getattr(args, "code_exec_enabled", False),
+        scrape_enabled=getattr(args, "scrape_enabled", True),
+        # Stated once, and only when the run actually enforces one.
+        t_cut=boundary.T_cut.isoformat() if boundary is not None and boundary.T_cut is not None else None,
     )
     format_error = FormatErrorConfig(strategy=FormatErrorStrategy.IGNORE, keywords=[])
     max_output_tokens = getattr(args, "max_output_tokens", DEFAULT_MAX_OUTPUT_TOKENS)
@@ -1037,8 +1111,21 @@ async def _score_and_record(
     timing: TaskTimingRow,
     state: dict[str, int],
     score_cache: dict[tuple[object, ...], float] | None = None,
+    forecast_mode: bool = False,
 ) -> None:
     extracted = str(result.output or "") or None
+    if forecast_mode:
+        await _score_and_record_forecast(
+            task_id=task_id,
+            result=result,
+            item=item,
+            extracted=extracted,
+            evaluator=evaluator,
+            results=results,
+            timing=timing,
+            state=state,
+        )
+        return
     score_cache_key = _score_cache_key(item=item, extracted=extracted)
     cached_score = score_cache.get(score_cache_key) if score_cache is not None else None
     if cached_score is not None:
@@ -1082,6 +1169,100 @@ async def _score_and_record(
     )
 
 
+def _last_assistant_text(result: OrchestrationResult) -> str:
+    """The agent's final message verbatim, which is where the Confidence line lives.
+
+    ``result.output`` has already been through boxed extraction, so it carries the
+    answer and not the line stating the probability.
+    """
+    for conversation in (result.visible_conversation, result.conversation):
+        for message in reversed(conversation or []):
+            if message.role == MessageRole.ASSISTANT and (message.content or "").strip():
+                return str(message.content)
+    return ""
+
+
+async def _score_and_record_forecast(
+    *,
+    task_id: str,
+    result: OrchestrationResult,
+    item: Any,
+    extracted: str | None,
+    evaluator: BatchEvaluator | None,
+    results: list[dict[str, object]],
+    timing: TaskTimingRow,
+    state: dict[str, int],
+) -> None:
+    """Record a forecast rollout without scoring it.
+
+    The score written here is **submission health**, not accuracy: 1.0 when the
+    final message yields a usable ``(answer, probability)`` pair and 0.0 when it
+    does not. Correctness on this benchmark is a probabilistic quantity (Brier
+    over a completed distribution, an integrated Brier for numeric targets) and
+    is computed by the benchmark's own scorer from the exported run directory.
+    Putting a normalized string match in this field would print a running
+    "accuracy" during the run that no reported number ever matches.
+    """
+    metadata = getattr(item, "metadata", None) or {}
+    task_type = str(metadata.get("task_type") or "")
+    submission = parse_forecast_submission(
+        _last_assistant_text(result),
+        task_type=task_type,
+        extracted_answer=extracted,
+    )
+
+    score = 1.0 if submission.ok else 0.0
+    timing.score = score
+    record: dict[str, object] = {
+        "task_id": task_id,
+        "output": submission.output or None,
+        "ground_truth": item.label,
+        "score": score,
+        "reason": result.reason,
+        "num_turns": result.num_turns,
+        "task_elapsed_s": timing.task_elapsed_s,
+        "model_client_elapsed_s": timing.model_client_elapsed_s,
+        "non_model_overhead_s": timing.non_model_overhead_s,
+        "tool_latency_ms_sum": timing.tool_latency_ms_sum,
+        "tool_count": timing.tool_count,
+        "cached": timing.cached,
+        # The forecast submission. The exporter forwards ``raw_*`` for rejections
+        # the benchmark scorer classifies in its own vocabulary, and withholds a
+        # contract violation. ``submission_*`` are this repository's diagnostics
+        # and are never scored.
+        "task_type": task_type,
+        "probability": submission.probability,
+        "raw_output": submission.raw_output or None,
+        "raw_probability": submission.raw_probability,
+        "contract_violation": submission.contract_violation,
+        "submission_reason": submission.reason,
+        "submission_detail": submission.detail,
+    }
+    results.append(record)
+    if evaluator is not None:
+        evaluator.log_result(
+            task_id,
+            eval_name="forecast_submission",
+            ground_truth=item.label,
+            prediction=submission.output or None,
+            score=score,
+        )
+    if submission.ok:
+        state["correct"] += 1
+    state["total"] += 1
+    logger.info(
+        "Task %s [%s]: answer=%s, p=%s, usable=%s, running submission rate=%.2f%% (%d/%d)",
+        task_id,
+        task_type or "?",
+        (submission.output or submission.reason or "")[:60],
+        submission.probability,
+        submission.ok,
+        state["correct"] / state["total"] * 100,
+        state["correct"],
+        state["total"],
+    )
+
+
 def _score_cache_key(*, item: Any, extracted: str | None) -> tuple[object, ...]:
     metadata = getattr(item, "metadata", None)
     try:
@@ -1101,6 +1282,9 @@ async def run_evaluation(args: argparse.Namespace) -> None:  # noqa: C901, PLR09
     script_started_at = datetime.now().astimezone().isoformat(timespec="seconds")
     dataset = BenchmarkDataset(data_path=args.data_path, max_items=args.max_tasks)
     dataset.load()
+    # Before anything is spent: a run that cannot determine the boundary it
+    # claims to enforce must not produce a number.
+    _validate_all_boundaries(dataset, args)
     if args.shuffle_tasks:
         random.Random(args.shuffle_seed).shuffle(dataset.items)
 
@@ -1160,6 +1344,10 @@ async def run_evaluation(args: argparse.Namespace) -> None:  # noqa: C901, PLR09
                 logger.warning("Could not render chat-template system prompt: %s", chat_template_error)
 
     verifier = BoxedAnswerVerifier()
+    # Forecast rows are graded by the benchmark's own probabilistic scorer from the
+    # exported run directory, so this runner records submission health instead of
+    # a normalized string match. See _score_and_record_forecast.
+    forecast_mode = getattr(args, "benchmark_name", "") == "offline_forecast"
 
     completed_cache = None
     completed_sweep_cache: dict[str, dict[int, OrchestrationResult]] = {}
@@ -1213,6 +1401,7 @@ async def run_evaluation(args: argparse.Namespace) -> None:  # noqa: C901, PLR09
         cached = False
         task_elapsed_s = None
         orchestrator_build_elapsed_s = None
+        boundary = _forecast_boundary_for(item, args)
         if completed_cache and task_id in completed_cache:
             result = completed_cache[task_id]
             cached = True
@@ -1224,7 +1413,9 @@ async def run_evaluation(args: argparse.Namespace) -> None:  # noqa: C901, PLR09
                 cached = True
             else:
                 build_start = time.perf_counter()
-                orchestrator = build_orchestrator(model_client, task_logger, args, summary_llm_request_logger=summary_llm_request_logger)
+                orchestrator = build_orchestrator(
+                    model_client, task_logger, args, summary_llm_request_logger=summary_llm_request_logger, boundary=boundary
+                )
                 orchestrator_build_elapsed_s = time.perf_counter() - build_start
                 async with semaphore:
                     try:
@@ -1282,11 +1473,14 @@ async def run_evaluation(args: argparse.Namespace) -> None:  # noqa: C901, PLR09
                         timing=timing_row,
                         state=sweep_states[budget],
                         score_cache=score_cache,
+                        forecast_mode=forecast_mode,
                     )
             return
         else:
             build_start = time.perf_counter()
-            orchestrator = build_orchestrator(model_client, task_logger, args, summary_llm_request_logger=summary_llm_request_logger)
+            orchestrator = build_orchestrator(
+                model_client, task_logger, args, summary_llm_request_logger=summary_llm_request_logger, boundary=boundary
+            )
             orchestrator_build_elapsed_s = time.perf_counter() - build_start
             async with semaphore:
                 try:
@@ -1319,6 +1513,7 @@ async def run_evaluation(args: argparse.Namespace) -> None:  # noqa: C901, PLR09
                 results=results,
                 timing=timing_row,
                 state=state,
+                forecast_mode=forecast_mode,
             )
 
     pending = [asyncio.create_task(_run_item(idx, item)) for idx, item in enumerate(dataset.items)]
@@ -1492,7 +1687,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:  # noqa: PL
     parser.add_argument("--endpoint_profile", default=None)
     parser.add_argument(
         "--prompt_profile",
-        choices=["default", "deepsearchqa", "livebrowsecomp", "livebrowsecomp_notools"],
+        choices=["default", "deepsearchqa", "livebrowsecomp", "livebrowsecomp_notools", "forecast"],
         default="default",
         help="Prompt and web-search tool schema profile.",
     )
@@ -1555,6 +1750,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:  # noqa: PL
     parser.add_argument("--max_response_retries", type=int, default=10)
     parser.add_argument("--retry_wait_seconds", type=float, default=30.0)
     parser.add_argument("--max_turns", type=int, default=DEFAULT_MAX_TURNS)
+    parser.add_argument("--max_tool_calls_per_task", type=int, default=None)
     parser.add_argument("--keep_tool_result", type=int, default=DEFAULT_KEEP_TOOL_RESULT)
     parser.add_argument(
         "--tool_result_role",
@@ -1873,6 +2069,26 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:  # noqa: PL
     parser.add_argument("--summary_llm_timeout_json", default=None)
     parser.add_argument("--summary_llm_retry_json", default=None)
     parser.add_argument("--scrape_timeout_json", default=None)
+    parser.add_argument(
+        "--scrape_enabled",
+        type=_parse_bool,
+        default=True,
+        help="Register the page-fetching tool. False leaves the agent with search only.",
+    )
+    parser.add_argument(
+        "--scrape_backend",
+        choices=["jina", "serper"],
+        default="jina",
+        help="Who fetches the page. 'serper' fetches from the provider, for egress-restricted hosts.",
+    )
+    # The information boundary. No default policy: an absent field is not a policy.
+    parser.add_argument("--forecast_temporal_policy", default="")
+    parser.add_argument("--forecast_delta_days", type=int, default=None)
+    parser.add_argument("--forecast_observation_time", default=None)
+    parser.add_argument("--forecast_cutoff_override", default=None)
+    parser.add_argument("--forecast_search_provider", default="serper")
+    parser.add_argument("--as_of_judge_enabled", type=_parse_bool, default=False)
+    parser.add_argument("--as_of_judge_page_prose", type=_parse_bool, default=False)
     parser.add_argument("--scrape_retry_json", default=None)
     parser.add_argument("--scrape_fallback_retry_json", default=None)
     parser.add_argument("--search_timeout_json", default=None)
@@ -1880,7 +2096,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:  # noqa: PL
     parser.add_argument("--data_path", required=True, help="Benchmark data file or directory")
     parser.add_argument(
         "--benchmark_name",
-        choices=["browsecomp", "browsecomp_zh", "gaia", "hle", "deepsearchqa", "livebrowsecomp"],
+        choices=["browsecomp", "browsecomp_zh", "gaia", "hle", "deepsearchqa", "livebrowsecomp", "offline_forecast"],
         default="browsecomp",
     )
     parser.add_argument("--output_dir", default="logs/web_search_infer/agentic")

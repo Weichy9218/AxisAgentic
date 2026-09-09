@@ -28,3 +28,4 @@ checkpoints/
 
 # Custom ignores
 .preview
+agentic/.cache/
