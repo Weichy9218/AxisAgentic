@@ -357,6 +357,9 @@ def _runner_args(config: WebSearchEvalConfig, run_dir: Path) -> list[str]:  # no
     if config.agent.max_tool_calls_per_task is not None:
         args.extend(["--max_tool_calls_per_task", str(config.agent.max_tool_calls_per_task)])
     args.extend(["--scrape_backend", config.tools.scrape.backend])
+    args.extend(["--fit_timeseries_enabled", str(config.tools.fit_timeseries.enabled).lower()])
+    if config.tools.fit_timeseries.max_calls_per_task is not None:
+        args.extend(["--fit_timeseries_max_calls", str(config.tools.fit_timeseries.max_calls_per_task)])
     forecast = config.agent.forecast
     if config.agent.skill_file:
         args.extend(["--skill_file", str(_resolve_path(config.agent.skill_file, label="agent.skill_file"))])

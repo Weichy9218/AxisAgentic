@@ -348,6 +348,16 @@ them relaxes the information boundary stated above.
 """
 
 
+#: Stated only when the tool is registered. A rule describing a tool the model
+#: cannot call teaches it to hallucinate the call.
+_FORECAST_FIT_TOOL_RULE = """
+- For a numeric question, once you have collected several observations of the same
+  metric, pass them to `fit_timeseries_forecast` rather than extrapolating by eye.
+  It returns the last observed value alongside the fitted alternatives and says
+  which one held up on the series' own recent history. Report the value it puts
+  forward, in the unit the source published.
+"""
+
 def generate_system_prompt(
     date: str | None = None,
     *,
@@ -356,6 +366,7 @@ def generate_system_prompt(
     t_cut: str | None = None,
     scrape_enabled: bool = True,
     skill: str | None = None,
+    fit_timeseries_enabled: bool = False,
 ) -> str:
     """Render the system prompt for *prompt_profile*.
 
@@ -374,6 +385,8 @@ def generate_system_prompt(
         rendered = FORECAST_SYSTEM_PROMPT_TEMPLATE.replace("{boundary_line}", _forecast_boundary_line(t_cut)).replace(
             "{scrape_tool_rule}", scrape_rule
         )
+        if fit_timeseries_enabled:
+            rendered = rendered.rstrip() + "\n" + _FORECAST_FIT_TOOL_RULE
         if skill and skill.strip():
             rendered = rendered.rstrip() + FORECAST_SKILL_HEADER + "\n" + skill.strip() + "\n"
         return rendered

@@ -393,8 +393,21 @@ class CodeExecConfig(StrictConfigModel):
     retry: RetryConfig = Field(default_factory=default_code_exec_retry)
 
 
+class FitTimeseriesConfig(StrictConfigModel):
+    """Deterministic series fit, off unless an arm asks for it.
+
+    Default False so adding the tool cannot silently change a run that was
+    configured before it existed: the arms of a comparison must differ in a key
+    someone wrote down.
+    """
+
+    enabled: bool = False
+    max_calls_per_task: int | None = Field(default=None, ge=1)
+
+
 class ToolsConfig(StrictConfigModel):
     disable_all: bool = False
+    fit_timeseries: FitTimeseriesConfig = Field(default_factory=FitTimeseriesConfig)
     serper_base_url: str | None = None
     jina_base_url: str | None = None
     max_content_length: int = 409_600

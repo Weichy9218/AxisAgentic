@@ -50,6 +50,9 @@ from agentic.tools.web_search import (
     create_scrape_and_extract_tool,
     create_web_search_tool,
 )
+from agentic.tools.forecasting import (  # noqa: E402
+    create_fit_timeseries_tool,
+)
 from recipe.common.boxed_verifier import BoxedAnswerVerifier
 from recipe.common.eval_results import TaskTimingRow, build_eval_results_payload, compute_non_model_overhead_s
 from recipe.common.io_timing import write_json_with_timing, write_jsonl_with_timing, write_text_with_timing
@@ -265,6 +268,14 @@ def build_web_search_tools(
                 judge_page_prose=getattr(args, "as_of_judge_page_prose", False),
             )
         )
+    # Pure compute over points the agent already holds, so it cannot cross the
+    # information boundary and needs no credentials.
+    if str(getattr(args, "fit_timeseries_enabled", "false")).lower() == "true":
+        tools.append(
+            create_fit_timeseries_tool(
+                max_calls_per_task=getattr(args, "fit_timeseries_max_calls", None),
+            )
+        )
     else:
         logger.warning("tools.scrape.enabled=false: registering web_search only, with no page-fetching tool.")
     tools.extend(code_execs)
@@ -390,6 +401,7 @@ def build_orchestrator(
         # Stated once, and only when the run actually enforces one.
         t_cut=boundary.T_cut.isoformat() if boundary is not None and boundary.T_cut is not None else None,
         skill=skill_text,
+        fit_timeseries_enabled=str(getattr(args, "fit_timeseries_enabled", "false")).lower() == "true",
     )
     format_error = FormatErrorConfig(strategy=FormatErrorStrategy.IGNORE, keywords=[])
     max_output_tokens = getattr(args, "max_output_tokens", DEFAULT_MAX_OUTPUT_TOKENS)
@@ -1692,6 +1704,13 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:  # noqa: PL
     parser.add_argument("--base_url", required=True)
     parser.add_argument("--api_key_env", default="OPENAI_API_KEY")
     parser.add_argument("--endpoint_profile", default=None)
+    parser.add_argument(
+        "--fit_timeseries_enabled",
+        default="false",
+        help="Expose the deterministic series-fit tool. Off by default so the tool's "
+        "presence is always a declared property of an arm.",
+    )
+    parser.add_argument("--fit_timeseries_max_calls", type=int, default=None)
     parser.add_argument(
         "--skill_file",
         default=None,
