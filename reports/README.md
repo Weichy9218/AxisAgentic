@@ -11,9 +11,9 @@
 | 运行 | 模型 | 数据 | skill | fit 工具 | 分数 | 准确率 | 记分/剔除 |
 |---|---|---|---|---|---|---|---|
 | `axis_strict_full` | gpt-5.4 | offline_0901 全量 1,969 题 | — | — | 0.7206 | 0.6834 | 1899 / 1 |
-| `s2_d_skill2` | gpt-5.6-sol | S2 · 200 题分层抽样，与 S1 不相交（seed 20260910） | forecast_v2.md | — | 跑分中 | — | — |
-| `s2_e_tool` | gpt-5.6-sol | S2 · 200 题分层抽样，与 S1 不相交（seed 20260910） | — | 是 | 跑分中 | — | — |
-| `s2_f_skill2tool` | gpt-5.6-sol | S2 · 200 题分层抽样，与 S1 不相交（seed 20260910） | forecast_v2.md | 是 | 跑分中 | — | — |
+| `s2_d_skill2` | gpt-5.6-sol | S2 · 200 题分层抽样，与 S1 不相交（seed 20260910） | forecast_v2.md | — | 0.7123 | 0.7451 | 200 / 0 |
+| `s2_e_tool` | gpt-5.6-sol | S2 · 200 题分层抽样，与 S1 不相交（seed 20260910） | — | 是 | 0.7214 | 0.6993 | 200 / 0 |
+| `s2_f_skill2tool` | gpt-5.6-sol | S2 · 200 题分层抽样，与 S1 不相交（seed 20260910） | forecast_v2.md | 是 | 0.7275 | 0.7386 | 200 / 0 |
 | `s2_noskill` | gpt-5.6-sol | S2 · 200 题分层抽样，与 S1 不相交（seed 20260910） | — | — | 0.7063 | 0.7059 | 200 / 0 |
 | `s2_skill` | gpt-5.6-sol | S2 · 200 题分层抽样，与 S1 不相交（seed 20260910） | forecast_v1.md | — | 0.7109 | 0.7516 | 200 / 0 |
 | `sample200_gpt56` | gpt-5.6-sol | S1 · 200 题分层抽样（seed 20260908） | — | — | 0.7239 | 0.6863 | 200 / 0 |
@@ -69,7 +69,12 @@ fit 工具        未启用
 跑于            2026-09-10 14:08
 ```
 
-记分尚未完成。
+```
+分数            0.7123      准确率 0.7451
+记分 / 剔除     200 / 0
+分题型          BINARY 0.8546   MULTIPLE_CHOICE 0.7542   NUMERIC 0.4201
+报告            reports/offline_0901/s2_gate_round2/
+```
 
 ### `s2_e_tool`
 
@@ -79,7 +84,7 @@ fit 工具        未启用
 模型            gpt-5.6-sol
 数据            S2 · 200 题分层抽样，与 S1 不相交（seed 20260910）
                 /home/dataset-local/wcy/AxisAgentic/data/offline_forecast/sample200b/offline_forecast_sample200_shard1.jsonl
-轨迹            198 条
+轨迹            199 条
 采样            temperature=1.0  top_p=1.0  reasoning_effort=high
 预算            max_output_tokens=12800  max_tool_calls=100  max_turns=70
 上下文          max_context_length=262144
@@ -91,7 +96,12 @@ fit 工具        启用
 跑于            2026-09-10 14:08
 ```
 
-记分尚未完成。
+```
+分数            0.7214      准确率 0.6993
+记分 / 剔除     200 / 0
+分题型          BINARY 0.8295   MULTIPLE_CHOICE 0.7358   NUMERIC 0.5290
+报告            reports/offline_0901/s2_gate_round2/
+```
 
 ### `s2_f_skill2tool`
 
@@ -113,7 +123,12 @@ fit 工具        启用
 跑于            2026-09-10 14:08
 ```
 
-记分尚未完成。
+```
+分数            0.7275      准确率 0.7386
+记分 / 剔除     200 / 0
+分题型          BINARY 0.8509   MULTIPLE_CHOICE 0.7699   NUMERIC 0.4636
+报告            reports/offline_0901/s2_gate_round2/
+```
 
 ### `s2_noskill`
 
@@ -264,4 +279,4 @@ S1 上的模型对比        sample200_gpt56  vs   sample200_qwen  vs  axis_stri
 
 `axis_strict_full` 作为分数来源已经退役：它跑在 `temperature 0.2` 加 `reasoning_effort medium` 下，并且 19.3% 的题触到当时 50 的工具上限，三个变量都和现在不同。它的价值是提供了 `site:` 归因的原始材料。
 
-生成于 2026-09-10 15:15。
+生成于 2026-09-10 15:39。
