@@ -1,0 +1,3131 @@
+{
+ "ground_truth": "/home/dataset-local/wcy/Milkyway-Harness-Agent/data/benchmarks/offline_0901/sample200b/offline_forecast_sample200.jsonl",
+ "n_ground_truth": 200,
+ "protocol": "harness-eval-v2",
+ "numeric_rule": {
+  "rule": "paper_eq13",
+  "sigma_multiplier": 3.0,
+  "history_points": 8,
+  "epsilon": 1e-09,
+  "window": "target-day value plus the seven most recent historical values"
+ },
+ "numeric_brier": {
+  "transform": "asinh",
+  "threshold_weight": "standard_logistic",
+  "scale": 1.0,
+  "role": "diagnostic"
+ },
+ "n_paired": 200,
+ "arms": [
+  {
+   "label": "s2_noskill",
+   "run_dir": "/tmp/axis_export/s2_noskill",
+   "own": {
+    "n_scored": 200,
+    "n_excluded": 0,
+    "exclusions": {},
+    "score": 0.7062803114038371,
+    "brier_loss": 0.17050332120450876,
+    "skill_vs_uniform": 0.34205262406707804,
+    "accuracy": 0.7058823529411765,
+    "choice_accuracy": 0.7058823529411765,
+    "choice_chance": 0.3365303115014764,
+    "by_type": {
+     "BINARY": {
+      "n": 73,
+      "score": 0.8316855889041096,
+      "brier_loss": 0.1683144110958904,
+      "accuracy": 0.7397260273972602,
+      "chance": 0.5
+     },
+     "MULTIPLE_CHOICE": {
+      "n": 80,
+      "score": 0.7408337432786886,
+      "brier_loss": 0.25916625672131144,
+      "accuracy": 0.675,
+      "chance": 0.1873642207465737
+     },
+     "NUMERIC": {
+      "n": 47,
+      "score": 0.45268754954196455,
+      "brier_loss": 0.02298748283397519,
+      "accuracy": null,
+      "chance": null
+     }
+    },
+    "by_area": {
+     "1 金融市场·宏观·加密": {
+      "n": 81,
+      "score": 0.647779810534301,
+      "brier_loss": 0.18083856147496574,
+      "accuracy": 0.6440677966101694,
+      "chance": 0.36447831829187766
+     },
+     "2 政治治理与地缘": {
+      "n": 20,
+      "score": 0.9127243268809524,
+      "brier_loss": 0.08727567311904763,
+      "accuracy": 0.9,
+      "chance": 0.37547619047619046
+     },
+     "3 科学技术与 AI": {
+      "n": 24,
+      "score": 0.6512352607230203,
+      "brier_loss": 0.08993951878753703,
+      "accuracy": 0.75,
+      "chance": 0.3638392857142857
+     },
+     "4 体育": {
+      "n": 36,
+      "score": 0.782715883510168,
+      "brier_loss": 0.217284116489832,
+      "accuracy": 0.6944444444444444,
+      "chance": 0.3619514472455649
+     },
+     "5 娱乐·媒体·社会": {
+      "n": 19,
+      "score": 0.7318742638458893,
+      "brier_loss": 0.21549989423107482,
+      "accuracy": 0.6666666666666666,
+      "chance": 0.23134982301648968
+     },
+     "6 天气气候能源环境": {
+      "n": 17,
+      "score": 0.5781244273753797,
+      "brier_loss": 0.2136052683231821,
+      "accuracy": 0.7,
+      "chance": 0.137012987012987
+     },
+     "8 其他（若干小类）": {
+      "n": 3,
+      "score": 0.9967555825660349,
+      "brier_loss": 0.00022103420973707734,
+      "accuracy": 1.0,
+      "chance": 0.5
+     }
+    },
+    "by_subarea": {
+     "env.geophysical_monitoring": {
+      "n": 2,
+      "score": 0.34986702149894977,
+      "brier_loss": 0.10448481790954733,
+      "accuracy": null,
+      "chance": null
+     },
+     "env.local_weather": {
+      "n": 11,
+      "score": 0.5789371866742422,
+      "brier_loss": 0.23900415903215497,
+      "accuracy": 0.75,
+      "chance": 0.09090909090909091
+     },
+     "env.power_grid": {
+      "n": 1,
+      "score": 0.9216,
+      "brier_loss": 0.07840000000000001,
+      "accuracy": 1.0,
+      "chance": 0.5
+     },
+     "env.seismic_volcano": {
+      "n": 3,
+      "score": 0.6128240563222972,
+      "brier_loss": 0.2382913921070989,
+      "accuracy": 0.0,
+      "chance": 0.14285714285714285
+     },
+     "health.drug_trial": {
+      "n": 7,
+      "score": 0.5414543517013156,
+      "brier_loss": 0.003294934577036176,
+      "accuracy": null,
+      "chance": null
+     },
+     "health.other": {
+      "n": 1,
+      "score": 0.9999,
+      "brier_loss": 0.00010000000000000018,
+      "accuracy": 1.0,
+      "chance": 0.5
+     },
+     "health.public_data": {
+      "n": 1,
+      "score": 0.9999,
+      "brier_loss": 0.00010000000000000018,
+      "accuracy": 1.0,
+      "chance": 0.5
+     },
+     "markets.commodities": {
+      "n": 10,
+      "score": 0.4541875,
+      "brier_loss": 0.24581542297929135,
+      "accuracy": 0.7142857142857143,
+      "chance": 0.4444444444444445
+     },
+     "markets.corporate_action": {
+      "n": 3,
+      "score": 0.9943466666666666,
+      "brier_loss": 0.005653333333333334,
+      "accuracy": 1.0,
+      "chance": 0.3888888888888889
+     },
+     "markets.corporate_results": {
+      "n": 8,
+      "score": 0.76266875,
+      "brier_loss": 0.23733125,
+      "accuracy": 0.625,
+      "chance": 0.4625
+     },
+     "markets.crypto_ecosystem": {
+      "n": 2,
+      "score": 0.96075,
+      "brier_loss": 0.03925000000000001,
+      "accuracy": 1.0,
+      "chance": 0.5
+     },
+     "markets.crypto_price": {
+      "n": 10,
+      "score": 0.644109,
+      "brier_loss": 0.355891,
+      "accuracy": 0.4,
+      "chance": 0.29545454545454547
+     },
+     "markets.equity_index": {
+      "n": 5,
+      "score": 0.837715,
+      "brier_loss": 0.16228499999999998,
+      "accuracy": 0.8,
+      "chance": 0.4222222222222222
+     },
+     "markets.equity_stats": {
+      "n": 5,
+      "score": 0.3839500409124451,
+      "brier_loss": 0.02462828621891887,
+      "accuracy": 1.0,
+      "chance": 0.5
+     },
+     "markets.fx_rates": {
+      "n": 5,
+      "score": 0.6170326707105342,
+      "brier_loss": 0.00033691778918807367,
+      "accuracy": null,
+      "chance": null
+     },
+     "markets.housing": {
+      "n": 1,
+      "score": 0.9723428571428572,
+      "brier_loss": 0.027657142857142852,
+      "accuracy": 1.0,
+      "chance": 0.125
+     },
+     "markets.macro_indicator": {
+      "n": 3,
+      "score": 0.35023333333333334,
+      "brier_loss": 0.31710586937616986,
+      "accuracy": 0.0,
+      "chance": 0.3214285714285714
+     },
+     "markets.other": {
+      "n": 2,
+      "score": 0.5532,
+      "brier_loss": 0.4468,
+      "accuracy": 0.5,
+      "chance": 0.5
+     },
+     "markets.policy_decision": {
+      "n": 3,
+      "score": 0.9977333333333332,
+      "brier_loss": 0.0022666666666666677,
+      "accuracy": 1.0,
+      "chance": 0.375
+     },
+     "markets.procurement": {
+      "n": 2,
+      "score": 0.5,
+      "brier_loss": 0.08198811916419224,
+      "accuracy": null,
+      "chance": null
+     },
+     "markets.single_stock": {
+      "n": 12,
+      "score": 0.7178205555555556,
+      "brier_loss": 0.2821794444444445,
+      "accuracy": 0.5833333333333334,
+      "chance": 0.3859848484848485
+     },
+     "markets.transport_volume": {
+      "n": 1,
+      "score": 0.0,
+      "brier_loss": 1.032472422224373e-05,
+      "accuracy": null,
+      "chance": null
+     },
+     "media.attention_traffic": {
+      "n": 1,
+      "score": 0.0,
+      "brier_loss": 0.00010900346231679237,
+      "accuracy": null,
+      "chance": null
+     },
+     "media.awards": {
+      "n": 3,
+      "score": 0.9683533333333333,
+      "brier_loss": 0.03164666666666667,
+      "accuracy": 1.0,
+      "chance": 0.2888888888888889
+     },
+     "media.film_boxoffice": {
+      "n": 5,
+      "score": 0.8681672222222222,
+      "brier_loss": 0.13183277777777777,
+      "accuracy": 0.8,
+      "chance": 0.24666666666666667
+     },
+     "media.gaming_esports": {
+      "n": 1,
+      "score": 0.9516,
+      "brier_loss": 0.04839999999999999,
+      "accuracy": 1.0,
+      "chance": 0.5
+     },
+     "media.music_charts": {
+      "n": 2,
+      "score": 0.4066333333333333,
+      "brier_loss": 0.5933666666666667,
+      "accuracy": 0.0,
+      "chance": 0.25
+     },
+     "media.other": {
+      "n": 2,
+      "score": 0.9951999949999999,
+      "brier_loss": 0.0048000049999999995,
+      "accuracy": 1.0,
+      "chance": 0.375
+     },
+     "media.social_activity": {
+      "n": 4,
+      "score": 0.6401650000000001,
+      "brier_loss": 0.35983499999999996,
+      "accuracy": 0.5,
+      "chance": 0.06468531468531469
+     },
+     "media.tv_streaming": {
+      "n": 1,
+      "score": 0.36338823529411757,
+      "brier_loss": 0.6366117647058824,
+      "accuracy": 0.0,
+      "chance": 0.05555555555555555
+     },
+     "politics.appointment": {
+      "n": 1,
+      "score": 0.9991,
+      "brier_loss": 0.0009000000000000016,
+      "accuracy": 1.0,
+      "chance": 0.5
+     },
+     "politics.armed_conflict": {
+      "n": 3,
+      "score": 0.999425,
+      "brier_loss": 0.0005750000000000011,
+      "accuracy": 1.0,
+      "chance": 0.5
+     },
+     "politics.global_election": {
+      "n": 6,
+      "score": 0.8347329761904762,
+      "brier_loss": 0.16526702380952382,
+      "accuracy": 0.6666666666666666,
+      "chance": 0.3263888888888889
+     },
+     "politics.judicial": {
+      "n": 1,
+      "score": 0.9804,
+      "brier_loss": 0.019600000000000003,
+      "accuracy": 1.0,
+      "chance": 0.5
+     },
+     "politics.other": {
+      "n": 1,
+      "score": 0.848125,
+      "brier_loss": 0.15187499999999998,
+      "accuracy": 1.0,
+      "chance": 0.3333333333333333
+     },
+     "politics.us_election": {
+      "n": 4,
+      "score": 0.9486114583333334,
+      "brier_loss": 0.05138854166666666,
+      "accuracy": 1.0,
+      "chance": 0.27321428571428574
+     },
+     "scitech.ai_benchmark": {
+      "n": 1,
+      "score": 0.6155999999999999,
+      "brier_loss": 0.3844,
+      "accuracy": 0.0,
+      "chance": 0.5
+     },
+     "scitech.ai_leaderboard": {
+      "n": 3,
+      "score": 0.7899345238095238,
+      "brier_loss": 0.21006547619047622,
+      "accuracy": 0.6666666666666666,
+      "chance": 0.06666666666666667
+     },
+     "scitech.app_ranking": {
+      "n": 1,
+      "score": 0.9424,
+      "brier_loss": 0.05759999999999998,
+      "accuracy": 1.0,
+      "chance": 0.1111111111111111
+     },
+     "scitech.code_repo": {
+      "n": 11,
+      "score": 0.5549391168579633,
+      "brier_loss": 0.009742782670591891,
+      "accuracy": null,
+      "chance": null
+     },
+     "scitech.cybersecurity": {
+      "n": 1,
+      "score": 0.9996,
+      "brier_loss": 0.0004000000000000007,
+      "accuracy": 1.0,
+      "chance": 0.5
+     },
+     "scitech.frontier_model": {
+      "n": 4,
+      "score": 0.9753857142857143,
+      "brier_loss": 0.02461428571428571,
+      "accuracy": 1.0,
+      "chance": 0.21875
+     },
+     "scitech.other": {
+      "n": 1,
+      "score": 0.9991,
+      "brier_loss": 0.0009000000000000016,
+      "accuracy": 1.0,
+      "chance": 0.5
+     },
+     "scitech.research_output": {
+      "n": 2,
+      "score": 0.7095906030121666,
+      "brier_loss": 0.00014305847025664065,
+      "accuracy": null,
+      "chance": null
+     },
+     "scitech.software_ecosystem": {
+      "n": 4,
+      "score": 0.6607622629012109,
+      "brier_loss": 0.12854435971739475,
+      "accuracy": 1.0,
+      "chance": 0.14285714285714285
+     },
+     "scitech.space_astro": {
+      "n": 2,
+      "score": 0.5686,
+      "brier_loss": 0.4314,
+      "accuracy": 0.5,
+      "chance": 0.3214285714285714
+     },
+     "sports.baseball": {
+      "n": 3,
+      "score": 0.7853333333333333,
+      "brier_loss": 0.21466666666666667,
+      "accuracy": 0.6666666666666666,
+      "chance": 0.5
+     },
+     "sports.basketball": {
+      "n": 3,
+      "score": 0.7401367816091954,
+      "brier_loss": 0.2598632183908046,
+      "accuracy": 0.3333333333333333,
+      "chance": 0.3444444444444445
+     },
+     "sports.combat": {
+      "n": 1,
+      "score": 0.8556,
+      "brier_loss": 0.1444,
+      "accuracy": 1.0,
+      "chance": 0.5
+     },
+     "sports.cricket": {
+      "n": 3,
+      "score": 0.46570833333333334,
+      "brier_loss": 0.5342916666666667,
+      "accuracy": 0.3333333333333333,
+      "chance": 0.3333333333333333
+     },
+     "sports.esports_chess": {
+      "n": 2,
+      "score": 0.9143692307692308,
+      "brier_loss": 0.08563076923076922,
+      "accuracy": 1.0,
+      "chance": 0.20238095238095238
+     },
+     "sports.football": {
+      "n": 19,
+      "score": 0.8006032894736842,
+      "brier_loss": 0.1993967105263158,
+      "accuracy": 0.7368421052631579,
+      "chance": 0.34958720330237353
+     },
+     "sports.other": {
+      "n": 1,
+      "score": 0.999999,
+      "brier_loss": 1.0000000000000019e-06,
+      "accuracy": 1.0,
+      "chance": 0.5
+     },
+     "sports.other_team": {
+      "n": 2,
+      "score": 0.74921825,
+      "brier_loss": 0.25078175,
+      "accuracy": 0.5,
+      "chance": 0.35
+     },
+     "sports.racing": {
+      "n": 2,
+      "score": 0.8720000000000001,
+      "brier_loss": 0.12799999999999997,
+      "accuracy": 1.0,
+      "chance": 0.375
+     },
+     "sports.tennis": {
+      "n": 1,
+      "score": 0.9216,
+      "brier_loss": 0.07840000000000001,
+      "accuracy": 1.0,
+      "chance": 0.5
+     }
+    },
+    "by_scoring_group": {
+     "g.ai": {
+      "n": 9,
+      "score": 0.8699273809523809,
+      "brier_loss": 0.13007261904761905,
+      "accuracy": 0.7777777777777778,
+      "chance": 0.18734567901234567
+     },
+     "g.code": {
+      "n": 11,
+      "score": 0.5549391168579633,
+      "brier_loss": 0.009742782670591891,
+      "accuracy": null,
+      "chance": null
+     },
+     "g.commodity_fx": {
+      "n": 15,
+      "score": 0.5084692235701781,
+      "brier_loss": 0.16398925458259025,
+      "accuracy": 0.7142857142857143,
+      "chance": 0.4444444444444445
+     },
+     "g.crypto": {
+      "n": 12,
+      "score": 0.6968825000000001,
+      "brier_loss": 0.3031175,
+      "accuracy": 0.5,
+      "chance": 0.32954545454545453
+     },
+     "g.equity": {
+      "n": 33,
+      "score": 0.721410965794815,
+      "brier_loss": 0.18897968983114932,
+      "accuracy": 0.6896551724137931,
+      "chance": 0.41757227446882617
+     },
+     "g.health": {
+      "n": 8,
+      "score": 0.5987600577386512,
+      "brier_loss": 0.002895567754906654,
+      "accuracy": 1.0,
+      "chance": 0.5
+     },
+     "g.macro": {
+      "n": 9,
+      "score": 0.6684714285714286,
+      "brier_loss": 0.12775010992378188,
+      "accuracy": 0.6666666666666666,
+      "chance": 0.31547619047619047
+     },
+     "g.media": {
+      "n": 17,
+      "score": 0.702047706651288,
+      "brier_loss": 0.2391351759053189,
+      "accuracy": 0.625,
+      "chance": 0.2133935508935509
+     },
+     "g.politics": {
+      "n": 15,
+      "score": 0.9187079126984127,
+      "brier_loss": 0.0812920873015873,
+      "accuracy": 0.8666666666666667,
+      "chance": 0.3700793650793651
+     },
+     "g.residual": {
+      "n": 8,
+      "score": 0.86799049875,
+      "brier_loss": 0.13200950125,
+      "accuracy": 0.875,
+      "chance": 0.4479166666666667
+     },
+     "g.sports": {
+      "n": 36,
+      "score": 0.7787048001768346,
+      "brier_loss": 0.22129519982316534,
+      "accuracy": 0.6944444444444444,
+      "chance": 0.3619514472455649
+     },
+     "g.tech_other": {
+      "n": 9,
+      "score": 0.6887811397365752,
+      "brier_loss": 0.15307372842334357,
+      "accuracy": 0.75,
+      "chance": 0.3214285714285714
+     },
+     "g.transport": {
+      "n": 1,
+      "score": 0.0,
+      "brier_loss": 1.032472422224373e-05,
+      "accuracy": null,
+      "chance": null
+     },
+     "g.weather": {
+      "n": 17,
+      "score": 0.5781244273753797,
+      "brier_loss": 0.2136052683231821,
+      "accuracy": 0.7,
+      "chance": 0.137012987012987
+     }
+    },
+    "by_age": {
+     "0": {
+      "n": 117,
+      "score": 0.6271105115444593,
+      "brier_loss": 0.16226321940997804,
+      "accuracy": 0.6714285714285714,
+      "chance": 0.2920892063118954
+     },
+     "1-30": {
+      "n": 50,
+      "score": 0.7670078878952381,
+      "brier_loss": 0.2329921121047619,
+      "accuracy": 0.66,
+      "chance": 0.3850007215007215
+     },
+     "31-180": {
+      "n": 20,
+      "score": 0.8606899464285714,
+      "brier_loss": 0.13931005357142856,
+      "accuracy": 0.8,
+      "chance": 0.3767261904761905
+     },
+     ">180": {
+      "n": 13,
+      "score": 0.947687623594796,
+      "brier_loss": 0.052312376405203996,
+      "accuracy": 0.9230769230769231,
+      "chance": 0.3275641025641026
+     }
+    },
+    "by_delta_days": {
+     "3": {
+      "n": 10,
+      "score": 0.683924,
+      "brier_loss": 0.31607599999999997,
+      "accuracy": 0.5,
+      "chance": 0.3772727272727273
+     },
+     "4": {
+      "n": 8,
+      "score": 0.7905713888888889,
+      "brier_loss": 0.2094286111111111,
+      "accuracy": 0.75,
+      "chance": 0.2991161616161616
+     },
+     "5": {
+      "n": 13,
+      "score": 0.6987140950226245,
+      "brier_loss": 0.14768824697561297,
+      "accuracy": 0.9090909090909091,
+      "chance": 0.3004066640430277
+     },
+     "6": {
+      "n": 13,
+      "score": 0.7464680642837748,
+      "brier_loss": 0.097830760302378,
+      "accuracy": 0.8888888888888888,
+      "chance": 0.25361952861952863
+     },
+     "7": {
+      "n": 156,
+      "score": 0.7006723275555969,
+      "brier_loss": 0.16713287344486522,
+      "accuracy": 0.6869565217391305,
+      "chance": 0.3455341915827849
+     }
+    },
+    "diagnostics": {
+     "brier_loss": 0.17050332120450876,
+     "brier_loss_n": 200,
+     "brier_choice_loss": 0.2158186441026465,
+     "brier_choice_loss_n": 153,
+     "brier_numeric_loss": 0.02298748283397519,
+     "brier_numeric_loss_n": 47,
+     "brier_binary": 0.19065654908496732,
+     "brier_binary_n": 153,
+     "calibration": [
+      {
+       "lo": 0.1,
+       "hi": 0.2,
+       "n": 4,
+       "mean_probability": 0.15,
+       "accuracy": 0.25
+      },
+      {
+       "lo": 0.2,
+       "hi": 0.3,
+       "n": 7,
+       "mean_probability": 0.2557142857142857,
+       "accuracy": 0.5714285714285714
+      },
+      {
+       "lo": 0.3,
+       "hi": 0.4,
+       "n": 4,
+       "mean_probability": 0.35750000000000004,
+       "accuracy": 0.5
+      },
+      {
+       "lo": 0.4,
+       "hi": 0.5,
+       "n": 13,
+       "mean_probability": 0.45769230769230773,
+       "accuracy": 0.5384615384615384
+      },
+      {
+       "lo": 0.5,
+       "hi": 0.6,
+       "n": 35,
+       "mean_probability": 0.5465714285714286,
+       "accuracy": 0.6
+      },
+      {
+       "lo": 0.6,
+       "hi": 0.7,
+       "n": 22,
+       "mean_probability": 0.6545454545454545,
+       "accuracy": 0.5909090909090909
+      },
+      {
+       "lo": 0.7,
+       "hi": 0.8,
+       "n": 18,
+       "mean_probability": 0.7366666666666667,
+       "accuracy": 0.8888888888888888
+      },
+      {
+       "lo": 0.8,
+       "hi": 0.9,
+       "n": 10,
+       "mean_probability": 0.8459999999999999,
+       "accuracy": 0.8
+      },
+      {
+       "lo": 0.9,
+       "hi": 1.0,
+       "n": 40,
+       "mean_probability": 0.9651975,
+       "accuracy": 0.9
+      }
+     ],
+     "answer_outside_options": 0
+    },
+    "n_run_tasks_outside_ground_truth": 0
+   },
+   "run_shape": {
+    "cohort": 200,
+    "health": {
+     "completed": 200,
+     "canonical_status": {
+      "usable": 200
+     },
+     "canonical_forecast_status": {
+      "valid": 200
+     }
+    },
+    "boundary": {
+     "distinct_t_cut": 80,
+     "clamped": 44,
+     "effective_delta_days": {
+      "3": 10,
+      "4": 8,
+      "5": 13,
+      "6": 13,
+      "7": 156
+     }
+    },
+    "effort": {
+     "latency_seconds": {
+      "p25": 148.26125006005168,
+      "median": 220.69888403639197,
+      "p75": 369.3766950368881,
+      "max": 1816.8500547036529
+     },
+     "tool_calls": {
+      "median": 9.0,
+      "p75": 16.0,
+      "total": 2550
+     },
+     "rollout_rounds": {
+      "n": 199,
+      "p25": 7.0,
+      "median": 10.0,
+      "p75": 17.0,
+      "p95": 35.0,
+      "max": 52.0,
+      "mean": 13.693467336683417
+     },
+     "context_tokens_peak": {
+      "n": 199,
+      "p25": 5411.0,
+      "median": 7199.0,
+      "p75": 9052.0,
+      "p95": 13764.0,
+      "max": 18511.0,
+      "mean": 7645.170854271357
+     },
+     "context_tokens_final": {
+      "n": 199,
+      "p25": 5411.0,
+      "median": 7199.0,
+      "p75": 9052.0,
+      "p95": 13764.0,
+      "max": 18511.0,
+      "mean": 7645.170854271357
+     },
+     "messages_in_history": {
+      "n": 199,
+      "p25": 15.0,
+      "median": 21.0,
+      "p75": 35.0,
+      "p95": 71.0,
+      "max": 106.0,
+      "mean": 28.396984924623116
+     },
+     "messages_sent_to_model": {
+      "n": 199,
+      "p25": 15.0,
+      "median": 21.0,
+      "p75": 31.0,
+      "p95": 54.0,
+      "max": 78.0,
+      "mean": 25.13065326633166
+     },
+     "compaction": {},
+     "tokens": {
+      "prompt_total": 13350750,
+      "completion_total": 353562,
+      "cached_total": 0,
+      "prompt_median": 40031.0,
+      "completion_median": 1130.0,
+      "cached_share": 0.0
+     },
+     "llm_calls": {
+      "median": 10.0,
+      "total": 2725
+     },
+     "forced_to_submit_at_cap": 0,
+     "reached_configured_cap": 2,
+     "tool_usage": [
+      [
+       "web_search",
+       1475
+      ],
+      [
+       "scrape_and_extract_info",
+       1051
+      ]
+     ]
+    }
+   },
+   "paired": {
+    "n_scored": 200,
+    "n_excluded": 0,
+    "exclusions": {},
+    "score": 0.7062803114038371,
+    "brier_loss": 0.17050332120450876,
+    "skill_vs_uniform": 0.34205262406707804,
+    "accuracy": 0.7058823529411765,
+    "choice_accuracy": 0.7058823529411765,
+    "choice_chance": 0.3365303115014764,
+    "by_type": {
+     "BINARY": {
+      "n": 73,
+      "score": 0.8316855889041096,
+      "brier_loss": 0.1683144110958904,
+      "accuracy": 0.7397260273972602,
+      "chance": 0.5
+     },
+     "MULTIPLE_CHOICE": {
+      "n": 80,
+      "score": 0.7408337432786886,
+      "brier_loss": 0.25916625672131144,
+      "accuracy": 0.675,
+      "chance": 0.1873642207465737
+     },
+     "NUMERIC": {
+      "n": 47,
+      "score": 0.45268754954196455,
+      "brier_loss": 0.02298748283397519,
+      "accuracy": null,
+      "chance": null
+     }
+    },
+    "by_area": {
+     "1 金融市场·宏观·加密": {
+      "n": 81,
+      "score": 0.647779810534301,
+      "brier_loss": 0.18083856147496574,
+      "accuracy": 0.6440677966101694,
+      "chance": 0.36447831829187766
+     },
+     "2 政治治理与地缘": {
+      "n": 20,
+      "score": 0.9127243268809524,
+      "brier_loss": 0.08727567311904763,
+      "accuracy": 0.9,
+      "chance": 0.37547619047619046
+     },
+     "3 科学技术与 AI": {
+      "n": 24,
+      "score": 0.6512352607230203,
+      "brier_loss": 0.08993951878753703,
+      "accuracy": 0.75,
+      "chance": 0.3638392857142857
+     },
+     "4 体育": {
+      "n": 36,
+      "score": 0.782715883510168,
+      "brier_loss": 0.217284116489832,
+      "accuracy": 0.6944444444444444,
+      "chance": 0.3619514472455649
+     },
+     "5 娱乐·媒体·社会": {
+      "n": 19,
+      "score": 0.7318742638458893,
+      "brier_loss": 0.21549989423107482,
+      "accuracy": 0.6666666666666666,
+      "chance": 0.23134982301648968
+     },
+     "6 天气气候能源环境": {
+      "n": 17,
+      "score": 0.5781244273753797,
+      "brier_loss": 0.2136052683231821,
+      "accuracy": 0.7,
+      "chance": 0.137012987012987
+     },
+     "8 其他（若干小类）": {
+      "n": 3,
+      "score": 0.9967555825660349,
+      "brier_loss": 0.00022103420973707734,
+      "accuracy": 1.0,
+      "chance": 0.5
+     }
+    },
+    "by_subarea": {
+     "env.geophysical_monitoring": {
+      "n": 2,
+      "score": 0.34986702149894977,
+      "brier_loss": 0.10448481790954733,
+      "accuracy": null,
+      "chance": null
+     },
+     "env.local_weather": {
+      "n": 11,
+      "score": 0.5789371866742422,
+      "brier_loss": 0.23900415903215497,
+      "accuracy": 0.75,
+      "chance": 0.09090909090909091
+     },
+     "env.power_grid": {
+      "n": 1,
+      "score": 0.9216,
+      "brier_loss": 0.07840000000000001,
+      "accuracy": 1.0,
+      "chance": 0.5
+     },
+     "env.seismic_volcano": {
+      "n": 3,
+      "score": 0.6128240563222972,
+      "brier_loss": 0.2382913921070989,
+      "accuracy": 0.0,
+      "chance": 0.14285714285714285
+     },
+     "health.drug_trial": {
+      "n": 7,
+      "score": 0.5414543517013156,
+      "brier_loss": 0.003294934577036176,
+      "accuracy": null,
+      "chance": null
+     },
+     "health.other": {
+      "n": 1,
+      "score": 0.9999,
+      "brier_loss": 0.00010000000000000018,
+      "accuracy": 1.0,
+      "chance": 0.5
+     },
+     "health.public_data": {
+      "n": 1,
+      "score": 0.9999,
+      "brier_loss": 0.00010000000000000018,
+      "accuracy": 1.0,
+      "chance": 0.5
+     },
+     "markets.commodities": {
+      "n": 10,
+      "score": 0.4541875,
+      "brier_loss": 0.24581542297929135,
+      "accuracy": 0.7142857142857143,
+      "chance": 0.4444444444444445
+     },
+     "markets.corporate_action": {
+      "n": 3,
+      "score": 0.9943466666666666,
+      "brier_loss": 0.005653333333333334,
+      "accuracy": 1.0,
+      "chance": 0.3888888888888889
+     },
+     "markets.corporate_results": {
+      "n": 8,
+      "score": 0.76266875,
+      "brier_loss": 0.23733125,
+      "accuracy": 0.625,
+      "chance": 0.4625
+     },
+     "markets.crypto_ecosystem": {
+      "n": 2,
+      "score": 0.96075,
+      "brier_loss": 0.03925000000000001,
+      "accuracy": 1.0,
+      "chance": 0.5
+     },
+     "markets.crypto_price": {
+      "n": 10,
+      "score": 0.644109,
+      "brier_loss": 0.355891,
+      "accuracy": 0.4,
+      "chance": 0.29545454545454547
+     },
+     "markets.equity_index": {
+      "n": 5,
+      "score": 0.837715,
+      "brier_loss": 0.16228499999999998,
+      "accuracy": 0.8,
+      "chance": 0.4222222222222222
+     },
+     "markets.equity_stats": {
+      "n": 5,
+      "score": 0.3839500409124451,
+      "brier_loss": 0.02462828621891887,
+      "accuracy": 1.0,
+      "chance": 0.5
+     },
+     "markets.fx_rates": {
+      "n": 5,
+      "score": 0.6170326707105342,
+      "brier_loss": 0.00033691778918807367,
+      "accuracy": null,
+      "chance": null
+     },
+     "markets.housing": {
+      "n": 1,
+      "score": 0.9723428571428572,
+      "brier_loss": 0.027657142857142852,
+      "accuracy": 1.0,
+      "chance": 0.125
+     },
+     "markets.macro_indicator": {
+      "n": 3,
+      "score": 0.35023333333333334,
+      "brier_loss": 0.31710586937616986,
+      "accuracy": 0.0,
+      "chance": 0.3214285714285714
+     },
+     "markets.other": {
+      "n": 2,
+      "score": 0.5532,
+      "brier_loss": 0.4468,
+      "accuracy": 0.5,
+      "chance": 0.5
+     },
+     "markets.policy_decision": {
+      "n": 3,
+      "score": 0.9977333333333332,
+      "brier_loss": 0.0022666666666666677,
+      "accuracy": 1.0,
+      "chance": 0.375
+     },
+     "markets.procurement": {
+      "n": 2,
+      "score": 0.5,
+      "brier_loss": 0.08198811916419224,
+      "accuracy": null,
+      "chance": null
+     },
+     "markets.single_stock": {
+      "n": 12,
+      "score": 0.7178205555555556,
+      "brier_loss": 0.2821794444444445,
+      "accuracy": 0.5833333333333334,
+      "chance": 0.3859848484848485
+     },
+     "markets.transport_volume": {
+      "n": 1,
+      "score": 0.0,
+      "brier_loss": 1.032472422224373e-05,
+      "accuracy": null,
+      "chance": null
+     },
+     "media.attention_traffic": {
+      "n": 1,
+      "score": 0.0,
+      "brier_loss": 0.00010900346231679237,
+      "accuracy": null,
+      "chance": null
+     },
+     "media.awards": {
+      "n": 3,
+      "score": 0.9683533333333333,
+      "brier_loss": 0.03164666666666667,
+      "accuracy": 1.0,
+      "chance": 0.2888888888888889
+     },
+     "media.film_boxoffice": {
+      "n": 5,
+      "score": 0.8681672222222222,
+      "brier_loss": 0.13183277777777777,
+      "accuracy": 0.8,
+      "chance": 0.24666666666666667
+     },
+     "media.gaming_esports": {
+      "n": 1,
+      "score": 0.9516,
+      "brier_loss": 0.04839999999999999,
+      "accuracy": 1.0,
+      "chance": 0.5
+     },
+     "media.music_charts": {
+      "n": 2,
+      "score": 0.4066333333333333,
+      "brier_loss": 0.5933666666666667,
+      "accuracy": 0.0,
+      "chance": 0.25
+     },
+     "media.other": {
+      "n": 2,
+      "score": 0.9951999949999999,
+      "brier_loss": 0.0048000049999999995,
+      "accuracy": 1.0,
+      "chance": 0.375
+     },
+     "media.social_activity": {
+      "n": 4,
+      "score": 0.6401650000000001,
+      "brier_loss": 0.35983499999999996,
+      "accuracy": 0.5,
+      "chance": 0.06468531468531469
+     },
+     "media.tv_streaming": {
+      "n": 1,
+      "score": 0.36338823529411757,
+      "brier_loss": 0.6366117647058824,
+      "accuracy": 0.0,
+      "chance": 0.05555555555555555
+     },
+     "politics.appointment": {
+      "n": 1,
+      "score": 0.9991,
+      "brier_loss": 0.0009000000000000016,
+      "accuracy": 1.0,
+      "chance": 0.5
+     },
+     "politics.armed_conflict": {
+      "n": 3,
+      "score": 0.999425,
+      "brier_loss": 0.0005750000000000011,
+      "accuracy": 1.0,
+      "chance": 0.5
+     },
+     "politics.global_election": {
+      "n": 6,
+      "score": 0.8347329761904762,
+      "brier_loss": 0.16526702380952382,
+      "accuracy": 0.6666666666666666,
+      "chance": 0.3263888888888889
+     },
+     "politics.judicial": {
+      "n": 1,
+      "score": 0.9804,
+      "brier_loss": 0.019600000000000003,
+      "accuracy": 1.0,
+      "chance": 0.5
+     },
+     "politics.other": {
+      "n": 1,
+      "score": 0.848125,
+      "brier_loss": 0.15187499999999998,
+      "accuracy": 1.0,
+      "chance": 0.3333333333333333
+     },
+     "politics.us_election": {
+      "n": 4,
+      "score": 0.9486114583333334,
+      "brier_loss": 0.05138854166666666,
+      "accuracy": 1.0,
+      "chance": 0.27321428571428574
+     },
+     "scitech.ai_benchmark": {
+      "n": 1,
+      "score": 0.6155999999999999,
+      "brier_loss": 0.3844,
+      "accuracy": 0.0,
+      "chance": 0.5
+     },
+     "scitech.ai_leaderboard": {
+      "n": 3,
+      "score": 0.7899345238095238,
+      "brier_loss": 0.21006547619047622,
+      "accuracy": 0.6666666666666666,
+      "chance": 0.06666666666666667
+     },
+     "scitech.app_ranking": {
+      "n": 1,
+      "score": 0.9424,
+      "brier_loss": 0.05759999999999998,
+      "accuracy": 1.0,
+      "chance": 0.1111111111111111
+     },
+     "scitech.code_repo": {
+      "n": 11,
+      "score": 0.5549391168579633,
+      "brier_loss": 0.009742782670591891,
+      "accuracy": null,
+      "chance": null
+     },
+     "scitech.cybersecurity": {
+      "n": 1,
+      "score": 0.9996,
+      "brier_loss": 0.0004000000000000007,
+      "accuracy": 1.0,
+      "chance": 0.5
+     },
+     "scitech.frontier_model": {
+      "n": 4,
+      "score": 0.9753857142857143,
+      "brier_loss": 0.02461428571428571,
+      "accuracy": 1.0,
+      "chance": 0.21875
+     },
+     "scitech.other": {
+      "n": 1,
+      "score": 0.9991,
+      "brier_loss": 0.0009000000000000016,
+      "accuracy": 1.0,
+      "chance": 0.5
+     },
+     "scitech.research_output": {
+      "n": 2,
+      "score": 0.7095906030121666,
+      "brier_loss": 0.00014305847025664065,
+      "accuracy": null,
+      "chance": null
+     },
+     "scitech.software_ecosystem": {
+      "n": 4,
+      "score": 0.6607622629012109,
+      "brier_loss": 0.12854435971739475,
+      "accuracy": 1.0,
+      "chance": 0.14285714285714285
+     },
+     "scitech.space_astro": {
+      "n": 2,
+      "score": 0.5686,
+      "brier_loss": 0.4314,
+      "accuracy": 0.5,
+      "chance": 0.3214285714285714
+     },
+     "sports.baseball": {
+      "n": 3,
+      "score": 0.7853333333333333,
+      "brier_loss": 0.21466666666666667,
+      "accuracy": 0.6666666666666666,
+      "chance": 0.5
+     },
+     "sports.basketball": {
+      "n": 3,
+      "score": 0.7401367816091954,
+      "brier_loss": 0.2598632183908046,
+      "accuracy": 0.3333333333333333,
+      "chance": 0.3444444444444445
+     },
+     "sports.combat": {
+      "n": 1,
+      "score": 0.8556,
+      "brier_loss": 0.1444,
+      "accuracy": 1.0,
+      "chance": 0.5
+     },
+     "sports.cricket": {
+      "n": 3,
+      "score": 0.46570833333333334,
+      "brier_loss": 0.5342916666666667,
+      "accuracy": 0.3333333333333333,
+      "chance": 0.3333333333333333
+     },
+     "sports.esports_chess": {
+      "n": 2,
+      "score": 0.9143692307692308,
+      "brier_loss": 0.08563076923076922,
+      "accuracy": 1.0,
+      "chance": 0.20238095238095238
+     },
+     "sports.football": {
+      "n": 19,
+      "score": 0.8006032894736842,
+      "brier_loss": 0.1993967105263158,
+      "accuracy": 0.7368421052631579,
+      "chance": 0.34958720330237353
+     },
+     "sports.other": {
+      "n": 1,
+      "score": 0.999999,
+      "brier_loss": 1.0000000000000019e-06,
+      "accuracy": 1.0,
+      "chance": 0.5
+     },
+     "sports.other_team": {
+      "n": 2,
+      "score": 0.74921825,
+      "brier_loss": 0.25078175,
+      "accuracy": 0.5,
+      "chance": 0.35
+     },
+     "sports.racing": {
+      "n": 2,
+      "score": 0.8720000000000001,
+      "brier_loss": 0.12799999999999997,
+      "accuracy": 1.0,
+      "chance": 0.375
+     },
+     "sports.tennis": {
+      "n": 1,
+      "score": 0.9216,
+      "brier_loss": 0.07840000000000001,
+      "accuracy": 1.0,
+      "chance": 0.5
+     }
+    },
+    "by_scoring_group": {
+     "g.ai": {
+      "n": 9,
+      "score": 0.8699273809523809,
+      "brier_loss": 0.13007261904761905,
+      "accuracy": 0.7777777777777778,
+      "chance": 0.18734567901234567
+     },
+     "g.code": {
+      "n": 11,
+      "score": 0.5549391168579633,
+      "brier_loss": 0.009742782670591891,
+      "accuracy": null,
+      "chance": null
+     },
+     "g.commodity_fx": {
+      "n": 15,
+      "score": 0.5084692235701781,
+      "brier_loss": 0.16398925458259025,
+      "accuracy": 0.7142857142857143,
+      "chance": 0.4444444444444445
+     },
+     "g.crypto": {
+      "n": 12,
+      "score": 0.6968825000000001,
+      "brier_loss": 0.3031175,
+      "accuracy": 0.5,
+      "chance": 0.32954545454545453
+     },
+     "g.equity": {
+      "n": 33,
+      "score": 0.721410965794815,
+      "brier_loss": 0.18897968983114932,
+      "accuracy": 0.6896551724137931,
+      "chance": 0.41757227446882617
+     },
+     "g.health": {
+      "n": 8,
+      "score": 0.5987600577386512,
+      "brier_loss": 0.002895567754906654,
+      "accuracy": 1.0,
+      "chance": 0.5
+     },
+     "g.macro": {
+      "n": 9,
+      "score": 0.6684714285714286,
+      "brier_loss": 0.12775010992378188,
+      "accuracy": 0.6666666666666666,
+      "chance": 0.31547619047619047
+     },
+     "g.media": {
+      "n": 17,
+      "score": 0.702047706651288,
+      "brier_loss": 0.2391351759053189,
+      "accuracy": 0.625,
+      "chance": 0.2133935508935509
+     },
+     "g.politics": {
+      "n": 15,
+      "score": 0.9187079126984127,
+      "brier_loss": 0.0812920873015873,
+      "accuracy": 0.8666666666666667,
+      "chance": 0.3700793650793651
+     },
+     "g.residual": {
+      "n": 8,
+      "score": 0.86799049875,
+      "brier_loss": 0.13200950125,
+      "accuracy": 0.875,
+      "chance": 0.4479166666666667
+     },
+     "g.sports": {
+      "n": 36,
+      "score": 0.7787048001768346,
+      "brier_loss": 0.22129519982316534,
+      "accuracy": 0.6944444444444444,
+      "chance": 0.3619514472455649
+     },
+     "g.tech_other": {
+      "n": 9,
+      "score": 0.6887811397365752,
+      "brier_loss": 0.15307372842334357,
+      "accuracy": 0.75,
+      "chance": 0.3214285714285714
+     },
+     "g.transport": {
+      "n": 1,
+      "score": 0.0,
+      "brier_loss": 1.032472422224373e-05,
+      "accuracy": null,
+      "chance": null
+     },
+     "g.weather": {
+      "n": 17,
+      "score": 0.5781244273753797,
+      "brier_loss": 0.2136052683231821,
+      "accuracy": 0.7,
+      "chance": 0.137012987012987
+     }
+    },
+    "by_age": {
+     "0": {
+      "n": 117,
+      "score": 0.6271105115444593,
+      "brier_loss": 0.16226321940997804,
+      "accuracy": 0.6714285714285714,
+      "chance": 0.2920892063118954
+     },
+     "1-30": {
+      "n": 50,
+      "score": 0.7670078878952381,
+      "brier_loss": 0.2329921121047619,
+      "accuracy": 0.66,
+      "chance": 0.3850007215007215
+     },
+     "31-180": {
+      "n": 20,
+      "score": 0.8606899464285714,
+      "brier_loss": 0.13931005357142856,
+      "accuracy": 0.8,
+      "chance": 0.3767261904761905
+     },
+     ">180": {
+      "n": 13,
+      "score": 0.947687623594796,
+      "brier_loss": 0.052312376405203996,
+      "accuracy": 0.9230769230769231,
+      "chance": 0.3275641025641026
+     }
+    },
+    "by_delta_days": {
+     "3": {
+      "n": 10,
+      "score": 0.683924,
+      "brier_loss": 0.31607599999999997,
+      "accuracy": 0.5,
+      "chance": 0.3772727272727273
+     },
+     "4": {
+      "n": 8,
+      "score": 0.7905713888888889,
+      "brier_loss": 0.2094286111111111,
+      "accuracy": 0.75,
+      "chance": 0.2991161616161616
+     },
+     "5": {
+      "n": 13,
+      "score": 0.6987140950226245,
+      "brier_loss": 0.14768824697561297,
+      "accuracy": 0.9090909090909091,
+      "chance": 0.3004066640430277
+     },
+     "6": {
+      "n": 13,
+      "score": 0.7464680642837748,
+      "brier_loss": 0.097830760302378,
+      "accuracy": 0.8888888888888888,
+      "chance": 0.25361952861952863
+     },
+     "7": {
+      "n": 156,
+      "score": 0.7006723275555969,
+      "brier_loss": 0.16713287344486522,
+      "accuracy": 0.6869565217391305,
+      "chance": 0.3455341915827849
+     }
+    },
+    "diagnostics": {
+     "brier_loss": 0.17050332120450876,
+     "brier_loss_n": 200,
+     "brier_choice_loss": 0.2158186441026465,
+     "brier_choice_loss_n": 153,
+     "brier_numeric_loss": 0.02298748283397519,
+     "brier_numeric_loss_n": 47,
+     "brier_binary": 0.19065654908496732,
+     "brier_binary_n": 153,
+     "calibration": [
+      {
+       "lo": 0.1,
+       "hi": 0.2,
+       "n": 4,
+       "mean_probability": 0.15,
+       "accuracy": 0.25
+      },
+      {
+       "lo": 0.2,
+       "hi": 0.3,
+       "n": 7,
+       "mean_probability": 0.2557142857142857,
+       "accuracy": 0.5714285714285714
+      },
+      {
+       "lo": 0.3,
+       "hi": 0.4,
+       "n": 4,
+       "mean_probability": 0.35750000000000004,
+       "accuracy": 0.5
+      },
+      {
+       "lo": 0.4,
+       "hi": 0.5,
+       "n": 13,
+       "mean_probability": 0.45769230769230773,
+       "accuracy": 0.5384615384615384
+      },
+      {
+       "lo": 0.5,
+       "hi": 0.6,
+       "n": 35,
+       "mean_probability": 0.5465714285714286,
+       "accuracy": 0.6
+      },
+      {
+       "lo": 0.6,
+       "hi": 0.7,
+       "n": 22,
+       "mean_probability": 0.6545454545454545,
+       "accuracy": 0.5909090909090909
+      },
+      {
+       "lo": 0.7,
+       "hi": 0.8,
+       "n": 18,
+       "mean_probability": 0.7366666666666667,
+       "accuracy": 0.8888888888888888
+      },
+      {
+       "lo": 0.8,
+       "hi": 0.9,
+       "n": 10,
+       "mean_probability": 0.8459999999999999,
+       "accuracy": 0.8
+      },
+      {
+       "lo": 0.9,
+       "hi": 1.0,
+       "n": 40,
+       "mean_probability": 0.9651975,
+       "accuracy": 0.9
+      }
+     ],
+     "answer_outside_options": 0
+    }
+   }
+  },
+  {
+   "label": "s2_skill",
+   "run_dir": "/tmp/axis_export/s2_skill",
+   "own": {
+    "n_scored": 200,
+    "n_excluded": 0,
+    "exclusions": {},
+    "score": 0.710900617144631,
+    "brier_loss": 0.1671665254474587,
+    "skill_vs_uniform": 0.37374686515561545,
+    "accuracy": 0.7516339869281046,
+    "choice_accuracy": 0.7516339869281046,
+    "choice_chance": 0.3365303115014764,
+    "by_type": {
+     "BINARY": {
+      "n": 73,
+      "score": 0.8640451780821918,
+      "brier_loss": 0.13595482191780822,
+      "accuracy": 0.863013698630137,
+      "chance": 0.5
+     },
+     "MULTIPLE_CHOICE": {
+      "n": 80,
+      "score": 0.7177381434215502,
+      "brier_loss": 0.28226185657844977,
+      "accuracy": 0.65,
+      "chance": 0.1873642207465737
+     },
+     "NUMERIC": {
+      "n": 47,
+      "score": 0.4613994458553659,
+      "brier_loss": 0.019737331132250083,
+      "accuracy": null,
+      "chance": null
+     }
+    },
+    "by_area": {
+     "1 金融市场·宏观·加密": {
+      "n": 81,
+      "score": 0.6484086222199072,
+      "brier_loss": 0.16900563880722266,
+      "accuracy": 0.7288135593220338,
+      "chance": 0.36447831829187766
+     },
+     "2 政治治理与地缘": {
+      "n": 20,
+      "score": 0.9090434714285713,
+      "brier_loss": 0.09095652857142858,
+      "accuracy": 0.9,
+      "chance": 0.37547619047619046
+     },
+     "3 科学技术与 AI": {
+      "n": 24,
+      "score": 0.6233815222443554,
+      "brier_loss": 0.10862935168829117,
+      "accuracy": 0.75,
+      "chance": 0.3638392857142857
+     },
+     "4 体育": {
+      "n": 36,
+      "score": 0.7929578038271196,
+      "brier_loss": 0.20704219617288044,
+      "accuracy": 0.7222222222222222,
+      "chance": 0.3619514472455649
+     },
+     "5 娱乐·媒体·社会": {
+      "n": 19,
+      "score": 0.6992943294302364,
+      "brier_loss": 0.2766414249897246,
+      "accuracy": 0.6111111111111112,
+      "chance": 0.23134982301648968
+     },
+     "6 天气气候能源环境": {
+      "n": 17,
+      "score": 0.6927650849120537,
+      "brier_loss": 0.14804522581279336,
+      "accuracy": 0.9,
+      "chance": 0.137012987012987
+     },
+     "8 其他（若干小类）": {
+      "n": 3,
+      "score": 0.9689731420740205,
+      "brier_loss": 0.030379452771064217,
+      "accuracy": 1.0,
+      "chance": 0.5
+     }
+    },
+    "by_subarea": {
+     "env.geophysical_monitoring": {
+      "n": 2,
+      "score": 0.34986702149894977,
+      "brier_loss": 0.10447242429619075,
+      "accuracy": null,
+      "chance": null
+     },
+     "env.local_weather": {
+      "n": 11,
+      "score": 0.6931313070029176,
+      "brier_loss": 0.19436001096275565,
+      "accuracy": 0.875,
+      "chance": 0.09090909090909091
+     },
+     "env.power_grid": {
+      "n": 1,
+      "score": 0.9996,
+      "brier_loss": 0.0004000000000000007,
+      "accuracy": 1.0,
+      "chance": 0.5
+     },
+     "env.seismic_volcano": {
+      "n": 3,
+      "score": 0.81774267449164,
+      "brier_loss": 0.05648795654493135,
+      "accuracy": 1.0,
+      "chance": 0.14285714285714285
+     },
+     "health.drug_trial": {
+      "n": 7,
+      "score": 0.5215868758762291,
+      "brier_loss": 0.002147090416990286,
+      "accuracy": null,
+      "chance": null
+     },
+     "health.other": {
+      "n": 1,
+      "score": 0.9099999999999999,
+      "brier_loss": 0.09000000000000002,
+      "accuracy": 1.0,
+      "chance": 0.5
+     },
+     "health.public_data": {
+      "n": 1,
+      "score": 0.9991,
+      "brier_loss": 0.0009000000000000016,
+      "accuracy": 1.0,
+      "chance": 0.5
+     },
+     "markets.commodities": {
+      "n": 10,
+      "score": 0.5183734957602172,
+      "brier_loss": 0.22372234105782632,
+      "accuracy": 0.8571428571428571,
+      "chance": 0.4444444444444445
+     },
+     "markets.corporate_action": {
+      "n": 3,
+      "score": 0.9835466666666667,
+      "brier_loss": 0.01645333333333333,
+      "accuracy": 1.0,
+      "chance": 0.3888888888888889
+     },
+     "markets.corporate_results": {
+      "n": 8,
+      "score": 0.75476875,
+      "brier_loss": 0.24523125,
+      "accuracy": 0.625,
+      "chance": 0.4625
+     },
+     "markets.crypto_ecosystem": {
+      "n": 2,
+      "score": 0.96075,
+      "brier_loss": 0.03925000000000001,
+      "accuracy": 1.0,
+      "chance": 0.5
+     },
+     "markets.crypto_price": {
+      "n": 10,
+      "score": 0.7596965,
+      "brier_loss": 0.2403035,
+      "accuracy": 0.6,
+      "chance": 0.29545454545454547
+     },
+     "markets.equity_index": {
+      "n": 5,
+      "score": 0.828355,
+      "brier_loss": 0.171645,
+      "accuracy": 0.8,
+      "chance": 0.4222222222222222
+     },
+     "markets.equity_stats": {
+      "n": 5,
+      "score": 0.3068269688138415,
+      "brier_loss": 0.027936687053920533,
+      "accuracy": 1.0,
+      "chance": 0.5
+     },
+     "markets.fx_rates": {
+      "n": 5,
+      "score": 0.23930570877470564,
+      "brier_loss": 0.0007003495893128431,
+      "accuracy": null,
+      "chance": null
+     },
+     "markets.housing": {
+      "n": 1,
+      "score": 0.9814857142857143,
+      "brier_loss": 0.018514285714285726,
+      "accuracy": 1.0,
+      "chance": 0.125
+     },
+     "markets.macro_indicator": {
+      "n": 3,
+      "score": 0.38901851856424746,
+      "brier_loss": 0.35172385447128435,
+      "accuracy": 0.0,
+      "chance": 0.3214285714285714
+     },
+     "markets.other": {
+      "n": 2,
+      "score": 0.7637999999999999,
+      "brier_loss": 0.23620000000000005,
+      "accuracy": 0.5,
+      "chance": 0.5
+     },
+     "markets.policy_decision": {
+      "n": 3,
+      "score": 0.6925904761904761,
+      "brier_loss": 0.3074095238095238,
+      "accuracy": 0.6666666666666666,
+      "chance": 0.375
+     },
+     "markets.procurement": {
+      "n": 2,
+      "score": 0.9503968254030748,
+      "brier_loss": 0.06231535323629328,
+      "accuracy": null,
+      "chance": null
+     },
+     "markets.single_stock": {
+      "n": 12,
+      "score": 0.7118666666666668,
+      "brier_loss": 0.2881333333333333,
+      "accuracy": 0.75,
+      "chance": 0.3859848484848485
+     },
+     "markets.transport_volume": {
+      "n": 1,
+      "score": 0.0,
+      "brier_loss": 1.6747955568607864e-05,
+      "accuracy": null,
+      "chance": null
+     },
+     "media.attention_traffic": {
+      "n": 1,
+      "score": 0.5427017232267783,
+      "brier_loss": 7.761075247958438e-05,
+      "accuracy": null,
+      "chance": null
+     },
+     "media.awards": {
+      "n": 3,
+      "score": 0.8978366666666666,
+      "brier_loss": 0.10216333333333334,
+      "accuracy": 1.0,
+      "chance": 0.2888888888888889
+     },
+     "media.film_boxoffice": {
+      "n": 5,
+      "score": 0.8353011111111112,
+      "brier_loss": 0.1646988888888889,
+      "accuracy": 0.8,
+      "chance": 0.24666666666666667
+     },
+     "media.gaming_esports": {
+      "n": 1,
+      "score": 0.9999,
+      "brier_loss": 0.00010000000000000018,
+      "accuracy": 1.0,
+      "chance": 0.5
+     },
+     "media.music_charts": {
+      "n": 2,
+      "score": 0.44573333333333337,
+      "brier_loss": 0.5542666666666667,
+      "accuracy": 0.0,
+      "chance": 0.25
+     },
+     "media.other": {
+      "n": 2,
+      "score": 0.5981328333333333,
+      "brier_loss": 0.40186716666666666,
+      "accuracy": 0.5,
+      "chance": 0.375
+     },
+     "media.social_activity": {
+      "n": 4,
+      "score": 0.617056,
+      "brier_loss": 0.382944,
+      "accuracy": 0.5,
+      "chance": 0.06468531468531469
+     },
+     "media.tv_streaming": {
+      "n": 1,
+      "score": 0.3324176470588235,
+      "brier_loss": 0.6675823529411765,
+      "accuracy": 0.0,
+      "chance": 0.05555555555555555
+     },
+     "politics.appointment": {
+      "n": 1,
+      "score": 0.9991,
+      "brier_loss": 0.0009000000000000016,
+      "accuracy": 1.0,
+      "chance": 0.5
+     },
+     "politics.armed_conflict": {
+      "n": 3,
+      "score": 0.9891333333333333,
+      "brier_loss": 0.010866666666666672,
+      "accuracy": 1.0,
+      "chance": 0.5
+     },
+     "politics.global_election": {
+      "n": 6,
+      "score": 0.881714119047619,
+      "brier_loss": 0.11828588095238096,
+      "accuracy": 0.8333333333333334,
+      "chance": 0.3263888888888889
+     },
+     "politics.judicial": {
+      "n": 1,
+      "score": 0.9856,
+      "brier_loss": 0.0144,
+      "accuracy": 1.0,
+      "chance": 0.5
+     },
+     "politics.other": {
+      "n": 1,
+      "score": 0.7971999999999999,
+      "brier_loss": 0.20280000000000004,
+      "accuracy": 1.0,
+      "chance": 0.3333333333333333
+     },
+     "politics.us_election": {
+      "n": 4,
+      "score": 0.938075,
+      "brier_loss": 0.06192500000000001,
+      "accuracy": 1.0,
+      "chance": 0.27321428571428574
+     },
+     "scitech.ai_benchmark": {
+      "n": 1,
+      "score": 0.9471,
+      "brier_loss": 0.05289999999999999,
+      "accuracy": 1.0,
+      "chance": 0.5
+     },
+     "scitech.ai_leaderboard": {
+      "n": 3,
+      "score": 0.9946964285714287,
+      "brier_loss": 0.005303571428571428,
+      "accuracy": 1.0,
+      "chance": 0.06666666666666667
+     },
+     "scitech.app_ranking": {
+      "n": 1,
+      "score": 0.9559,
+      "brier_loss": 0.04410000000000001,
+      "accuracy": 1.0,
+      "chance": 0.1111111111111111
+     },
+     "scitech.code_repo": {
+      "n": 11,
+      "score": 0.47926515649636126,
+      "brier_loss": 0.00956109478115546,
+      "accuracy": null,
+      "chance": null
+     },
+     "scitech.cybersecurity": {
+      "n": 1,
+      "score": 0.9856,
+      "brier_loss": 0.0144,
+      "accuracy": 1.0,
+      "chance": 0.5
+     },
+     "scitech.frontier_model": {
+      "n": 4,
+      "score": 0.7646607142857142,
+      "brier_loss": 0.23533928571428575,
+      "accuracy": 0.75,
+      "chance": 0.21875
+     },
+     "scitech.other": {
+      "n": 1,
+      "score": 0.9984,
+      "brier_loss": 0.001600000000000003,
+      "accuracy": 1.0,
+      "chance": 0.5
+     },
+     "scitech.research_output": {
+      "n": 2,
+      "score": 0.9309365310744251,
+      "brier_loss": 0.00012164280051296661,
+      "accuracy": null,
+      "chance": null
+     },
+     "scitech.software_ecosystem": {
+      "n": 4,
+      "score": 0.5411321637544031,
+      "brier_loss": 0.29113180189083676,
+      "accuracy": 0.0,
+      "chance": 0.14285714285714285
+     },
+     "scitech.space_astro": {
+      "n": 2,
+      "score": 0.7996833333333333,
+      "brier_loss": 0.2003166666666667,
+      "accuracy": 1.0,
+      "chance": 0.3214285714285714
+     },
+     "sports.baseball": {
+      "n": 3,
+      "score": 0.7903666666666668,
+      "brier_loss": 0.20963333333333334,
+      "accuracy": 0.6666666666666666,
+      "chance": 0.5
+     },
+     "sports.basketball": {
+      "n": 3,
+      "score": 0.8015701149425287,
+      "brier_loss": 0.19842988505747125,
+      "accuracy": 0.6666666666666666,
+      "chance": 0.3444444444444445
+     },
+     "sports.combat": {
+      "n": 1,
+      "score": 0.8976000000000001,
+      "brier_loss": 0.10239999999999996,
+      "accuracy": 1.0,
+      "chance": 0.5
+     },
+     "sports.cricket": {
+      "n": 3,
+      "score": 0.7813916666666666,
+      "brier_loss": 0.21860833333333332,
+      "accuracy": 0.6666666666666666,
+      "chance": 0.3333333333333333
+     },
+     "sports.esports_chess": {
+      "n": 2,
+      "score": 0.8303576923076923,
+      "brier_loss": 0.1696423076923077,
+      "accuracy": 1.0,
+      "chance": 0.20238095238095238
+     },
+     "sports.football": {
+      "n": 19,
+      "score": 0.7478805372807017,
+      "brier_loss": 0.25211946271929825,
+      "accuracy": 0.631578947368421,
+      "chance": 0.34958720330237353
+     },
+     "sports.other": {
+      "n": 1,
+      "score": 0.9999,
+      "brier_loss": 0.00010000000000000018,
+      "accuracy": 1.0,
+      "chance": 0.5
+     },
+     "sports.other_team": {
+      "n": 2,
+      "score": 0.7575750000000001,
+      "brier_loss": 0.24242499999999997,
+      "accuracy": 0.5,
+      "chance": 0.35
+     },
+     "sports.racing": {
+      "n": 2,
+      "score": 0.9083,
+      "brier_loss": 0.09169999999999999,
+      "accuracy": 1.0,
+      "chance": 0.375
+     },
+     "sports.tennis": {
+      "n": 1,
+      "score": 0.9424,
+      "brier_loss": 0.0576,
+      "accuracy": 1.0,
+      "chance": 0.5
+     }
+    },
+    "by_scoring_group": {
+     "g.ai": {
+      "n": 9,
+      "score": 0.8828591269841269,
+      "brier_loss": 0.11714087301587302,
+      "accuracy": 0.8888888888888888,
+      "chance": 0.18734567901234567
+     },
+     "g.code": {
+      "n": 11,
+      "score": 0.47926515649636126,
+      "brier_loss": 0.00956109478115546,
+      "accuracy": null,
+      "chance": null
+     },
+     "g.commodity_fx": {
+      "n": 15,
+      "score": 0.42535090009838006,
+      "brier_loss": 0.1493816772349885,
+      "accuracy": 0.8571428571428571,
+      "chance": 0.4444444444444445
+     },
+     "g.crypto": {
+      "n": 12,
+      "score": 0.7932054166666666,
+      "brier_loss": 0.20679458333333334,
+      "accuracy": 0.6666666666666666,
+      "chance": 0.32954545454545453
+     },
+     "g.equity": {
+      "n": 33,
+      "score": 0.703245449820279,
+      "brier_loss": 0.19596116470513947,
+      "accuracy": 0.7586206896551724,
+      "chance": 0.41757227446882617
+     },
+     "g.health": {
+      "n": 8,
+      "score": 0.5812760163917005,
+      "brier_loss": 0.0019912041148665003,
+      "accuracy": 1.0,
+      "chance": 0.5
+     },
+     "g.macro": {
+      "n": 9,
+      "score": 0.6807895943728928,
+      "brier_loss": 0.23561612522547742,
+      "accuracy": 0.5,
+      "chance": 0.31547619047619047
+     },
+     "g.media": {
+      "n": 17,
+      "score": 0.712042681912225,
+      "brier_loss": 0.26106198479243725,
+      "accuracy": 0.625,
+      "chance": 0.2133935508935509
+     },
+     "g.politics": {
+      "n": 15,
+      "score": 0.932978980952381,
+      "brier_loss": 0.06702101904761906,
+      "accuracy": 0.9333333333333333,
+      "chance": 0.3700793650793651
+     },
+     "g.residual": {
+      "n": 8,
+      "score": 0.8036707083333333,
+      "brier_loss": 0.19632929166666668,
+      "accuracy": 0.75,
+      "chance": 0.4479166666666667
+     },
+     "g.sports": {
+      "n": 36,
+      "score": 0.7822828038271196,
+      "brier_loss": 0.21771719617288043,
+      "accuracy": 0.6944444444444444,
+      "chance": 0.3619514472455649
+     },
+     "g.tech_other": {
+      "n": 9,
+      "score": 0.73459648709257,
+      "brier_loss": 0.17553375849974515,
+      "accuracy": 0.75,
+      "chance": 0.3214285714285714
+     },
+     "g.transport": {
+      "n": 1,
+      "score": 0.0,
+      "brier_loss": 1.6747955568607864e-05,
+      "accuracy": null,
+      "chance": null
+     },
+     "g.weather": {
+      "n": 17,
+      "score": 0.6927650849120537,
+      "brier_loss": 0.14804522581279336,
+      "accuracy": 0.9,
+      "chance": 0.137012987012987
+     }
+    },
+    "by_age": {
+     "0": {
+      "n": 117,
+      "score": 0.6272303405641315,
+      "brier_loss": 0.1643374245505518,
+      "accuracy": 0.7,
+      "chance": 0.2920892063118954
+     },
+     "1-30": {
+      "n": 50,
+      "score": 0.7927635561904762,
+      "brier_loss": 0.20723644380952383,
+      "accuracy": 0.74,
+      "chance": 0.3850007215007215
+     },
+     "31-180": {
+      "n": 20,
+      "score": 0.8736880809523809,
+      "brier_loss": 0.12631191904761907,
+      "accuracy": 0.85,
+      "chance": 0.3767261904761905
+     },
+     ">180": {
+      "n": 13,
+      "score": 0.8986333964885689,
+      "brier_loss": 0.1013666035114311,
+      "accuracy": 0.9230769230769231,
+      "chance": 0.3275641025641026
+     }
+    },
+    "by_delta_days": {
+     "3": {
+      "n": 10,
+      "score": 0.7135785,
+      "brier_loss": 0.2864215,
+      "accuracy": 0.8,
+      "chance": 0.3772727272727273
+     },
+     "4": {
+      "n": 8,
+      "score": 0.8393575,
+      "brier_loss": 0.1606425,
+      "accuracy": 0.875,
+      "chance": 0.2991161616161616
+     },
+     "5": {
+      "n": 13,
+      "score": 0.7540207761359004,
+      "brier_loss": 0.15187734471311376,
+      "accuracy": 0.8181818181818182,
+      "chance": 0.3004066640430277
+     },
+     "6": {
+      "n": 13,
+      "score": 0.7518460745597141,
+      "brier_loss": 0.16752795843141144,
+      "accuracy": 0.8888888888888888,
+      "chance": 0.25361952861952863
+     },
+     "7": {
+      "n": 156,
+      "score": 0.6971359574992514,
+      "brier_loss": 0.16110052018341608,
+      "accuracy": 0.7217391304347827,
+      "chance": 0.3455341915827849
+     }
+    },
+    "diagnostics": {
+     "brier_loss": 0.1671665254474587,
+     "brier_loss_n": 200,
+     "brier_choice_loss": 0.21245523219788226,
+     "brier_choice_loss_n": 153,
+     "brier_numeric_loss": 0.019737331132250083,
+     "brier_numeric_loss_n": 47,
+     "brier_binary": 0.19389674509803922,
+     "brier_binary_n": 153,
+     "calibration": [
+      {
+       "lo": 0.1,
+       "hi": 0.2,
+       "n": 3,
+       "mean_probability": 0.15,
+       "accuracy": 0.3333333333333333
+      },
+      {
+       "lo": 0.2,
+       "hi": 0.3,
+       "n": 7,
+       "mean_probability": 0.24714285714285714,
+       "accuracy": 0.5714285714285714
+      },
+      {
+       "lo": 0.3,
+       "hi": 0.4,
+       "n": 9,
+       "mean_probability": 0.36000000000000004,
+       "accuracy": 0.6666666666666666
+      },
+      {
+       "lo": 0.4,
+       "hi": 0.5,
+       "n": 16,
+       "mean_probability": 0.4575,
+       "accuracy": 0.5625
+      },
+      {
+       "lo": 0.5,
+       "hi": 0.6,
+       "n": 32,
+       "mean_probability": 0.5493750000000001,
+       "accuracy": 0.875
+      },
+      {
+       "lo": 0.6,
+       "hi": 0.7,
+       "n": 21,
+       "mean_probability": 0.6371428571428572,
+       "accuracy": 0.47619047619047616
+      },
+      {
+       "lo": 0.7,
+       "hi": 0.8,
+       "n": 17,
+       "mean_probability": 0.7417647058823529,
+       "accuracy": 0.8235294117647058
+      },
+      {
+       "lo": 0.8,
+       "hi": 0.9,
+       "n": 15,
+       "mean_probability": 0.8533333333333334,
+       "accuracy": 0.8666666666666667
+      },
+      {
+       "lo": 0.9,
+       "hi": 1.0,
+       "n": 33,
+       "mean_probability": 0.969939393939394,
+       "accuracy": 0.9090909090909091
+      }
+     ],
+     "answer_outside_options": 0
+    },
+    "n_run_tasks_outside_ground_truth": 0
+   },
+   "run_shape": {
+    "cohort": 200,
+    "health": {
+     "completed": 200,
+     "canonical_status": {
+      "usable": 200
+     },
+     "canonical_forecast_status": {
+      "valid": 200
+     }
+    },
+    "boundary": {
+     "distinct_t_cut": 80,
+     "clamped": 44,
+     "effective_delta_days": {
+      "3": 10,
+      "4": 8,
+      "5": 13,
+      "6": 13,
+      "7": 156
+     }
+    },
+    "effort": {
+     "latency_seconds": {
+      "p25": 158.67686965689063,
+      "median": 264.2244069315493,
+      "p75": 410.9266587868333,
+      "max": 1979.6903786733747
+     },
+     "tool_calls": {
+      "median": 11.0,
+      "p75": 19.0,
+      "total": 2831
+     },
+     "rollout_rounds": {
+      "n": 199,
+      "p25": 8.0,
+      "median": 12.0,
+      "p75": 20.0,
+      "p95": 36.0,
+      "max": 52.0,
+      "mean": 15.090452261306533
+     },
+     "context_tokens_peak": {
+      "n": 199,
+      "p25": 6888.0,
+      "median": 8503.0,
+      "p75": 10812.0,
+      "p95": 16304.0,
+      "max": 25643.0,
+      "mean": 9345.869346733669
+     },
+     "context_tokens_final": {
+      "n": 199,
+      "p25": 6888.0,
+      "median": 8503.0,
+      "p75": 10812.0,
+      "p95": 16304.0,
+      "max": 25643.0,
+      "mean": 9345.869346733669
+     },
+     "messages_in_history": {
+      "n": 199,
+      "p25": 17.0,
+      "median": 25.0,
+      "p75": 41.0,
+      "p95": 73.0,
+      "max": 106.0,
+      "mean": 31.201005025125628
+     },
+     "messages_sent_to_model": {
+      "n": 199,
+      "p25": 17.0,
+      "median": 23.0,
+      "p75": 34.0,
+      "p95": 54.0,
+      "max": 78.0,
+      "mean": 27.261306532663315
+     },
+     "compaction": {},
+     "tokens": {
+      "prompt_total": 18807750,
+      "completion_total": 385813,
+      "cached_total": 0,
+      "prompt_median": 64170.0,
+      "completion_median": 1355.0,
+      "cached_share": 0.0
+     },
+     "llm_calls": {
+      "median": 12.0,
+      "total": 3003
+     },
+     "forced_to_submit_at_cap": 0,
+     "reached_configured_cap": 4,
+     "tool_usage": [
+      [
+       "web_search",
+       1506
+      ],
+      [
+       "scrape_and_extract_info",
+       1298
+      ]
+     ]
+    }
+   },
+   "paired": {
+    "n_scored": 200,
+    "n_excluded": 0,
+    "exclusions": {},
+    "score": 0.710900617144631,
+    "brier_loss": 0.1671665254474587,
+    "skill_vs_uniform": 0.37374686515561545,
+    "accuracy": 0.7516339869281046,
+    "choice_accuracy": 0.7516339869281046,
+    "choice_chance": 0.3365303115014764,
+    "by_type": {
+     "BINARY": {
+      "n": 73,
+      "score": 0.8640451780821918,
+      "brier_loss": 0.13595482191780822,
+      "accuracy": 0.863013698630137,
+      "chance": 0.5
+     },
+     "MULTIPLE_CHOICE": {
+      "n": 80,
+      "score": 0.7177381434215502,
+      "brier_loss": 0.28226185657844977,
+      "accuracy": 0.65,
+      "chance": 0.1873642207465737
+     },
+     "NUMERIC": {
+      "n": 47,
+      "score": 0.4613994458553659,
+      "brier_loss": 0.019737331132250083,
+      "accuracy": null,
+      "chance": null
+     }
+    },
+    "by_area": {
+     "1 金融市场·宏观·加密": {
+      "n": 81,
+      "score": 0.6484086222199072,
+      "brier_loss": 0.16900563880722266,
+      "accuracy": 0.7288135593220338,
+      "chance": 0.36447831829187766
+     },
+     "2 政治治理与地缘": {
+      "n": 20,
+      "score": 0.9090434714285713,
+      "brier_loss": 0.09095652857142858,
+      "accuracy": 0.9,
+      "chance": 0.37547619047619046
+     },
+     "3 科学技术与 AI": {
+      "n": 24,
+      "score": 0.6233815222443554,
+      "brier_loss": 0.10862935168829117,
+      "accuracy": 0.75,
+      "chance": 0.3638392857142857
+     },
+     "4 体育": {
+      "n": 36,
+      "score": 0.7929578038271196,
+      "brier_loss": 0.20704219617288044,
+      "accuracy": 0.7222222222222222,
+      "chance": 0.3619514472455649
+     },
+     "5 娱乐·媒体·社会": {
+      "n": 19,
+      "score": 0.6992943294302364,
+      "brier_loss": 0.2766414249897246,
+      "accuracy": 0.6111111111111112,
+      "chance": 0.23134982301648968
+     },
+     "6 天气气候能源环境": {
+      "n": 17,
+      "score": 0.6927650849120537,
+      "brier_loss": 0.14804522581279336,
+      "accuracy": 0.9,
+      "chance": 0.137012987012987
+     },
+     "8 其他（若干小类）": {
+      "n": 3,
+      "score": 0.9689731420740205,
+      "brier_loss": 0.030379452771064217,
+      "accuracy": 1.0,
+      "chance": 0.5
+     }
+    },
+    "by_subarea": {
+     "env.geophysical_monitoring": {
+      "n": 2,
+      "score": 0.34986702149894977,
+      "brier_loss": 0.10447242429619075,
+      "accuracy": null,
+      "chance": null
+     },
+     "env.local_weather": {
+      "n": 11,
+      "score": 0.6931313070029176,
+      "brier_loss": 0.19436001096275565,
+      "accuracy": 0.875,
+      "chance": 0.09090909090909091
+     },
+     "env.power_grid": {
+      "n": 1,
+      "score": 0.9996,
+      "brier_loss": 0.0004000000000000007,
+      "accuracy": 1.0,
+      "chance": 0.5
+     },
+     "env.seismic_volcano": {
+      "n": 3,
+      "score": 0.81774267449164,
+      "brier_loss": 0.05648795654493135,
+      "accuracy": 1.0,
+      "chance": 0.14285714285714285
+     },
+     "health.drug_trial": {
+      "n": 7,
+      "score": 0.5215868758762291,
+      "brier_loss": 0.002147090416990286,
+      "accuracy": null,
+      "chance": null
+     },
+     "health.other": {
+      "n": 1,
+      "score": 0.9099999999999999,
+      "brier_loss": 0.09000000000000002,
+      "accuracy": 1.0,
+      "chance": 0.5
+     },
+     "health.public_data": {
+      "n": 1,
+      "score": 0.9991,
+      "brier_loss": 0.0009000000000000016,
+      "accuracy": 1.0,
+      "chance": 0.5
+     },
+     "markets.commodities": {
+      "n": 10,
+      "score": 0.5183734957602172,
+      "brier_loss": 0.22372234105782632,
+      "accuracy": 0.8571428571428571,
+      "chance": 0.4444444444444445
+     },
+     "markets.corporate_action": {
+      "n": 3,
+      "score": 0.9835466666666667,
+      "brier_loss": 0.01645333333333333,
+      "accuracy": 1.0,
+      "chance": 0.3888888888888889
+     },
+     "markets.corporate_results": {
+      "n": 8,
+      "score": 0.75476875,
+      "brier_loss": 0.24523125,
+      "accuracy": 0.625,
+      "chance": 0.4625
+     },
+     "markets.crypto_ecosystem": {
+      "n": 2,
+      "score": 0.96075,
+      "brier_loss": 0.03925000000000001,
+      "accuracy": 1.0,
+      "chance": 0.5
+     },
+     "markets.crypto_price": {
+      "n": 10,
+      "score": 0.7596965,
+      "brier_loss": 0.2403035,
+      "accuracy": 0.6,
+      "chance": 0.29545454545454547
+     },
+     "markets.equity_index": {
+      "n": 5,
+      "score": 0.828355,
+      "brier_loss": 0.171645,
+      "accuracy": 0.8,
+      "chance": 0.4222222222222222
+     },
+     "markets.equity_stats": {
+      "n": 5,
+      "score": 0.3068269688138415,
+      "brier_loss": 0.027936687053920533,
+      "accuracy": 1.0,
+      "chance": 0.5
+     },
+     "markets.fx_rates": {
+      "n": 5,
+      "score": 0.23930570877470564,
+      "brier_loss": 0.0007003495893128431,
+      "accuracy": null,
+      "chance": null
+     },
+     "markets.housing": {
+      "n": 1,
+      "score": 0.9814857142857143,
+      "brier_loss": 0.018514285714285726,
+      "accuracy": 1.0,
+      "chance": 0.125
+     },
+     "markets.macro_indicator": {
+      "n": 3,
+      "score": 0.38901851856424746,
+      "brier_loss": 0.35172385447128435,
+      "accuracy": 0.0,
+      "chance": 0.3214285714285714
+     },
+     "markets.other": {
+      "n": 2,
+      "score": 0.7637999999999999,
+      "brier_loss": 0.23620000000000005,
+      "accuracy": 0.5,
+      "chance": 0.5
+     },
+     "markets.policy_decision": {
+      "n": 3,
+      "score": 0.6925904761904761,
+      "brier_loss": 0.3074095238095238,
+      "accuracy": 0.6666666666666666,
+      "chance": 0.375
+     },
+     "markets.procurement": {
+      "n": 2,
+      "score": 0.9503968254030748,
+      "brier_loss": 0.06231535323629328,
+      "accuracy": null,
+      "chance": null
+     },
+     "markets.single_stock": {
+      "n": 12,
+      "score": 0.7118666666666668,
+      "brier_loss": 0.2881333333333333,
+      "accuracy": 0.75,
+      "chance": 0.3859848484848485
+     },
+     "markets.transport_volume": {
+      "n": 1,
+      "score": 0.0,
+      "brier_loss": 1.6747955568607864e-05,
+      "accuracy": null,
+      "chance": null
+     },
+     "media.attention_traffic": {
+      "n": 1,
+      "score": 0.5427017232267783,
+      "brier_loss": 7.761075247958438e-05,
+      "accuracy": null,
+      "chance": null
+     },
+     "media.awards": {
+      "n": 3,
+      "score": 0.8978366666666666,
+      "brier_loss": 0.10216333333333334,
+      "accuracy": 1.0,
+      "chance": 0.2888888888888889
+     },
+     "media.film_boxoffice": {
+      "n": 5,
+      "score": 0.8353011111111112,
+      "brier_loss": 0.1646988888888889,
+      "accuracy": 0.8,
+      "chance": 0.24666666666666667
+     },
+     "media.gaming_esports": {
+      "n": 1,
+      "score": 0.9999,
+      "brier_loss": 0.00010000000000000018,
+      "accuracy": 1.0,
+      "chance": 0.5
+     },
+     "media.music_charts": {
+      "n": 2,
+      "score": 0.44573333333333337,
+      "brier_loss": 0.5542666666666667,
+      "accuracy": 0.0,
+      "chance": 0.25
+     },
+     "media.other": {
+      "n": 2,
+      "score": 0.5981328333333333,
+      "brier_loss": 0.40186716666666666,
+      "accuracy": 0.5,
+      "chance": 0.375
+     },
+     "media.social_activity": {
+      "n": 4,
+      "score": 0.617056,
+      "brier_loss": 0.382944,
+      "accuracy": 0.5,
+      "chance": 0.06468531468531469
+     },
+     "media.tv_streaming": {
+      "n": 1,
+      "score": 0.3324176470588235,
+      "brier_loss": 0.6675823529411765,
+      "accuracy": 0.0,
+      "chance": 0.05555555555555555
+     },
+     "politics.appointment": {
+      "n": 1,
+      "score": 0.9991,
+      "brier_loss": 0.0009000000000000016,
+      "accuracy": 1.0,
+      "chance": 0.5
+     },
+     "politics.armed_conflict": {
+      "n": 3,
+      "score": 0.9891333333333333,
+      "brier_loss": 0.010866666666666672,
+      "accuracy": 1.0,
+      "chance": 0.5
+     },
+     "politics.global_election": {
+      "n": 6,
+      "score": 0.881714119047619,
+      "brier_loss": 0.11828588095238096,
+      "accuracy": 0.8333333333333334,
+      "chance": 0.3263888888888889
+     },
+     "politics.judicial": {
+      "n": 1,
+      "score": 0.9856,
+      "brier_loss": 0.0144,
+      "accuracy": 1.0,
+      "chance": 0.5
+     },
+     "politics.other": {
+      "n": 1,
+      "score": 0.7971999999999999,
+      "brier_loss": 0.20280000000000004,
+      "accuracy": 1.0,
+      "chance": 0.3333333333333333
+     },
+     "politics.us_election": {
+      "n": 4,
+      "score": 0.938075,
+      "brier_loss": 0.06192500000000001,
+      "accuracy": 1.0,
+      "chance": 0.27321428571428574
+     },
+     "scitech.ai_benchmark": {
+      "n": 1,
+      "score": 0.9471,
+      "brier_loss": 0.05289999999999999,
+      "accuracy": 1.0,
+      "chance": 0.5
+     },
+     "scitech.ai_leaderboard": {
+      "n": 3,
+      "score": 0.9946964285714287,
+      "brier_loss": 0.005303571428571428,
+      "accuracy": 1.0,
+      "chance": 0.06666666666666667
+     },
+     "scitech.app_ranking": {
+      "n": 1,
+      "score": 0.9559,
+      "brier_loss": 0.04410000000000001,
+      "accuracy": 1.0,
+      "chance": 0.1111111111111111
+     },
+     "scitech.code_repo": {
+      "n": 11,
+      "score": 0.47926515649636126,
+      "brier_loss": 0.00956109478115546,
+      "accuracy": null,
+      "chance": null
+     },
+     "scitech.cybersecurity": {
+      "n": 1,
+      "score": 0.9856,
+      "brier_loss": 0.0144,
+      "accuracy": 1.0,
+      "chance": 0.5
+     },
+     "scitech.frontier_model": {
+      "n": 4,
+      "score": 0.7646607142857142,
+      "brier_loss": 0.23533928571428575,
+      "accuracy": 0.75,
+      "chance": 0.21875
+     },
+     "scitech.other": {
+      "n": 1,
+      "score": 0.9984,
+      "brier_loss": 0.001600000000000003,
+      "accuracy": 1.0,
+      "chance": 0.5
+     },
+     "scitech.research_output": {
+      "n": 2,
+      "score": 0.9309365310744251,
+      "brier_loss": 0.00012164280051296661,
+      "accuracy": null,
+      "chance": null
+     },
+     "scitech.software_ecosystem": {
+      "n": 4,
+      "score": 0.5411321637544031,
+      "brier_loss": 0.29113180189083676,
+      "accuracy": 0.0,
+      "chance": 0.14285714285714285
+     },
+     "scitech.space_astro": {
+      "n": 2,
+      "score": 0.7996833333333333,
+      "brier_loss": 0.2003166666666667,
+      "accuracy": 1.0,
+      "chance": 0.3214285714285714
+     },
+     "sports.baseball": {
+      "n": 3,
+      "score": 0.7903666666666668,
+      "brier_loss": 0.20963333333333334,
+      "accuracy": 0.6666666666666666,
+      "chance": 0.5
+     },
+     "sports.basketball": {
+      "n": 3,
+      "score": 0.8015701149425287,
+      "brier_loss": 0.19842988505747125,
+      "accuracy": 0.6666666666666666,
+      "chance": 0.3444444444444445
+     },
+     "sports.combat": {
+      "n": 1,
+      "score": 0.8976000000000001,
+      "brier_loss": 0.10239999999999996,
+      "accuracy": 1.0,
+      "chance": 0.5
+     },
+     "sports.cricket": {
+      "n": 3,
+      "score": 0.7813916666666666,
+      "brier_loss": 0.21860833333333332,
+      "accuracy": 0.6666666666666666,
+      "chance": 0.3333333333333333
+     },
+     "sports.esports_chess": {
+      "n": 2,
+      "score": 0.8303576923076923,
+      "brier_loss": 0.1696423076923077,
+      "accuracy": 1.0,
+      "chance": 0.20238095238095238
+     },
+     "sports.football": {
+      "n": 19,
+      "score": 0.7478805372807017,
+      "brier_loss": 0.25211946271929825,
+      "accuracy": 0.631578947368421,
+      "chance": 0.34958720330237353
+     },
+     "sports.other": {
+      "n": 1,
+      "score": 0.9999,
+      "brier_loss": 0.00010000000000000018,
+      "accuracy": 1.0,
+      "chance": 0.5
+     },
+     "sports.other_team": {
+      "n": 2,
+      "score": 0.7575750000000001,
+      "brier_loss": 0.24242499999999997,
+      "accuracy": 0.5,
+      "chance": 0.35
+     },
+     "sports.racing": {
+      "n": 2,
+      "score": 0.9083,
+      "brier_loss": 0.09169999999999999,
+      "accuracy": 1.0,
+      "chance": 0.375
+     },
+     "sports.tennis": {
+      "n": 1,
+      "score": 0.9424,
+      "brier_loss": 0.0576,
+      "accuracy": 1.0,
+      "chance": 0.5
+     }
+    },
+    "by_scoring_group": {
+     "g.ai": {
+      "n": 9,
+      "score": 0.8828591269841269,
+      "brier_loss": 0.11714087301587302,
+      "accuracy": 0.8888888888888888,
+      "chance": 0.18734567901234567
+     },
+     "g.code": {
+      "n": 11,
+      "score": 0.47926515649636126,
+      "brier_loss": 0.00956109478115546,
+      "accuracy": null,
+      "chance": null
+     },
+     "g.commodity_fx": {
+      "n": 15,
+      "score": 0.42535090009838006,
+      "brier_loss": 0.1493816772349885,
+      "accuracy": 0.8571428571428571,
+      "chance": 0.4444444444444445
+     },
+     "g.crypto": {
+      "n": 12,
+      "score": 0.7932054166666666,
+      "brier_loss": 0.20679458333333334,
+      "accuracy": 0.6666666666666666,
+      "chance": 0.32954545454545453
+     },
+     "g.equity": {
+      "n": 33,
+      "score": 0.703245449820279,
+      "brier_loss": 0.19596116470513947,
+      "accuracy": 0.7586206896551724,
+      "chance": 0.41757227446882617
+     },
+     "g.health": {
+      "n": 8,
+      "score": 0.5812760163917005,
+      "brier_loss": 0.0019912041148665003,
+      "accuracy": 1.0,
+      "chance": 0.5
+     },
+     "g.macro": {
+      "n": 9,
+      "score": 0.6807895943728928,
+      "brier_loss": 0.23561612522547742,
+      "accuracy": 0.5,
+      "chance": 0.31547619047619047
+     },
+     "g.media": {
+      "n": 17,
+      "score": 0.712042681912225,
+      "brier_loss": 0.26106198479243725,
+      "accuracy": 0.625,
+      "chance": 0.2133935508935509
+     },
+     "g.politics": {
+      "n": 15,
+      "score": 0.932978980952381,
+      "brier_loss": 0.06702101904761906,
+      "accuracy": 0.9333333333333333,
+      "chance": 0.3700793650793651
+     },
+     "g.residual": {
+      "n": 8,
+      "score": 0.8036707083333333,
+      "brier_loss": 0.19632929166666668,
+      "accuracy": 0.75,
+      "chance": 0.4479166666666667
+     },
+     "g.sports": {
+      "n": 36,
+      "score": 0.7822828038271196,
+      "brier_loss": 0.21771719617288043,
+      "accuracy": 0.6944444444444444,
+      "chance": 0.3619514472455649
+     },
+     "g.tech_other": {
+      "n": 9,
+      "score": 0.73459648709257,
+      "brier_loss": 0.17553375849974515,
+      "accuracy": 0.75,
+      "chance": 0.3214285714285714
+     },
+     "g.transport": {
+      "n": 1,
+      "score": 0.0,
+      "brier_loss": 1.6747955568607864e-05,
+      "accuracy": null,
+      "chance": null
+     },
+     "g.weather": {
+      "n": 17,
+      "score": 0.6927650849120537,
+      "brier_loss": 0.14804522581279336,
+      "accuracy": 0.9,
+      "chance": 0.137012987012987
+     }
+    },
+    "by_age": {
+     "0": {
+      "n": 117,
+      "score": 0.6272303405641315,
+      "brier_loss": 0.1643374245505518,
+      "accuracy": 0.7,
+      "chance": 0.2920892063118954
+     },
+     "1-30": {
+      "n": 50,
+      "score": 0.7927635561904762,
+      "brier_loss": 0.20723644380952383,
+      "accuracy": 0.74,
+      "chance": 0.3850007215007215
+     },
+     "31-180": {
+      "n": 20,
+      "score": 0.8736880809523809,
+      "brier_loss": 0.12631191904761907,
+      "accuracy": 0.85,
+      "chance": 0.3767261904761905
+     },
+     ">180": {
+      "n": 13,
+      "score": 0.8986333964885689,
+      "brier_loss": 0.1013666035114311,
+      "accuracy": 0.9230769230769231,
+      "chance": 0.3275641025641026
+     }
+    },
+    "by_delta_days": {
+     "3": {
+      "n": 10,
+      "score": 0.7135785,
+      "brier_loss": 0.2864215,
+      "accuracy": 0.8,
+      "chance": 0.3772727272727273
+     },
+     "4": {
+      "n": 8,
+      "score": 0.8393575,
+      "brier_loss": 0.1606425,
+      "accuracy": 0.875,
+      "chance": 0.2991161616161616
+     },
+     "5": {
+      "n": 13,
+      "score": 0.7540207761359004,
+      "brier_loss": 0.15187734471311376,
+      "accuracy": 0.8181818181818182,
+      "chance": 0.3004066640430277
+     },
+     "6": {
+      "n": 13,
+      "score": 0.7518460745597141,
+      "brier_loss": 0.16752795843141144,
+      "accuracy": 0.8888888888888888,
+      "chance": 0.25361952861952863
+     },
+     "7": {
+      "n": 156,
+      "score": 0.6971359574992514,
+      "brier_loss": 0.16110052018341608,
+      "accuracy": 0.7217391304347827,
+      "chance": 0.3455341915827849
+     }
+    },
+    "diagnostics": {
+     "brier_loss": 0.1671665254474587,
+     "brier_loss_n": 200,
+     "brier_choice_loss": 0.21245523219788226,
+     "brier_choice_loss_n": 153,
+     "brier_numeric_loss": 0.019737331132250083,
+     "brier_numeric_loss_n": 47,
+     "brier_binary": 0.19389674509803922,
+     "brier_binary_n": 153,
+     "calibration": [
+      {
+       "lo": 0.1,
+       "hi": 0.2,
+       "n": 3,
+       "mean_probability": 0.15,
+       "accuracy": 0.3333333333333333
+      },
+      {
+       "lo": 0.2,
+       "hi": 0.3,
+       "n": 7,
+       "mean_probability": 0.24714285714285714,
+       "accuracy": 0.5714285714285714
+      },
+      {
+       "lo": 0.3,
+       "hi": 0.4,
+       "n": 9,
+       "mean_probability": 0.36000000000000004,
+       "accuracy": 0.6666666666666666
+      },
+      {
+       "lo": 0.4,
+       "hi": 0.5,
+       "n": 16,
+       "mean_probability": 0.4575,
+       "accuracy": 0.5625
+      },
+      {
+       "lo": 0.5,
+       "hi": 0.6,
+       "n": 32,
+       "mean_probability": 0.5493750000000001,
+       "accuracy": 0.875
+      },
+      {
+       "lo": 0.6,
+       "hi": 0.7,
+       "n": 21,
+       "mean_probability": 0.6371428571428572,
+       "accuracy": 0.47619047619047616
+      },
+      {
+       "lo": 0.7,
+       "hi": 0.8,
+       "n": 17,
+       "mean_probability": 0.7417647058823529,
+       "accuracy": 0.8235294117647058
+      },
+      {
+       "lo": 0.8,
+       "hi": 0.9,
+       "n": 15,
+       "mean_probability": 0.8533333333333334,
+       "accuracy": 0.8666666666666667
+      },
+      {
+       "lo": 0.9,
+       "hi": 1.0,
+       "n": 33,
+       "mean_probability": 0.969939393939394,
+       "accuracy": 0.9090909090909091
+      }
+     ],
+     "answer_outside_options": 0
+    }
+   }
+  }
+ ]
+}

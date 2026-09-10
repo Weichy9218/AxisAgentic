@@ -29,3 +29,7 @@ checkpoints/
 # Custom ignores
 .preview
 agentic/.cache/
+
+# The uncompressed copy under reports/ is 93 MB of JSON; the tarball beside it
+# carries the same traces at 16 MB and is what gets committed.
+reports/*/logs/
