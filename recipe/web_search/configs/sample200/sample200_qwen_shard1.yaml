@@ -42,7 +42,16 @@ model:
   top_p: 1.0
   max_output_tokens: 16384
   request_extra_body:
-    reasoning_effort: high
+    # qwen3.5 is a thinking on/off model, not a reasoning_effort model — sending
+    # reasoning_effort here was inert and read as if it controlled something.
+    # The completed 200-task run had thinking ON (reasoning_content on 4174 of
+    # 4174 assistant messages), which was the gateway default rather than a
+    # declared choice; it is declared now.
+    #
+    # NOTE: galaxy currently runs this model with enable_thinking: false. The two
+    # runtimes must agree before any cross-runtime number is quoted — see
+    # ALIGNMENT.md section 3.
+    enable_thinking: true
   transport:
     timeout:
       total_seconds: 600
