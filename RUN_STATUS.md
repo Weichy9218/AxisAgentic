@@ -1,3 +1,9 @@
+> **这份文档描述的是 `axis_strict_full`，该运行作为分数来源已经退役。**
+> 它跑在 `temperature 0.2` / `reasoning_effort medium` / 摘要模型 `deepseek-v4-pro` 下，
+> 并且 19.3% 的题触到了当时 50 的工具上限，四处设置与现在不同。文中的分数不可与新结果并排。
+> 保留它是因为里面的运行史、网关基准和故障分析都是实测，而且 `site:` 归因的原始材料出自这次运行。
+> 当前结果看 `reports/README.md` 与 `reports/sample200_overview.html`。
+
 # AxisAgentic on offline_0901 — current state
 
 The run finished 2026-09-08 20:14. All 1,969 tasks completed; the report is at
