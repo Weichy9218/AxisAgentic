@@ -1,0 +1,228 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>离线题集结果</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,400;0,600;0,700;1,400&family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+:root{
+  --font-display:'Crimson Pro','Songti SC','Noto Serif CJK SC',Georgia,serif;
+  --font-body:'DM Sans',-apple-system,BlinkMacSystemFont,'PingFang SC','Segoe UI',sans-serif;
+  --font-mono:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+  --accent:#A63D38; --accent-light:#D4918C; --accent-dark:#8B3A36;
+  --ink:#0c1222; --ink-soft:#334155; --ink-muted:#64748b;
+  --surface:#fff; --raised:#f8fafc; --sunken:#f1f5f9; --border:#e2e8f0;
+  --cat1:#A63D38; --cat2:#1A6E9E; --cat3:#A2740F;
+  --r-sm:8px; --r-md:14px; --r-lg:20px;
+  --sh-sm:0 1px 3px rgba(15,23,42,.04),0 1px 2px rgba(15,23,42,.06);
+  --sh-md:0 4px 16px rgba(15,23,42,.06),0 2px 4px rgba(15,23,42,.04);
+  --sh-lg:0 12px 40px rgba(15,23,42,.08),0 4px 12px rgba(15,23,42,.04);
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--surface);color:var(--ink);
+  font:15px/1.7 var(--font-body);-webkit-font-smoothing:antialiased}
+main{max-width:1080px;margin:0 auto;padding:36px 24px 96px}
+a{color:var(--accent);text-decoration:none;border-bottom:1px solid rgba(166,61,56,.3)}
+a:hover{border-bottom-color:var(--accent)}
+p{margin:10px 0;color:var(--ink-soft)}
+ul{color:var(--ink-soft);padding-left:22px} li{margin:6px 0}
+code{font:0.88em var(--font-mono);background:var(--sunken);padding:2px 6px;
+  border-radius:4px;color:var(--accent-dark);white-space:nowrap}
+pre{background:#0c1222;color:#e2e8f0;padding:18px 20px;border-radius:var(--r-sm);
+  overflow:auto;font:12.5px/1.7 var(--font-mono);box-shadow:var(--sh-sm)}
+pre code{background:none;color:inherit;padding:0;white-space:pre}
+
+/* ---- hero ---- */
+.hero{text-align:center;padding:18px 0 26px;position:relative;margin-bottom:8px}
+.hero h1{font-family:var(--font-display);font-size:40px;line-height:1.18;
+  margin:0 0 10px;font-weight:700;letter-spacing:-.01em}
+.hero .sub{color:var(--ink-muted);font-size:14px;letter-spacing:.04em;margin:0}
+.hero::after{content:'';position:absolute;bottom:0;left:12%;right:12%;height:2px;
+  background:linear-gradient(90deg,transparent,var(--accent-light) 20%,
+    var(--accent) 50%,var(--accent-light) 80%,transparent);opacity:.55}
+.crumbs{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin-top:16px}
+.crumb{display:inline-flex;align-items:center;gap:7px;padding:8px 16px;
+  border:1px solid var(--border);border-radius:var(--r-sm);font-size:13px;
+  font-weight:600;box-shadow:var(--sh-sm);color:var(--ink-soft);
+  transition:all .3s cubic-bezier(.22,1,.36,1)}
+.crumb:hover{border-color:var(--accent);color:var(--accent);
+  transform:translateY(-2px);box-shadow:var(--sh-md)}
+
+/* ---- section rhythm ---- */
+h2{font-family:var(--font-display);font-size:26px;margin:52px 0 6px;font-weight:600;
+  letter-spacing:-.005em}
+h2 .num{color:var(--accent);font-size:.7em;font-family:var(--font-body);
+  font-weight:700;letter-spacing:.08em;display:block;margin-bottom:6px;
+  text-transform:uppercase}
+h3{font-family:var(--font-display);font-size:19px;margin:30px 0 8px;font-weight:600}
+h4{font-size:13px;margin:22px 0 6px;color:var(--accent);font-weight:700;
+  letter-spacing:.07em;text-transform:uppercase;font-family:var(--font-body)}
+hr.rule{border:0;height:2px;margin:52px 0 0;opacity:.45;
+  background:linear-gradient(90deg,transparent,var(--accent-light) 20%,
+    var(--accent) 50%,var(--accent-light) 80%,transparent)}
+
+/* ---- callouts ---- */
+.note{background:var(--raised);border-radius:var(--r-sm);padding:16px 22px;
+  margin:20px 0;font-family:var(--font-display);font-size:15.5px;line-height:1.75;
+  color:var(--ink);box-shadow:var(--sh-sm);position:relative;overflow:hidden}
+.note::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;
+  background:linear-gradient(180deg,var(--accent),var(--accent-light));
+  border-radius:var(--r-sm) 0 0 var(--r-sm)}
+.note code{background:#fff}
+
+/* ---- stat cards ---- */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));
+  gap:14px;margin:26px 0}
+.card{background:var(--raised);border:1px solid var(--border);
+  border-radius:var(--r-sm);padding:16px 18px;position:relative;overflow:hidden;
+  box-shadow:var(--sh-sm);transition:all .3s cubic-bezier(.22,1,.36,1)}
+.card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;
+  background:linear-gradient(90deg,var(--accent),var(--accent-light))}
+.card:hover{transform:translateY(-3px);box-shadow:var(--sh-md)}
+.card b{display:block;font-family:var(--font-display);font-size:32px;
+  font-weight:700;line-height:1.1;
+  background:linear-gradient(135deg,var(--accent-dark),var(--accent),var(--accent-light));
+  -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.card span{display:block;margin-top:6px;font-size:12.5px;color:var(--ink-muted)}
+
+/* ---- tables ---- */
+.tw{border-radius:var(--r-sm);overflow:hidden;box-shadow:var(--sh-sm);
+  margin:14px 0 22px;border:1px solid var(--border)}
+.tw.scroll{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13.5px}
+th,td{padding:9px 14px;text-align:left;border-bottom:1px solid var(--border);
+  vertical-align:middle}
+th{background:linear-gradient(135deg,var(--accent-dark),var(--accent));color:#fff;
+  font-weight:600;font-size:12px;letter-spacing:.05em;text-transform:uppercase;
+  border-bottom:0;white-space:nowrap}
+tbody tr{transition:background .2s ease}
+tbody tr:hover{background:var(--raised)}
+tbody tr:last-child td{border-bottom:0}
+td.num{text-align:right;font-family:var(--font-mono);font-size:12.5px;
+  white-space:nowrap;color:var(--ink-soft)}
+td.bar{width:34%;padding-right:18px}
+
+/* ---- in-table magnitude bars (single series, one hue) ---- */
+.track{height:9px;background:var(--sunken);border-radius:4px;overflow:hidden}
+.track i{display:block;height:100%;border-radius:0 4px 4px 0;
+  background:linear-gradient(90deg,var(--accent-dark),var(--accent))}
+tr.thin td.slug{color:var(--ink-muted)}
+tr.thin .track i{background:var(--accent-light)}
+
+/* ---- diverging bars: a signed delta against a shared zero ---- */
+/* One axis, a neutral midpoint and two poles taken from the validated
+   categorical set, so a reader never has to decide whether a longer bar means
+   more or less — the side carries the sign and the number is printed beside it. */
+.dv{position:relative;height:11px;background:var(--sunken);border-radius:4px}
+.dv::before{content:'';position:absolute;left:50%;top:-3px;bottom:-3px;width:1px;
+  background:var(--border)}
+.dv i{position:absolute;top:0;height:100%;border-radius:3px}
+.dv i.neg{background:#A63D38}
+.dv i.pos{background:#1A6E9E}
+
+/* ---- stacked composition bars ---- */
+.legend{display:flex;gap:18px;flex-wrap:wrap;margin:14px 0 10px;font-size:12.5px;
+  color:var(--ink-soft)}
+.legend span{display:inline-flex;align-items:center;gap:7px}
+.legend i{width:11px;height:11px;border-radius:3px;display:inline-block}
+.stack{display:grid;grid-template-columns:150px 1fr 56px;gap:12px;
+  align-items:center;margin:9px 0;font-size:13px}
+.stack .lbl{color:var(--ink-soft);text-align:right;font-size:12.5px}
+.stack .tot{font-family:var(--font-mono);font-size:12px;color:var(--ink-muted)}
+.stack .segs{display:flex;height:16px;border-radius:4px;overflow:hidden;gap:2px;
+  background:var(--sunken)}
+.stack .segs i{display:block;position:relative;cursor:default}
+.stack .segs i:first-child{border-radius:4px 0 0 4px}
+.stack .segs i:last-child{border-radius:0 4px 4px 0}
+
+/* ---- hover tooltip, no JS, no external library ---- */
+[data-tip]{position:relative}
+[data-tip]:hover::after{content:attr(data-tip);position:absolute;bottom:calc(100% + 8px);
+  left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;
+  padding:6px 10px;border-radius:6px;font:11.5px/1.45 var(--font-body);
+  white-space:pre;z-index:20;box-shadow:var(--sh-md);pointer-events:none}
+
+/* ---- figures ---- */
+figure{margin:20px 0;background:var(--raised);border:1px solid var(--border);
+  border-radius:var(--r-sm);padding:20px 22px 14px;box-shadow:var(--sh-sm)}
+figure svg{display:block;width:100%;height:auto;overflow:visible}
+figcaption{margin-top:12px;font-size:12.5px;color:var(--ink-muted);line-height:1.65}
+.formula{background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--r-sm);padding:15px 18px;margin:14px 0;
+  font:13.5px/1.95 var(--font-mono);color:var(--ink)}
+.formula b{color:var(--accent);font-weight:500}
+.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:22px}
+.small{font-size:12.5px;color:var(--ink-muted)}
+
+/* ---- floating table of contents ---- */
+.toc{position:fixed;right:16px;top:96px;width:196px;max-height:calc(100vh - 150px);
+  overflow-y:auto;padding:16px;background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--r-md);box-shadow:var(--sh-lg);z-index:100;font-size:12px}
+.toc-t{font-size:10.5px;text-transform:uppercase;letter-spacing:.15em;
+  color:var(--ink-muted);margin-bottom:10px;font-weight:600}
+.toc-p{height:3px;background:var(--border);border-radius:2px;margin-bottom:12px;
+  overflow:hidden}
+.toc-p i{display:block;height:100%;width:0;background:var(--accent);border-radius:2px}
+.toc ol{list-style:none;padding:0;margin:0}
+.toc a{display:block;padding:6px 9px;color:var(--ink-muted);border-radius:6px;
+  border-left:2px solid transparent;line-height:1.4;border-bottom:0;
+  transition:all .2s ease}
+.toc a:hover{background:var(--sunken);color:var(--ink)}
+.toc a.on{background:var(--sunken);color:var(--accent);
+  border-left-color:var(--accent);font-weight:500}
+@media (max-width:1420px){.toc{display:none}}
+
+@media (max-width:720px){
+  main{padding:24px 16px 64px} .hero h1{font-size:30px}
+  .stack{grid-template-columns:96px 1fr 44px}
+  td.bar{display:none} th.bar{display:none}
+}
+@media (prefers-reduced-motion:reduce){
+  *{transition:none!important;animation:none!important}
+}
+</style></head>
+<body>
+<main>
+<header class="hero">
+<h1>离线题集结果</h1>
+<p class="sub">1900 题 · 2 个 arm · 配对 1899 题 · protocol harness-eval-v2</p>
+
+</header>
+<div class="stats"><div class="card"><b>1900</b><span>题集</span><span class="small">每题都有 ground truth，且都能评分</span></div><div class="card"><b>1899</b><span>参与比较的题</span><span class="small">所有 arm 都给出有效提交的交集</span></div><div class="card"><b>65</b><span>子域</span><span class="small">7 个大类之下</span></div><div class="card"><b>2</b><span>对比的 arm</span><span class="small">axisagentic、serper_gate3</span></div></div>
+<h2>两个 arm</h2>
+<div class="note"><p>下面这一对<b>只固定了题集</b>。两个 arm 之间差了两件事：检索 provider 不同，以及是否跑了 as-of 信息筛查。这是两个变量，不是受控实验，所以这一页不把差值归因给其中任何一个。两变量的对比能支持的是一个方向和一个上界，这有价值，但它不是控制变量的结论。</p></div>
+<div class="tw "><table><thead><tr><th class="">arm</th><th class="num">题数</th><th class="num">总分</th><th class="bar">分布</th><th class="num">准确率</th><th class="num">Brier loss</th><th class="">说明</th></tr></thead><tbody><tr><td class=""><code>axisagentic</code></td><td class="num">1899</td><td class="num">0.7206</td><td class="bar"><div class="track" data-tip="axisagentic: 0.7206"><i style="width:100.0%"></i></div></td><td class="num">0.6834</td><td class="num">0.1807</td><td class="">axis_strict_full</td></tr><tr><td class=""><code>serper_gate3</code></td><td class="num">1899</td><td class="num">0.6557</td><td class="bar"><div class="track" data-tip="serper_gate3: 0.6557"><i style="width:91.0%"></i></div></td><td class="num">0.5317</td><td class="num">0.2321</td><td class="">20260907_dt7_1969_serper_gpt54</td></tr></tbody></table></div>
+<p class="small">配对集合 1899 题，是每个 arm 都给出有效提交的交集。各自的 <code>own</code> 分母不同，不能直接比。</p>
+<h2>按题型</h2>
+<div class="tw "><table><thead><tr><th class="">题型</th><th class="num">n</th><th class="num">axisagentic</th><th class="num">serper_gate3</th><th class="bar">差值</th><th class="num">delta</th></tr></thead><tbody><tr><td class="">BINARY</td><td class="num">689</td><td class="num">0.8397</td><td class="num">0.8045</td><td class="bar"><div class="dv" data-tip="BINARY: -0.0352"><i class="neg" style="right:50%;width:18.19%"></i></div></td><td class="num">-0.0352</td></tr><tr><td class="">MULTIPLE_CHOICE</td><td class="num">761</td><td class="num">0.7055</td><td class="num">0.6087</td><td class="bar"><div class="dv" data-tip="MULTIPLE_CHOICE: -0.0969"><i class="neg" style="right:50%;width:50.00%"></i></div></td><td class="num">-0.0969</td></tr><tr><td class="">NUMERIC</td><td class="num">449</td><td class="num">0.5632</td><td class="num">0.5071</td><td class="bar"><div class="dv" data-tip="NUMERIC: -0.0560"><i class="neg" style="right:50%;width:28.92%"></i></div></td><td class="num">-0.0560</td></tr></tbody></table></div>
+<h2>按大类</h2>
+<div class="tw "><table><thead><tr><th class="">大类</th><th class="num">n</th><th class="num">axisagentic</th><th class="num">serper_gate3</th><th class="bar">差值</th><th class="num">delta</th></tr></thead><tbody><tr><td class="">1 金融市场·宏观·加密</td><td class="num">714</td><td class="num">0.676</td><td class="num">0.646</td><td class="bar"><div class="dv" data-tip="1 金融市场·宏观·加密: -0.030"><i class="neg" style="right:50%;width:8.45%"></i></div></td><td class="num">-0.030</td></tr><tr><td class="">2 政治治理与地缘</td><td class="num">196</td><td class="num">0.865</td><td class="num">0.786</td><td class="bar"><div class="dv" data-tip="2 政治治理与地缘: -0.078"><i class="neg" style="right:50%;width:22.06%"></i></div></td><td class="num">-0.078</td></tr><tr><td class="">3 科学技术与 AI</td><td class="num">256</td><td class="num">0.683</td><td class="num">0.590</td><td class="bar"><div class="dv" data-tip="3 科学技术与 AI: -0.093"><i class="neg" style="right:50%;width:26.28%"></i></div></td><td class="num">-0.093</td></tr><tr><td class="">4 体育</td><td class="num">346</td><td class="num">0.732</td><td class="num">0.709</td><td class="bar"><div class="dv" data-tip="4 体育: -0.023"><i class="neg" style="right:50%;width:6.48%"></i></div></td><td class="num">-0.023</td></tr><tr><td class="">5 娱乐·媒体·社会</td><td class="num">174</td><td class="num">0.731</td><td class="num">0.553</td><td class="bar"><div class="dv" data-tip="5 娱乐·媒体·社会: -0.177"><i class="neg" style="right:50%;width:50.00%"></i></div></td><td class="num">-0.177</td></tr><tr><td class="">6 天气气候能源环境</td><td class="num">179</td><td class="num">0.748</td><td class="num">0.647</td><td class="bar"><div class="dv" data-tip="6 天气气候能源环境: -0.101"><i class="neg" style="right:50%;width:28.47%"></i></div></td><td class="num">-0.101</td></tr><tr><td class="">8 其他（若干小类）</td><td class="num">34</td><td class="num">0.801</td><td class="num">0.635</td><td class="bar"><div class="dv" data-tip="8 其他（若干小类）: -0.165"><i class="neg" style="right:50%;width:46.59%"></i></div></td><td class="num">-0.165</td></tr></tbody></table></div>
+<h2>按子域</h2>
+<p>标签文件把 7 个大类细分成 65 个子域。下面按差值排序，两端是分歧最大的地方。<b>n 小于 12 的行用浅色标出</b>，它们的均值照报，但不要当成差异读：n=3 时一道题就能移动三分之一。</p>
+<div class="tw scroll "><table><thead><tr><th class="">子域</th><th class="num">n</th><th class="num">axisagentic</th><th class="num">serper_gate3</th><th class="bar">差值</th><th class="num">delta</th></tr></thead><tbody><tr class="thin"><td class="">markets.housing</td><td class="num">6</td><td class="num">0.693</td><td class="num">0.329</td><td class="bar"><div class="dv" data-tip="markets.housing: -0.364"><i class="neg" style="right:50%;width:50.00%"></i></div></td><td class="num">-0.364</td></tr><tr class="thin"><td class="">health.public_data</td><td class="num">10</td><td class="num">0.737</td><td class="num">0.382</td><td class="bar"><div class="dv" data-tip="health.public_data: -0.355"><i class="neg" style="right:50%;width:48.79%"></i></div></td><td class="num">-0.355</td></tr><tr><td class="">media.social_activity</td><td class="num">53</td><td class="num">0.740</td><td class="num">0.447</td><td class="bar"><div class="dv" data-tip="media.social_activity: -0.292"><i class="neg" style="right:50%;width:40.12%"></i></div></td><td class="num">-0.292</td></tr><tr><td class="">markets.fx_rates</td><td class="num">33</td><td class="num">0.505</td><td class="num">0.300</td><td class="bar"><div class="dv" data-tip="markets.fx_rates: -0.205"><i class="neg" style="right:50%;width:28.15%"></i></div></td><td class="num">-0.205</td></tr><tr class="thin"><td class="">scitech.tech_industry</td><td class="num">10</td><td class="num">0.944</td><td class="num">0.749</td><td class="bar"><div class="dv" data-tip="scitech.tech_industry: -0.195"><i class="neg" style="right:50%;width:26.80%"></i></div></td><td class="num">-0.195</td></tr><tr><td class="">sports.racing</td><td class="num">15</td><td class="num">0.808</td><td class="num">0.623</td><td class="bar"><div class="dv" data-tip="sports.racing: -0.185"><i class="neg" style="right:50%;width:25.32%"></i></div></td><td class="num">-0.185</td></tr><tr class="thin"><td class="">markets.transport_volume</td><td class="num">10</td><td class="num">0.169</td><td class="num">0.000</td><td class="bar"><div class="dv" data-tip="markets.transport_volume: -0.169"><i class="neg" style="right:50%;width:23.19%"></i></div></td><td class="num">-0.169</td></tr><tr class="thin"><td class="">sports.combat</td><td class="num">6</td><td class="num">0.843</td><td class="num">0.675</td><td class="bar"><div class="dv" data-tip="sports.combat: -0.167"><i class="neg" style="right:50%;width:22.98%"></i></div></td><td class="num">-0.167</td></tr><tr><td class="">media.film_boxoffice</td><td class="num">39</td><td class="num">0.784</td><td class="num">0.617</td><td class="bar"><div class="dv" data-tip="media.film_boxoffice: -0.167"><i class="neg" style="right:50%;width:22.93%"></i></div></td><td class="num">-0.167</td></tr><tr><td class="">media.attention_traffic</td><td class="num">16</td><td class="num">0.280</td><td class="num">0.114</td><td class="bar"><div class="dv" data-tip="media.attention_traffic: -0.166"><i class="neg" style="right:50%;width:22.82%"></i></div></td><td class="num">-0.166</td></tr><tr><td class="">scitech.research_output</td><td class="num">12</td><td class="num">0.865</td><td class="num">0.703</td><td class="bar"><div class="dv" data-tip="scitech.research_output: -0.162"><i class="neg" style="right:50%;width:22.29%"></i></div></td><td class="num">-0.162</td></tr><tr><td class="">env.local_weather</td><td class="num">104</td><td class="num">0.732</td><td class="num">0.573</td><td class="bar"><div class="dv" data-tip="env.local_weather: -0.159"><i class="neg" style="right:50%;width:21.87%"></i></div></td><td class="num">-0.159</td></tr><tr><td class="">politics.appointment</td><td class="num">12</td><td class="num">0.927</td><td class="num">0.768</td><td class="bar"><div class="dv" data-tip="politics.appointment: -0.159"><i class="neg" style="right:50%;width:21.79%"></i></div></td><td class="num">-0.159</td></tr><tr><td class="">scitech.frontier_model</td><td class="num">15</td><td class="num">0.879</td><td class="num">0.722</td><td class="bar"><div class="dv" data-tip="scitech.frontier_model: -0.157"><i class="neg" style="right:50%;width:21.60%"></i></div></td><td class="num">-0.157</td></tr><tr><td class="">scitech.software_ecosystem</td><td class="num">17</td><td class="num">0.671</td><td class="num">0.525</td><td class="bar"><div class="dv" data-tip="scitech.software_ecosystem: -0.146"><i class="neg" style="right:50%;width:20.04%"></i></div></td><td class="num">-0.146</td></tr><tr class="thin"><td class="">env.other</td><td class="num">3</td><td class="num">0.847</td><td class="num">0.725</td><td class="bar"><div class="dv" data-tip="env.other: -0.122"><i class="neg" style="right:50%;width:16.78%"></i></div></td><td class="num">-0.122</td></tr><tr><td class="">media.music_charts</td><td class="num">20</td><td class="num">0.735</td><td class="num">0.615</td><td class="bar"><div class="dv" data-tip="media.music_charts: -0.120"><i class="neg" style="right:50%;width:16.48%"></i></div></td><td class="num">-0.120</td></tr><tr><td class="">politics.armed_conflict</td><td class="num">33</td><td class="num">0.838</td><td class="num">0.724</td><td class="bar"><div class="dv" data-tip="politics.armed_conflict: -0.114"><i class="neg" style="right:50%;width:15.64%"></i></div></td><td class="num">-0.114</td></tr><tr class="thin"><td class="">scitech.other</td><td class="num">11</td><td class="num">0.903</td><td class="num">0.791</td><td class="bar"><div class="dv" data-tip="scitech.other: -0.112"><i class="neg" style="right:50%;width:15.32%"></i></div></td><td class="num">-0.112</td></tr><tr><td class="">scitech.cybersecurity</td><td class="num">33</td><td class="num">0.752</td><td class="num">0.643</td><td class="bar"><div class="dv" data-tip="scitech.cybersecurity: -0.109"><i class="neg" style="right:50%;width:14.95%"></i></div></td><td class="num">-0.109</td></tr><tr><td class="">sports.other_team</td><td class="num">14</td><td class="num">0.841</td><td class="num">0.743</td><td class="bar"><div class="dv" data-tip="sports.other_team: -0.098"><i class="neg" style="right:50%;width:13.48%"></i></div></td><td class="num">-0.098</td></tr><tr><td class="">markets.commodities</td><td class="num">108</td><td class="num">0.621</td><td class="num">0.524</td><td class="bar"><div class="dv" data-tip="markets.commodities: -0.097"><i class="neg" style="right:50%;width:13.30%"></i></div></td><td class="num">-0.097</td></tr><tr><td class="">politics.us_election</td><td class="num">38</td><td class="num">0.865</td><td class="num">0.771</td><td class="bar"><div class="dv" data-tip="politics.us_election: -0.094"><i class="neg" style="right:50%;width:12.91%"></i></div></td><td class="num">-0.094</td></tr><tr><td class="">politics.global_election</td><td class="num">25</td><td class="num">0.915</td><td class="num">0.823</td><td class="bar"><div class="dv" data-tip="politics.global_election: -0.092"><i class="neg" style="right:50%;width:12.61%"></i></div></td><td class="num">-0.092</td></tr><tr><td class="">media.gaming_esports</td><td class="num">12</td><td class="num">0.855</td><td class="num">0.764</td><td class="bar"><div class="dv" data-tip="media.gaming_esports: -0.091"><i class="neg" style="right:50%;width:12.46%"></i></div></td><td class="num">-0.091</td></tr><tr><td class="">scitech.app_ranking</td><td class="num">20</td><td class="num">0.662</td><td class="num">0.572</td><td class="bar"><div class="dv" data-tip="scitech.app_ranking: -0.090"><i class="neg" style="right:50%;width:12.38%"></i></div></td><td class="num">-0.090</td></tr><tr class="thin"><td class="">health.infectious_disease</td><td class="num">9</td><td class="num">0.772</td><td class="num">0.683</td><td class="bar"><div class="dv" data-tip="health.infectious_disease: -0.089"><i class="neg" style="right:50%;width:12.21%"></i></div></td><td class="num">-0.089</td></tr><tr><td class="">markets.procurement</td><td class="num">19</td><td class="num">0.460</td><td class="num">0.372</td><td class="bar"><div class="dv" data-tip="markets.procurement: -0.088"><i class="neg" style="right:50%;width:12.11%"></i></div></td><td class="num">-0.088</td></tr><tr><td class="">media.other</td><td class="num">23</td><td class="num">0.870</td><td class="num">0.782</td><td class="bar"><div class="dv" data-tip="media.other: -0.088"><i class="neg" style="right:50%;width:12.08%"></i></div></td><td class="num">-0.088</td></tr><tr class="thin"><td class="">env.storm_cyclone</td><td class="num">9</td><td class="num">0.812</td><td class="num">0.724</td><td class="bar"><div class="dv" data-tip="env.storm_cyclone: -0.087"><i class="neg" style="right:50%;width:11.95%"></i></div></td><td class="num">-0.087</td></tr><tr><td class="">env.climate_indicator</td><td class="num">13</td><td class="num">0.821</td><td class="num">0.739</td><td class="bar"><div class="dv" data-tip="env.climate_indicator: -0.081"><i class="neg" style="right:50%;width:11.16%"></i></div></td><td class="num">-0.081</td></tr><tr><td class="">scitech.ai_leaderboard</td><td class="num">33</td><td class="num">0.733</td><td class="num">0.653</td><td class="bar"><div class="dv" data-tip="scitech.ai_leaderboard: -0.081"><i class="neg" style="right:50%;width:11.07%"></i></div></td><td class="num">-0.081</td></tr><tr><td class="">scitech.code_repo</td><td class="num">102</td><td class="num">0.527</td><td class="num">0.449</td><td class="bar"><div class="dv" data-tip="scitech.code_repo: -0.078"><i class="neg" style="right:50%;width:10.69%"></i></div></td><td class="num">-0.078</td></tr><tr class="thin"><td class="">media.tv_streaming</td><td class="num">6</td><td class="num">0.582</td><td class="num">0.507</td><td class="bar"><div class="dv" data-tip="media.tv_streaming: -0.075"><i class="neg" style="right:50%;width:10.26%"></i></div></td><td class="num">-0.075</td></tr><tr class="thin"><td class="">env.power_grid</td><td class="num">1</td><td class="num">0.898</td><td class="num">0.824</td><td class="bar"><div class="dv" data-tip="env.power_grid: -0.074"><i class="neg" style="right:50%;width:10.16%"></i></div></td><td class="num">-0.074</td></tr><tr><td class="">markets.single_stock</td><td class="num">105</td><td class="num">0.745</td><td class="num">0.687</td><td class="bar"><div class="dv" data-tip="markets.single_stock: -0.058"><i class="neg" style="right:50%;width:7.91%"></i></div></td><td class="num">-0.058</td></tr><tr><td class="">env.geophysical_monitoring</td><td class="num">12</td><td class="num">0.657</td><td class="num">0.601</td><td class="bar"><div class="dv" data-tip="env.geophysical_monitoring: -0.056"><i class="neg" style="right:50%;width:7.71%"></i></div></td><td class="num">-0.056</td></tr><tr><td class="">markets.macro_indicator</td><td class="num">37</td><td class="num">0.750</td><td class="num">0.696</td><td class="bar"><div class="dv" data-tip="markets.macro_indicator: -0.054"><i class="neg" style="right:50%;width:7.47%"></i></div></td><td class="num">-0.054</td></tr><tr class="thin"><td class="">scitech.ai_benchmark</td><td class="num">11</td><td class="num">0.749</td><td class="num">0.695</td><td class="bar"><div class="dv" data-tip="scitech.ai_benchmark: -0.054"><i class="neg" style="right:50%;width:7.42%"></i></div></td><td class="num">-0.054</td></tr><tr class="thin"><td class="">politics.diplomacy_sanctions</td><td class="num">11</td><td class="num">0.887</td><td class="num">0.835</td><td class="bar"><div class="dv" data-tip="politics.diplomacy_sanctions: -0.052"><i class="neg" style="right:50%;width:7.14%"></i></div></td><td class="num">-0.052</td></tr><tr><td class="">politics.other</td><td class="num">23</td><td class="num">0.878</td><td class="num">0.826</td><td class="bar"><div class="dv" data-tip="politics.other: -0.051"><i class="neg" style="right:50%;width:7.05%"></i></div></td><td class="num">-0.051</td></tr><tr><td class="">media.awards</td><td class="num">15</td><td class="num">0.840</td><td class="num">0.793</td><td class="bar"><div class="dv" data-tip="media.awards: -0.047"><i class="neg" style="right:50%;width:6.52%"></i></div></td><td class="num">-0.047</td></tr><tr class="thin"><td class="">politics.figure_conduct</td><td class="num">9</td><td class="num">0.809</td><td class="num">0.762</td><td class="bar"><div class="dv" data-tip="politics.figure_conduct: -0.047"><i class="neg" style="right:50%;width:6.39%"></i></div></td><td class="num">-0.047</td></tr><tr><td class="">markets.equity_index</td><td class="num">43</td><td class="num">0.818</td><td class="num">0.780</td><td class="bar"><div class="dv" data-tip="markets.equity_index: -0.037"><i class="neg" style="right:50%;width:5.11%"></i></div></td><td class="num">-0.037</td></tr><tr><td class="">sports.basketball</td><td class="num">32</td><td class="num">0.786</td><td class="num">0.753</td><td class="bar"><div class="dv" data-tip="sports.basketball: -0.034"><i class="neg" style="right:50%;width:4.60%"></i></div></td><td class="num">-0.034</td></tr><tr><td class="">markets.crypto_price</td><td class="num">83</td><td class="num">0.711</td><td class="num">0.678</td><td class="bar"><div class="dv" data-tip="markets.crypto_price: -0.033"><i class="neg" style="right:50%;width:4.50%"></i></div></td><td class="num">-0.033</td></tr><tr class="thin"><td class="">markets.other</td><td class="num">10</td><td class="num">0.750</td><td class="num">0.719</td><td class="bar"><div class="dv" data-tip="markets.other: -0.031"><i class="neg" style="right:50%;width:4.26%"></i></div></td><td class="num">-0.031</td></tr><tr><td class="">markets.policy_decision</td><td class="num">18</td><td class="num">0.834</td><td class="num">0.804</td><td class="bar"><div class="dv" data-tip="markets.policy_decision: -0.030"><i class="neg" style="right:50%;width:4.13%"></i></div></td><td class="num">-0.030</td></tr><tr><td class="">sports.cricket</td><td class="num">35</td><td class="num">0.804</td><td class="num">0.779</td><td class="bar"><div class="dv" data-tip="sports.cricket: -0.025"><i class="neg" style="right:50%;width:3.38%"></i></div></td><td class="num">-0.025</td></tr><tr><td class="">markets.corporate_action</td><td class="num">25</td><td class="num">0.885</td><td class="num">0.865</td><td class="bar"><div class="dv" data-tip="markets.corporate_action: -0.020"><i class="neg" style="right:50%;width:2.76%"></i></div></td><td class="num">-0.020</td></tr><tr><td class="">markets.equity_stats</td><td class="num">37</td><td class="num">0.426</td><td class="num">0.406</td><td class="bar"><div class="dv" data-tip="markets.equity_stats: -0.020"><i class="neg" style="right:50%;width:2.71%"></i></div></td><td class="num">-0.020</td></tr><tr class="thin"><td class="">health.other</td><td class="num">6</td><td class="num">0.846</td><td class="num">0.830</td><td class="bar"><div class="dv" data-tip="health.other: -0.016"><i class="neg" style="right:50%;width:2.23%"></i></div></td><td class="num">-0.016</td></tr><tr><td class="">sports.football</td><td class="num">183</td><td class="num">0.694</td><td class="num">0.684</td><td class="bar"><div class="dv" data-tip="sports.football: -0.010"><i class="neg" style="right:50%;width:1.39%"></i></div></td><td class="num">-0.010</td></tr><tr class="thin"><td class="">scitech.competition_math</td><td class="num">6</td><td class="num">0.704</td><td class="num">0.694</td><td class="bar"><div class="dv" data-tip="scitech.competition_math: -0.009"><i class="neg" style="right:50%;width:1.28%"></i></div></td><td class="num">-0.009</td></tr><tr class="thin"><td class="">sports.tennis</td><td class="num">11</td><td class="num">0.606</td><td class="num">0.596</td><td class="bar"><div class="dv" data-tip="sports.tennis: -0.009"><i class="neg" style="right:50%;width:1.28%"></i></div></td><td class="num">-0.009</td></tr><tr class="thin"><td class="">politics.domestic_policy</td><td class="num">11</td><td class="num">0.727</td><td class="num">0.719</td><td class="bar"><div class="dv" data-tip="politics.domestic_policy: -0.007"><i class="neg" style="right:50%;width:0.99%"></i></div></td><td class="num">-0.007</td></tr><tr><td class="">scitech.space_astro</td><td class="num">15</td><td class="num">0.823</td><td class="num">0.818</td><td class="bar"><div class="dv" data-tip="scitech.space_astro: -0.004"><i class="neg" style="right:50%;width:0.61%"></i></div></td><td class="num">-0.004</td></tr><tr><td class="">sports.baseball</td><td class="num">29</td><td class="num">0.779</td><td class="num">0.781</td><td class="bar"><div class="dv" data-tip="sports.baseball: +0.002"><i class="pos" style="left:50%;width:0.31%"></i></div></td><td class="num">+0.002</td></tr><tr class="thin"><td class="">sports.other</td><td class="num">7</td><td class="num">0.845</td><td class="num">0.872</td><td class="bar"><div class="dv" data-tip="sports.other: +0.027"><i class="pos" style="left:50%;width:3.71%"></i></div></td><td class="num">+0.027</td></tr><tr class="thin"><td class="">politics.judicial</td><td class="num">7</td><td class="num">0.850</td><td class="num">0.902</td><td class="bar"><div class="dv" data-tip="politics.judicial: +0.052"><i class="pos" style="left:50%;width:7.10%"></i></div></td><td class="num">+0.052</td></tr><tr><td class="">markets.crypto_ecosystem</td><td class="num">27</td><td class="num">0.758</td><td class="num">0.813</td><td class="bar"><div class="dv" data-tip="markets.crypto_ecosystem: +0.055"><i class="pos" style="left:50%;width:7.54%"></i></div></td><td class="num">+0.055</td></tr><tr><td class="">env.seismic_volcano</td><td class="num">36</td><td class="num">0.764</td><td class="num">0.827</td><td class="bar"><div class="dv" data-tip="env.seismic_volcano: +0.063"><i class="pos" style="left:50%;width:8.62%"></i></div></td><td class="num">+0.063</td></tr><tr><td class="">sports.esports_chess</td><td class="num">15</td><td class="num">0.780</td><td class="num">0.843</td><td class="bar"><div class="dv" data-tip="sports.esports_chess: +0.063"><i class="pos" style="left:50%;width:8.63%"></i></div></td><td class="num">+0.063</td></tr><tr><td class="">markets.corporate_results</td><td class="num">93</td><td class="num">0.712</td><td class="num">0.777</td><td class="bar"><div class="dv" data-tip="markets.corporate_results: +0.065"><i class="pos" style="left:50%;width:8.89%"></i></div></td><td class="num">+0.065</td></tr><tr><td class="">health.drug_trial</td><td class="num">57</td><td class="num">0.670</td><td class="num">0.804</td><td class="bar"><div class="dv" data-tip="health.drug_trial: +0.134"><i class="pos" style="left:50%;width:18.35%"></i></div></td><td class="num">+0.134</td></tr></tbody></table></div>
+<h2>按评分组</h2>
+<p class="small">评分组是按「这题该怎么算分」分的，和按主题分的大类正交。</p>
+<div class="tw "><table><thead><tr><th class="">评分组</th><th class="num">n</th><th class="num">axisagentic</th><th class="num">serper_gate3</th><th class="bar">差值</th><th class="num">delta</th></tr></thead><tbody><tr><td class="">g.media</td><td class="num">161</td><td class="num">0.716</td><td class="num">0.534</td><td class="bar"><div class="dv" data-tip="g.media: -0.182"><i class="neg" style="right:50%;width:50.00%"></i></div></td><td class="num">-0.182</td></tr><tr><td class="">g.transport</td><td class="num">10</td><td class="num">0.169</td><td class="num">0.000</td><td class="bar"><div class="dv" data-tip="g.transport: -0.169"><i class="neg" style="right:50%;width:46.39%"></i></div></td><td class="num">-0.169</td></tr><tr><td class="">g.commodity_fx</td><td class="num">141</td><td class="num">0.594</td><td class="num">0.471</td><td class="bar"><div class="dv" data-tip="g.commodity_fx: -0.122"><i class="neg" style="right:50%;width:33.57%"></i></div></td><td class="num">-0.122</td></tr><tr><td class="">g.ai</td><td class="num">89</td><td class="num">0.768</td><td class="num">0.662</td><td class="bar"><div class="dv" data-tip="g.ai: -0.105"><i class="neg" style="right:50%;width:28.92%"></i></div></td><td class="num">-0.105</td></tr><tr><td class="">g.tech_other</td><td class="num">83</td><td class="num">0.761</td><td class="num">0.663</td><td class="bar"><div class="dv" data-tip="g.tech_other: -0.098"><i class="neg" style="right:50%;width:26.96%"></i></div></td><td class="num">-0.098</td></tr><tr><td class="">g.weather</td><td class="num">175</td><td class="num">0.745</td><td class="num">0.649</td><td class="bar"><div class="dv" data-tip="g.weather: -0.097"><i class="neg" style="right:50%;width:26.51%"></i></div></td><td class="num">-0.097</td></tr><tr><td class="">g.politics</td><td class="num">146</td><td class="num">0.860</td><td class="num">0.776</td><td class="bar"><div class="dv" data-tip="g.politics: -0.084"><i class="neg" style="right:50%;width:23.02%"></i></div></td><td class="num">-0.084</td></tr><tr><td class="">g.macro</td><td class="num">80</td><td class="num">0.696</td><td class="num">0.616</td><td class="bar"><div class="dv" data-tip="g.macro: -0.080"><i class="neg" style="right:50%;width:22.03%"></i></div></td><td class="num">-0.080</td></tr><tr><td class="">g.code</td><td class="num">102</td><td class="num">0.527</td><td class="num">0.449</td><td class="bar"><div class="dv" data-tip="g.code: -0.078"><i class="neg" style="right:50%;width:21.38%"></i></div></td><td class="num">-0.078</td></tr><tr><td class="">g.residual</td><td class="num">83</td><td class="num">0.857</td><td class="num">0.797</td><td class="bar"><div class="dv" data-tip="g.residual: -0.060"><i class="neg" style="right:50%;width:16.61%"></i></div></td><td class="num">-0.060</td></tr><tr><td class="">g.sports</td><td class="num">340</td><td class="num">0.736</td><td class="num">0.712</td><td class="bar"><div class="dv" data-tip="g.sports: -0.024"><i class="neg" style="right:50%;width:6.48%"></i></div></td><td class="num">-0.024</td></tr><tr><td class="">g.crypto</td><td class="num">110</td><td class="num">0.722</td><td class="num">0.711</td><td class="bar"><div class="dv" data-tip="g.crypto: -0.011"><i class="neg" style="right:50%;width:3.09%"></i></div></td><td class="num">-0.011</td></tr><tr><td class="">g.equity</td><td class="num">303</td><td class="num">0.718</td><td class="num">0.708</td><td class="bar"><div class="dv" data-tip="g.equity: -0.009"><i class="neg" style="right:50%;width:2.60%"></i></div></td><td class="num">-0.009</td></tr><tr><td class="">g.health</td><td class="num">76</td><td class="num">0.691</td><td class="num">0.734</td><td class="bar"><div class="dv" data-tip="g.health: +0.043"><i class="pos" style="left:50%;width:11.80%"></i></div></td><td class="num">+0.043</td></tr></tbody></table></div>
+<h2>这一页不能证明什么</h2>
+<div class="note"><p>两个 arm 差着 provider 和 as-of 筛查两件事，所以任何一行的差值都不能归因给其中一个。带筛查的那个 arm 分数更低，这和「筛查拿掉了本不该看到的证据」一致，但同样和「serper 的检索质量不如 exa」一致，这一页两种都不排除。要分开，需要第三个 arm：同一个 provider，只开关筛查。</p><p>子域这一层的 n 普遍很小，66 个子域摊 1886 题，中位数不到 20。按差值排序之后两端天然会站着方差最大的行，这是排序本身造成的，不是发现。</p></div>
+</main>
+<script>
+(function(){
+  var heads=[].slice.call(document.querySelectorAll('main h2[id]'));
+  if(heads.length<3||window.innerWidth<1420)return;
+  var nav=document.createElement('nav');nav.className='toc';
+  nav.innerHTML='<div class="toc-t">目录</div><div class="toc-p"><i></i></div><ol>'+
+    heads.map(function(h){return '<li><a href="#'+h.id+'">'+
+      (h.getAttribute('data-toc')||h.textContent).trim()+'</a></li>';}).join('')+'</ol>';
+  document.body.appendChild(nav);
+  var links=[].slice.call(nav.querySelectorAll('a')),bar=nav.querySelector('.toc-p i');
+  function sync(){
+    var top=window.scrollY,h=document.documentElement;
+    bar.style.width=Math.min(100,100*top/((h.scrollHeight-h.clientHeight)||1))+'%';
+    var cur=0;
+    heads.forEach(function(el,i){if(el.getBoundingClientRect().top<140)cur=i;});
+    links.forEach(function(a,i){a.className=i===cur?'on':'';});
+  }
+  addEventListener('scroll',sync,{passive:true});sync();
+})();
+</script>
+</body></html>

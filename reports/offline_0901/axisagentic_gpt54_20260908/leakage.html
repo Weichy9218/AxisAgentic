@@ -1,0 +1,234 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>泄露检查</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,400;0,600;0,700;1,400&family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+:root{
+  --font-display:'Crimson Pro','Songti SC','Noto Serif CJK SC',Georgia,serif;
+  --font-body:'DM Sans',-apple-system,BlinkMacSystemFont,'PingFang SC','Segoe UI',sans-serif;
+  --font-mono:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+  --accent:#A63D38; --accent-light:#D4918C; --accent-dark:#8B3A36;
+  --ink:#0c1222; --ink-soft:#334155; --ink-muted:#64748b;
+  --surface:#fff; --raised:#f8fafc; --sunken:#f1f5f9; --border:#e2e8f0;
+  --cat1:#A63D38; --cat2:#1A6E9E; --cat3:#A2740F;
+  --r-sm:8px; --r-md:14px; --r-lg:20px;
+  --sh-sm:0 1px 3px rgba(15,23,42,.04),0 1px 2px rgba(15,23,42,.06);
+  --sh-md:0 4px 16px rgba(15,23,42,.06),0 2px 4px rgba(15,23,42,.04);
+  --sh-lg:0 12px 40px rgba(15,23,42,.08),0 4px 12px rgba(15,23,42,.04);
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--surface);color:var(--ink);
+  font:15px/1.7 var(--font-body);-webkit-font-smoothing:antialiased}
+main{max-width:1080px;margin:0 auto;padding:36px 24px 96px}
+a{color:var(--accent);text-decoration:none;border-bottom:1px solid rgba(166,61,56,.3)}
+a:hover{border-bottom-color:var(--accent)}
+p{margin:10px 0;color:var(--ink-soft)}
+ul{color:var(--ink-soft);padding-left:22px} li{margin:6px 0}
+code{font:0.88em var(--font-mono);background:var(--sunken);padding:2px 6px;
+  border-radius:4px;color:var(--accent-dark);white-space:nowrap}
+pre{background:#0c1222;color:#e2e8f0;padding:18px 20px;border-radius:var(--r-sm);
+  overflow:auto;font:12.5px/1.7 var(--font-mono);box-shadow:var(--sh-sm)}
+pre code{background:none;color:inherit;padding:0;white-space:pre}
+
+/* ---- hero ---- */
+.hero{text-align:center;padding:18px 0 26px;position:relative;margin-bottom:8px}
+.hero h1{font-family:var(--font-display);font-size:40px;line-height:1.18;
+  margin:0 0 10px;font-weight:700;letter-spacing:-.01em}
+.hero .sub{color:var(--ink-muted);font-size:14px;letter-spacing:.04em;margin:0}
+.hero::after{content:'';position:absolute;bottom:0;left:12%;right:12%;height:2px;
+  background:linear-gradient(90deg,transparent,var(--accent-light) 20%,
+    var(--accent) 50%,var(--accent-light) 80%,transparent);opacity:.55}
+.crumbs{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin-top:16px}
+.crumb{display:inline-flex;align-items:center;gap:7px;padding:8px 16px;
+  border:1px solid var(--border);border-radius:var(--r-sm);font-size:13px;
+  font-weight:600;box-shadow:var(--sh-sm);color:var(--ink-soft);
+  transition:all .3s cubic-bezier(.22,1,.36,1)}
+.crumb:hover{border-color:var(--accent);color:var(--accent);
+  transform:translateY(-2px);box-shadow:var(--sh-md)}
+
+/* ---- section rhythm ---- */
+h2{font-family:var(--font-display);font-size:26px;margin:52px 0 6px;font-weight:600;
+  letter-spacing:-.005em}
+h2 .num{color:var(--accent);font-size:.7em;font-family:var(--font-body);
+  font-weight:700;letter-spacing:.08em;display:block;margin-bottom:6px;
+  text-transform:uppercase}
+h3{font-family:var(--font-display);font-size:19px;margin:30px 0 8px;font-weight:600}
+h4{font-size:13px;margin:22px 0 6px;color:var(--accent);font-weight:700;
+  letter-spacing:.07em;text-transform:uppercase;font-family:var(--font-body)}
+hr.rule{border:0;height:2px;margin:52px 0 0;opacity:.45;
+  background:linear-gradient(90deg,transparent,var(--accent-light) 20%,
+    var(--accent) 50%,var(--accent-light) 80%,transparent)}
+
+/* ---- callouts ---- */
+.note{background:var(--raised);border-radius:var(--r-sm);padding:16px 22px;
+  margin:20px 0;font-family:var(--font-display);font-size:15.5px;line-height:1.75;
+  color:var(--ink);box-shadow:var(--sh-sm);position:relative;overflow:hidden}
+.note::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;
+  background:linear-gradient(180deg,var(--accent),var(--accent-light));
+  border-radius:var(--r-sm) 0 0 var(--r-sm)}
+.note code{background:#fff}
+
+/* ---- stat cards ---- */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));
+  gap:14px;margin:26px 0}
+.card{background:var(--raised);border:1px solid var(--border);
+  border-radius:var(--r-sm);padding:16px 18px;position:relative;overflow:hidden;
+  box-shadow:var(--sh-sm);transition:all .3s cubic-bezier(.22,1,.36,1)}
+.card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;
+  background:linear-gradient(90deg,var(--accent),var(--accent-light))}
+.card:hover{transform:translateY(-3px);box-shadow:var(--sh-md)}
+.card b{display:block;font-family:var(--font-display);font-size:32px;
+  font-weight:700;line-height:1.1;
+  background:linear-gradient(135deg,var(--accent-dark),var(--accent),var(--accent-light));
+  -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.card span{display:block;margin-top:6px;font-size:12.5px;color:var(--ink-muted)}
+
+/* ---- tables ---- */
+.tw{border-radius:var(--r-sm);overflow:hidden;box-shadow:var(--sh-sm);
+  margin:14px 0 22px;border:1px solid var(--border)}
+.tw.scroll{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13.5px}
+th,td{padding:9px 14px;text-align:left;border-bottom:1px solid var(--border);
+  vertical-align:middle}
+th{background:linear-gradient(135deg,var(--accent-dark),var(--accent));color:#fff;
+  font-weight:600;font-size:12px;letter-spacing:.05em;text-transform:uppercase;
+  border-bottom:0;white-space:nowrap}
+tbody tr{transition:background .2s ease}
+tbody tr:hover{background:var(--raised)}
+tbody tr:last-child td{border-bottom:0}
+td.num{text-align:right;font-family:var(--font-mono);font-size:12.5px;
+  white-space:nowrap;color:var(--ink-soft)}
+td.bar{width:34%;padding-right:18px}
+
+/* ---- in-table magnitude bars (single series, one hue) ---- */
+.track{height:9px;background:var(--sunken);border-radius:4px;overflow:hidden}
+.track i{display:block;height:100%;border-radius:0 4px 4px 0;
+  background:linear-gradient(90deg,var(--accent-dark),var(--accent))}
+tr.thin td.slug{color:var(--ink-muted)}
+tr.thin .track i{background:var(--accent-light)}
+
+/* ---- diverging bars: a signed delta against a shared zero ---- */
+/* One axis, a neutral midpoint and two poles taken from the validated
+   categorical set, so a reader never has to decide whether a longer bar means
+   more or less — the side carries the sign and the number is printed beside it. */
+.dv{position:relative;height:11px;background:var(--sunken);border-radius:4px}
+.dv::before{content:'';position:absolute;left:50%;top:-3px;bottom:-3px;width:1px;
+  background:var(--border)}
+.dv i{position:absolute;top:0;height:100%;border-radius:3px}
+.dv i.neg{background:#A63D38}
+.dv i.pos{background:#1A6E9E}
+
+/* ---- stacked composition bars ---- */
+.legend{display:flex;gap:18px;flex-wrap:wrap;margin:14px 0 10px;font-size:12.5px;
+  color:var(--ink-soft)}
+.legend span{display:inline-flex;align-items:center;gap:7px}
+.legend i{width:11px;height:11px;border-radius:3px;display:inline-block}
+.stack{display:grid;grid-template-columns:150px 1fr 56px;gap:12px;
+  align-items:center;margin:9px 0;font-size:13px}
+.stack .lbl{color:var(--ink-soft);text-align:right;font-size:12.5px}
+.stack .tot{font-family:var(--font-mono);font-size:12px;color:var(--ink-muted)}
+.stack .segs{display:flex;height:16px;border-radius:4px;overflow:hidden;gap:2px;
+  background:var(--sunken)}
+.stack .segs i{display:block;position:relative;cursor:default}
+.stack .segs i:first-child{border-radius:4px 0 0 4px}
+.stack .segs i:last-child{border-radius:0 4px 4px 0}
+
+/* ---- hover tooltip, no JS, no external library ---- */
+[data-tip]{position:relative}
+[data-tip]:hover::after{content:attr(data-tip);position:absolute;bottom:calc(100% + 8px);
+  left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;
+  padding:6px 10px;border-radius:6px;font:11.5px/1.45 var(--font-body);
+  white-space:pre;z-index:20;box-shadow:var(--sh-md);pointer-events:none}
+
+/* ---- figures ---- */
+figure{margin:20px 0;background:var(--raised);border:1px solid var(--border);
+  border-radius:var(--r-sm);padding:20px 22px 14px;box-shadow:var(--sh-sm)}
+figure svg{display:block;width:100%;height:auto;overflow:visible}
+figcaption{margin-top:12px;font-size:12.5px;color:var(--ink-muted);line-height:1.65}
+.formula{background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--r-sm);padding:15px 18px;margin:14px 0;
+  font:13.5px/1.95 var(--font-mono);color:var(--ink)}
+.formula b{color:var(--accent);font-weight:500}
+.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:22px}
+.small{font-size:12.5px;color:var(--ink-muted)}
+
+/* ---- floating table of contents ---- */
+.toc{position:fixed;right:16px;top:96px;width:196px;max-height:calc(100vh - 150px);
+  overflow-y:auto;padding:16px;background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--r-md);box-shadow:var(--sh-lg);z-index:100;font-size:12px}
+.toc-t{font-size:10.5px;text-transform:uppercase;letter-spacing:.15em;
+  color:var(--ink-muted);margin-bottom:10px;font-weight:600}
+.toc-p{height:3px;background:var(--border);border-radius:2px;margin-bottom:12px;
+  overflow:hidden}
+.toc-p i{display:block;height:100%;width:0;background:var(--accent);border-radius:2px}
+.toc ol{list-style:none;padding:0;margin:0}
+.toc a{display:block;padding:6px 9px;color:var(--ink-muted);border-radius:6px;
+  border-left:2px solid transparent;line-height:1.4;border-bottom:0;
+  transition:all .2s ease}
+.toc a:hover{background:var(--sunken);color:var(--ink)}
+.toc a.on{background:var(--sunken);color:var(--accent);
+  border-left-color:var(--accent);font-weight:500}
+@media (max-width:1420px){.toc{display:none}}
+
+@media (max-width:720px){
+  main{padding:24px 16px 64px} .hero h1{font-size:30px}
+  .stack{grid-template-columns:96px 1fr 44px}
+  td.bar{display:none} th.bar{display:none}
+}
+@media (prefers-reduced-motion:reduce){
+  *{transition:none!important;animation:none!important}
+}
+</style></head>
+<body>
+<main>
+<header class="hero">
+<h1>泄露检查</h1>
+<p class="sub">/tmp/axis_export/axis_strict_full · 审计这次运行的 1900 题，当前可评题集 1900 题 · 1 个分片 · 33,454 个检索 packet</p>
+
+</header>
+<div class="stats"><div class="card"><b>0.7206</b><span>总分</span><span class="small">1899 题，越高越好</span></div><div class="card"><b>156</b><span>有未解释越界日期的题</span><span class="small">占 8.2%，上界</span></div><div class="card"><b>144,661</b><span>进入 context 的证据单元</span><span class="small">筛出 170,871，保留 84.7%</span></div><div class="card"><b>0</b><span>未经筛查的检索结果</span><span class="small">33,454 个 packet 全部带戳</span></div></div>
+<h2>这一页回答什么</h2>
+<div class="note"><p>时间截断的运行只有在模型确实看不到答案时才算数。这一页把 1900 道题的落盘产物全部扫一遍，把每一个越过该题边界的日期分类，只有落在最后一档的才可能是答案泄露。分类偏保守，只有结构上确属文档时钟或计划日期的才排除，模棱两可的一律留在残留里，所以残留是<b>上界</b>而不是估计。</p><p>筛查<b>怎么做</b>的 —— provider 侧怎么编码边界、两条算术规则的判据和动作、小模型用哪个模型和什么提示词 —— 在 <code>filtering.html</code>。那一页写机制，随设计变；这一页写这次运行的结果，随运行变。</p></div>
+<h2>三道门各拦下了什么</h2>
+<div class="tw "><table><thead><tr><th class="">门</th><th class="num">拦截</th><th class="bar">分布</th><th class="">依据</th></tr></thead><tbody><tr><td class="">Gate 1 · 发布方声称的日期</td><td class="num">12,252</td><td class="bar"><div class="track" data-tip="Gate 1 · 发布方声称的日期: 12252"><i style="width:100.0%"></i></div></td><td class="">算术。provider 服务端已经滤过一轮，这里是客户端的第二道</td></tr><tr><td class="">Gate 2 · 列表形状的卡片</td><td class="num">124</td><td class="bar"><div class="track" data-tip="Gate 2 · 列表形状的卡片: 124"><i style="width:1.0%"></i></div></td><td class="">算术。一段文字里三个以上越界日期即判定为列表</td></tr><tr><td class="">Gate 3 · 小模型判定</td><td class="num">9,205</td><td class="bar"><div class="track" data-tip="Gate 3 · 小模型判定: 9205"><i style="width:75.1%"></i></div></td><td class="">唯一能看见没有日期的泄露</td></tr></tbody></table></div>
+<p class="small">送判定 54,397 条，实际请求 47,566 次，缓存命中 6,775 次。判定按内容摘要缓存，与 T_cut 和题目都无关，所以重跑时边际成本接近零。</p>
+<div class="note"><p><b>⚠ 缺陷，不是发现：</b>4629 条证据是因为 judge 连不上而被拦的，涉及 194 道题。judge 是 fail-closed 的，连不上就当没通过，所以这些题的证据是因为跟内容无关的理由少了几条。评分时要跟分数一起报。</p></div>
+<h2>小模型这道门做了什么</h2>
+<p>Gate 3 只看得到 Gate 1 和 Gate 2 已经放行的东西，所以它拦下的每一条，按流水线顺序就是算术没抓到的。问题只剩一个：它是在做判断，还是在乱拒。判定的分布回答这件事。</p>
+<div class="tw "><table><thead><tr><th class="">判定</th><th class="num">条数</th><th class="num">占比</th><th class="bar">分布</th><th class="">含义</th></tr></thead><tbody><tr><td class="">null，这段话什么都没结算 → 放行</td><td class="num">12,558</td><td class="num">70.1%</td><td class="bar"><div class="track" data-tip="null，这段话什么都没结算 → 放行: 12558"><i style="width:100.0%"></i></div></td><td class="">日程、预测、分析师意见、导航文字。它们没有陈述任何人需要等待的事实</td></tr><tr><td class="">给出一个日期 → 与 T_cut 比较</td><td class="num">4,501</td><td class="num">25.1%</td><td class="bar"><div class="track" data-tip="给出一个日期 → 与 T_cut 比较: 4501"><i style="width:35.8%"></i></div></td><td class="">判定的是论断何时可知，不是页面何时渲染</td></tr><tr><td class="">unknown，结算了但无法定日期 → 拦截</td><td class="num">862</td><td class="num">4.8%</td><td class="bar"><div class="track" data-tip="unknown，结算了但无法定日期 → 拦截: 862"><i style="width:6.9%"></i></div></td><td class="">只有这道门看得见这一类，已经发生的事实，通篇没有可用日期</td></tr></tbody></table></div>
+<div class="note"><p><b>这就是小模型不可替代的地方。</b>862 条判定是「结算了但定不出日期」。一个截断后才发布、用散文陈述结果、通篇不写日期的页面，任何按日期扫描的规则在它面前都无字可读，能看见它的只有一个被问「这段话最强的已结算论断最早何时可知」的模型。</p></div>
+<p class="small">带日期的判定跨度 1762 到 2030，近年分布 2025:432, 2026:3486, 2027:20, 2028:3, 2029:1, 2030:1。跨度这么宽本身是个证据：如果模型读的是页面渲染时间，日期会挤在当下；它给出的是论断本身的年份。</p>
+<p class="small">口径说明：判定按内容摘要寻址、跨运行共用同一个缓存，所以这 17,921 条是本机累积的全部判定，是这一次运行的超集，不是本次的拦截清单。被拦单元的原文<b>从不落盘</b>，所以判定缓存是这些决定唯一留下痕迹的地方。模型分布 {&#x27;gpt-5.4-mini&#x27;: 17791, &#x27;gpt-5.4-nano&#x27;: 130}。</p>
+<h2>越界日期都是些什么</h2>
+<div class="tw "><table><thead><tr><th class="">分类</th><th class="num">出现次数</th><th class="num">占比</th><th class="bar">分布</th><th class="num">涉及题数</th></tr></thead><tbody><tr><td class="">模型自己写的 note</td><td class="num">0</td><td class="num">0.0%</td><td class="bar"><div class="track" data-tip="模型自己写的 note: 0"><i style="width:0.0%"></i></div></td><td class="num">0</td></tr><tr><td class="">题目自身的预测窗口</td><td class="num">2,278</td><td class="num">83.0%</td><td class="bar"><div class="track" data-tip="题目自身的预测窗口: 2278"><i style="width:100.0%"></i></div></td><td class="num">583</td></tr><tr><td class="">文档时钟或计划日期</td><td class="num">38</td><td class="num">1.4%</td><td class="bar"><div class="track" data-tip="文档时钟或计划日期: 38"><i style="width:1.7%"></i></div></td><td class="num">26</td></tr><tr><td class="">URL 里的日期</td><td class="num">135</td><td class="num">4.9%</td><td class="bar"><div class="track" data-tip="URL 里的日期: 135"><i style="width:5.9%"></i></div></td><td class="num">90</td></tr><tr><td class="">残留：检索证据里，无法解释</td><td class="num">294</td><td class="num">10.7%</td><td class="bar"><div class="track" data-tip="残留：检索证据里，无法解释: 294"><i style="width:12.9%"></i></div></td><td class="num">156</td></tr></tbody></table></div>
+<div class="legend"><span><i style="background:#1A6E9E"></i>可解释</span><span><i style="background:#A63D38"></i>残留</span></div>
+<div class="stack"><div class="lbl">全部越界日期</div><div class="segs"><i style="width:89.29%;background:#1A6E9E" data-tip="全部越界日期 · 可解释: 2451"></i><i style="width:10.71%;background:#A63D38" data-tip="全部越界日期 · 残留: 294"></i></div><div class="tot">2745</div></div>
+<h2>残留</h2>
+<p>294 次出现，分布在 156 道题上（占全体 8.2%）。按产物类型：search.json 283，page.md 11。</p>
+<p class="small">出现最多的站点：mykbostats.com 25，earthquake.usgs.gov 19，services.swpc.noaa.gov 15，fred.stlouisfed.org 13，www.quheqihuo.com 12，quote.eastmoney.com 11</p>
+<div class="tw scroll "><table><thead><tr><th class="">题</th><th class="">产物</th><th class="">T_cut</th><th class="">越界日期</th><th class="">上下文</th></tr></thead><tbody><tr><td class=""><code>20260629110716293437</code></td><td class=""><code>art-0028.search.json</code></td><td class=""><code>2026-06-29</code></td><td class=""><code>2026-07-21</code></td><td class=""><span class="small">，海外需求偏弱制约整体需求弹性。 展望后市，短时基本面供需 ...&quot;, &quot;date&quot;: &quot;2025年8月28日&quot;, &quot;position&quot;: 5}, {&quot;title&quot;: &quot;实时行情|走势图_RU橡胶期货分析&quot;, &quot;link&quot;: &quot;https://www.niumoney.com/qhhq/ru.html&quot;, &quot;snippet&quot;: &quot;最新橡胶期货行情分析 ; 天气市真的行情来了？ </span></td></tr><tr><td class=""><code>20260629110716293437</code></td><td class=""><code>art-0035.search.json</code></td><td class=""><code>2026-06-29</code></td><td class=""><code>2026-09-04</code></td><td class=""><span class="small">ds&quot;: [{&quot;title&quot;: &quot;欧线集运_ 期货频道_ 东方财富网&quot;, &quot;link&quot;: &quot;https://futures.eastmoney.com/qihuo/ec.html&quot;, &quot;snippet&quot;: &quot;大连商品期货交易所, 郑州商品交易所, 广州期货交易所, 上海国际能源交易中心. 品种. 国际铜, 低硫燃料油, 20号胶. 合约. bc2609, bc2610. 日期 </span></td></tr><tr><td class=""><code>20260629110716293452</code></td><td class=""><code>art-0036.search.json</code></td><td class=""><code>2026-06-29</code></td><td class=""><code>2026-07-20</code></td><td class=""><span class="small">{&quot;query&quot;: &quot;2026-07-06 星期几 中国 交易日 工业硅&quot;, &quot;source_cards&quot;: [{&quot;title&quot;: &quot;市场综述 - 硅业在线赢硅网&quot;, &quot;link&quot;: &quot;http://windosi.com/m/listinfo/cid/20&quot;, &quot;snippet&quot;: &quot;多晶硅价格底部在哪里？ 期货日报 1244 2026-07-20. 光伏能效国标加速落地，新</span></td></tr><tr><td class=""><code>20260629110716293464</code></td><td class=""><code>art-0032.search.json</code></td><td class=""><code>2026-06-29</code></td><td class=""><code>2026-09-06</code></td><td class=""><span class="small">&quot;纯碱主连\&quot; 成交量 site:quote.eastmoney.com/qihuo/SAM.html&quot;, &quot;source_cards&quot;: [{&quot;title&quot;: &quot;纯碱主连(SAM)_行情中心&quot;, &quot;link&quot;: &quot;https://quote.eastmoney.com/qihuo/SAM.html?jump_to_web=true&quot;, &quot;snippet&quot;: &quot;纯碱主连SAM（</span></td></tr><tr><td class=""><code>20260629110716293464</code></td><td class=""><code>art-0045.search.json</code></td><td class=""><code>2026-06-29</code></td><td class=""><code>2026-09-06</code></td><td class=""><span class="small">{&quot;query&quot;: &quot;纯碱 期货 2026年6月 成交量 主连 216.2万 63.04万&quot;, &quot;source_cards&quot;: [{&quot;title&quot;: &quot;纯碱主连(SAM)_行情中心&quot;, &quot;link&quot;: &quot;https://quote.eastmoney.com/qihuo/SAM.html?jump_to_web=true&quot;, &quot;snippet&quot;: &quot;纯碱主连SAM（2026-0</span></td></tr><tr><td class=""><code>20260629110716293476</code></td><td class=""><code>art-0029.search.json</code></td><td class=""><code>2026-06-29</code></td><td class=""><code>2026-09-06</code></td><td class=""><span class="small">12日&quot;, &quot;position&quot;: 8}, {&quot;title&quot;: &quot;纸浆&quot;, &quot;link&quot;: &quot;https://www.shfe.com.cn/products/futures/energyandchemical/sp_f/&quot;, &quot;snippet&quot;: &quot;... 价±3%. 合约月份. 1～12月. 交易时间. 上午9:00～11:30，下午1:30～3:00和交易所规定 ... </span></td></tr><tr><td class=""><code>20260629110716293481</code></td><td class=""><code>art-0038.search.json</code></td><td class=""><code>2026-06-29</code></td><td class=""><code>2026-07-27</code></td><td class=""><span class="small">7月28日&quot;, &quot;position&quot;: 7}, {&quot;title&quot;: &quot;纯碱主力- 期货行情&quot;, &quot;link&quot;: &quot;https://www.quheqihuo.com/quote/czce-sam.html&quot;, &quot;snippet&quot;: &quot;主力价格季节性规律. 主力价格季节性规律. 抱歉，暂无数据！ 纯碱又名苏打、碱灰 ... （2026年7月27日）今日纯碱期货最新价格行情查询: </span></td></tr><tr><td class=""><code>20260629110716293502</code></td><td class=""><code>art-0027.search.json</code></td><td class=""><code>2026-06-29</code></td><td class=""><code>2026-08-24</code></td><td class=""><span class="small">元/吨&quot;, &quot;date&quot;: &quot;Jul 27, 2023&quot;, &quot;position&quot;: 3}, {&quot;title&quot;: &quot;丁二烯橡胶- 商品期货 - 橡塑- 生意社&quot;, &quot;link&quot;: &quot;https://rp.100ppi.com/futures/list-14-2926-5.html&quot;, &quot;snippet&quot;: &quot;上海期货交易所的丁二烯橡胶报价。 量持仓量持仓量变化… 183 元/吨 </span></td></tr><tr><td class=""><code>20260629110716311213</code></td><td class=""><code>art-0036.search.json</code></td><td class=""><code>2026-06-29</code></td><td class=""><code>2026-09-04</code></td><td class=""><span class="small">ate&quot;: &quot;2021年12月3日&quot;, &quot;position&quot;: 3}, {&quot;title&quot;: &quot;中国建设银行-外汇频道&quot;, &quot;link&quot;: &quot;https://www2.ccb.com/chn/forex/exchange-quotations.shtml&quot;, &quot;snippet&quot;: &quot;币种; 买入价; 卖出价; 发布时间; 走势图; 操作. 美元; 6.6991; 6.7279; </span></td></tr><tr><td class=""><code>20260629110716311213</code></td><td class=""><code>art-0036.search.json</code></td><td class=""><code>2026-06-29</code></td><td class=""><code>2026-09-04</code></td><td class=""><span class="small">国建设银行-外汇频道&quot;, &quot;link&quot;: &quot;https://www2.ccb.com/chn/forex/exchange-quotations.shtml&quot;, &quot;snippet&quot;: &quot;币种; 买入价; 卖出价; 发布时间; 走势图; 操作. 美元; 6.6991; 6.7279; 2026-09-04 17:33:50; 购汇 结汇. 欧元; 7.7737; 7.8260; </span></td></tr><tr><td class=""><code>20260629110740127586</code></td><td class=""><code>art-0013.search.json</code></td><td class=""><code>2026-06-29</code></td><td class=""><code>2026-08-19</code></td><td class=""><span class="small">al-surface-temperature-data-gistemp-nasa-goddard-institute-space-studies-giss&quot;, &quot;snippet&quot;: &quot;GISTEMP provides monthly anomalies relative to the 1951-1980 base period on a 2x2 degree grid. on </span></td></tr><tr><td class=""><code>20260629110740128448</code></td><td class=""><code>art-0007.search.json</code></td><td class=""><code>2026-06-29</code></td><td class=""><code>2026-07-23</code></td><td class=""><span class="small">n&quot;: 2}, {&quot;title&quot;: &quot;Does it ever feel like you&#x27;re running faster than ...&quot;, &quot;link&quot;: &quot;https://www.instagram.com/p/DUAdqSLjDoW/&quot;, &quot;snippet&quot;: &quot;Source: FRED · CPIAUCSL (US Consumer Price Index) (</span></td></tr><tr><td class=""><code>20260629110751098835</code></td><td class=""><code>art-0007.search.json</code></td><td class=""><code>2026-06-29</code></td><td class=""><code>2026-09-05</code></td><td class=""><span class="small"> ...&quot;, &quot;link&quot;: &quot;https://scangoal.com/match/utah-royals-women-vs-boston-legacy-fc-women-20260905&quot;, &quot;snippet&quot;: &quot;Utah Royals Women vs Boston Legacy FC Women (National Women&#x27;s Soccer League) on </span></td></tr><tr><td class=""><code>20260630161440278433</code></td><td class=""><code>art-0002.search.json</code></td><td class=""><code>2026-06-30</code></td><td class=""><code>2026-09-06</code></td><td class=""><span class="small">、金融期货等多个市场的最新报价、涨跌幅情况。了解最近期货行情走势，及时把握投资机会。&quot;, &quot;position&quot;: 8, &quot;date&quot;: &quot;undated&quot;}, {&quot;title&quot;: &quot;上海期货交易所&quot;, &quot;link&quot;: &quot;https://www.shfe.com.cn/&quot;, &quot;snippet&quot;: &quot;日间均价. 厂库提货地升贴水. 月均结算价. 库存周报. 交易日历. 当前日期为：</span></td></tr></tbody></table></div>
+<h2>这一页不能证明什么</h2>
+<div class="note"><p>一个越界日期不等于一次泄露，一次泄露也不一定带日期。前者是因为截断前的页面本来就可以谈论未来的日程；后者才是真正难办的一类，一个截断后才发布、用散文陈述结果、通篇不写日期的页面，任何按日期扫描的方法都看不见它，这正是 Gate 3 存在的理由，而 Gate 3 拦下的数量也无法用这一页的方法去核对。所以这里给的是<b>按日期可见的那一部分</b>的上界，不是泄露率。</p></div>
+</main>
+<script>
+(function(){
+  var heads=[].slice.call(document.querySelectorAll('main h2[id]'));
+  if(heads.length<3||window.innerWidth<1420)return;
+  var nav=document.createElement('nav');nav.className='toc';
+  nav.innerHTML='<div class="toc-t">目录</div><div class="toc-p"><i></i></div><ol>'+
+    heads.map(function(h){return '<li><a href="#'+h.id+'">'+
+      (h.getAttribute('data-toc')||h.textContent).trim()+'</a></li>';}).join('')+'</ol>';
+  document.body.appendChild(nav);
+  var links=[].slice.call(nav.querySelectorAll('a')),bar=nav.querySelector('.toc-p i');
+  function sync(){
+    var top=window.scrollY,h=document.documentElement;
+    bar.style.width=Math.min(100,100*top/((h.scrollHeight-h.clientHeight)||1))+'%';
+    var cur=0;
+    heads.forEach(function(el,i){if(el.getBoundingClientRect().top<140)cur=i;});
+    links.forEach(function(a,i){a.className=i===cur?'on':'';});
+  }
+  addEventListener('scroll',sync,{passive:true});sync();
+})();
+</script>
+</body></html>

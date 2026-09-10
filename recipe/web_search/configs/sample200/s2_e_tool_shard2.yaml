@@ -18,7 +18,7 @@ schema_version: 1
 # arms are graded by one implementation.
 
 run:
-  output_dir: axis_log://offline_forecast/sample200_gpt56_siteretry/shard2
+  output_dir: axis_log://offline_forecast/s2_e_tool/shard2
   num_runs: 1
   resume: true
   model_request_logging: false
@@ -68,12 +68,12 @@ model:
 
 benchmark:
   name: offline_forecast
-  data_path: axis_data://offline_forecast/sample200/offline_forecast_sample200_shard2.jsonl
+  data_path: axis_data://offline_forecast/sample200b/offline_forecast_sample200_shard2.jsonl
   # Both null on purpose: the subset is the file, not a runtime truncation.
   max_tasks: null
   shuffle_tasks: false
   shuffle_seed: null
-  max_concurrent: 8
+  max_concurrent: 10
 
 agent:
   prompt_profile: forecast
@@ -106,6 +106,8 @@ agent:
 
 tools:
   disable_all: false
+  fit_timeseries:
+    enabled: true
   serper_base_url: null
   jina_base_url: null
   max_content_length: 409600

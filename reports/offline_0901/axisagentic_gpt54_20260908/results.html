@@ -1,0 +1,99 @@
+<!doctype html><html lang='zh-CN'><head><meta charset='utf-8'/><meta name='viewport' content='width=device-width,initial-scale=1'/><title>评分报告 · axisagentic</title><style>
+:root{
+  --surface:#fcfcfb; --plane:#f9f9f7; --ink:#0b0b0b; --ink-2:#52514e;
+  --muted:#898781; --grid:#e1e0d9; --axis:#c3c2b7; --border:rgba(11,11,11,.10);
+  --s-1:#2a78d6; --s-2:#eb6834; --s-3:#1baf7a; --s-4:#eda100;
+  --mono:ui-monospace,SFMono-Regular,Menlo,monospace;
+  --body:'DM Sans','Segoe UI','PingFang SC',sans-serif;
+  --display:'Crimson Pro',Georgia,'Songti SC',serif;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --surface:#1a1a19; --plane:#0d0d0d; --ink:#fff; --ink-2:#c3c2b7;
+    --muted:#898781; --grid:#2c2c2a; --axis:#383835; --border:rgba(255,255,255,.10);
+    --s-1:#3987e5; --s-2:#d95926; --s-3:#199e70; --s-4:#c98500;
+  }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--plane);color:var(--ink);font-family:var(--display);
+  line-height:1.7;-webkit-font-smoothing:antialiased}
+.wrap{max-width:880px;margin:0 auto;padding:40px 24px 72px}
+h1{font-size:2em;font-weight:700;margin:0 0 4px;letter-spacing:.01em}
+h2{font-size:1.4em;font-weight:700;margin:44px 0 6px}
+h3{font-size:1.05em;font-weight:700;margin:28px 0 6px}
+p{font-family:var(--body);font-size:.94em;color:var(--ink-2);margin:0 0 14px}
+.sub{color:var(--muted);font-size:.9em;margin:0 0 24px}
+code{font-family:var(--mono);font-size:.85em;background:var(--surface);
+  border:1px solid var(--border);border-radius:4px;padding:1px 5px}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin:18px 0 8px}
+.tile{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px 18px}
+.tile-label{font-family:var(--body);font-size:.76em;letter-spacing:.06em;
+  text-transform:uppercase;color:var(--muted);margin:0 0 4px}
+.tile-value{font-family:var(--display);font-size:2em;font-weight:700;color:var(--ink);margin:0;line-height:1.15}
+.tile-note{font-family:var(--body);font-size:.82em;color:var(--muted);margin:4px 0 0}
+figure{margin:20px 0}
+figcaption{font-family:var(--body);font-size:.84em;color:var(--muted);margin-top:10px}
+.chart,.tbl{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px 20px}
+.chart-title{font-family:var(--body);font-weight:600;font-size:.95em;color:var(--ink);margin:0 0 2px}
+.chart-sub{font-family:var(--body);font-size:.84em;color:var(--muted);margin:0 0 14px}
+.bars{display:flex;flex-direction:column;gap:9px}
+.bar-row{display:grid;grid-template-columns:150px 1fr 52px 62px;align-items:center;gap:10px}
+.bar-name{font-family:var(--body);font-size:.85em;color:var(--ink-2);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bar-track{height:15px;background:var(--grid);border-radius:4px;overflow:hidden}
+.bar-fill{display:block;height:100%;background:var(--c);
+  border-radius:0 4px 4px 0;transition:filter .12s}
+.bar-row:hover .bar-fill{filter:brightness(1.08)}
+.bar-value{font-family:var(--mono);font-size:.82em;color:var(--ink);text-align:right}
+.bar-n{font-family:var(--mono);font-size:.76em;color:var(--muted);text-align:right}
+table{border-collapse:collapse;width:100%;font-family:var(--body);font-size:.86em}
+th,td{padding:7px 10px;border-bottom:1px solid var(--border);text-align:left;vertical-align:top}
+th{color:var(--muted);font-weight:600;font-size:.82em;letter-spacing:.03em}
+td.num,th.num{text-align:right;font-family:var(--mono);white-space:nowrap}
+tbody tr:last-child td{border-bottom:none}
+svg{width:100%;height:auto;display:block}
+.grid{stroke:var(--grid);stroke-width:1}
+.axis{stroke:var(--axis);stroke-width:1}
+.diag{stroke:var(--axis);stroke-width:2;stroke-dasharray:4 4}
+.line{fill:none;stroke:var(--s-1);stroke-width:2;stroke-linejoin:round}
+.pt{fill:var(--s-1);stroke:var(--surface);stroke-width:2}
+.tick{font-family:var(--body);font-size:11px;fill:var(--muted)}
+.tick.mid{text-anchor:middle}
+.tick.end{text-anchor:end}
+.note{background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--s-2);
+  border-radius:8px;padding:14px 18px;margin:18px 0}
+.note p:last-child{margin-bottom:0}
+</style></head><body><div class='wrap'><h1>评分报告 · axisagentic</h1><p class="sub">题集 <code>offline_forecast_20260401_20260829.jsonl</code>（1900 题）· 运行 <code>axis_strict_full</code>· 协议 <code>harness-eval-v2</code></p>
+<div class="tiles">
+<div class="tile"><p class="tile-label">总分 S</p><p class="tile-value">0.7206</p><p class="tile-note">逐题分数的简单平均，1899/1900 题可评</p></div>
+<div class="tile"><p class="tile-label">选择题准确率</p><p class="tile-value">0.6834</p><p class="tile-note">盲猜基线 0.333</p></div>
+<div class="tile"><p class="tile-label">二元化 Brier</p><p class="tile-value">0.1940</p><p class="tile-note">诊断列，非主指标 · n=1450</p></div>
+</div>
+<div class="note"><p><b>总分不是准确率。</b>四类题各出一个 <code>[0,1]</code>、越高越好的分数，再简单平均。选择题的分数按提交所蕴含的分布算——只对「我这个答案对不对」打分是可被利用的：挑一个自己认为最不可能的选项、报 p=0.02，那个数接近满分。完整定义见 <code>docs/SCORING_SPEC.md</code>。</p></div>
+<h2>为什么 1 题不可评</h2>
+<figure class="tbl"><table><thead><tr><th>原因</th><th class="num">题数</th><th class="num">占全集</th></tr></thead><tbody><tr><td><b>output_not_in_options</b><br/><span style='color:var(--muted)'></span><br/><code>output_not_in_options</code></td><td class="num">1</td><td class="num">0.1%</td></tr></tbody></table><figcaption>排除是显式计数的：缺少有效提交或违反题型契约就不打分，绝不按答案方向补 0/1。</figcaption></figure>
+<h2>分题型</h2>
+<figure class="chart"><p class="chart-title">逐题分数 s</p><p class="chart-sub">越高越好，Brier loss 已归一到 [0,1]</p><div class="bars"><div class="bar-row" title="BINARY · n=689 · 0.8397"><span class="bar-name">BINARY</span><span class="bar-track"><span class="bar-fill" style="width:83.97%;--c:var(--s-1)"></span></span><span class="bar-value">0.840</span><span class="bar-n">n=689</span></div><div class="bar-row" title="MULTIPLE_CHOICE · n=761 · 0.7055"><span class="bar-name">MULTIPLE_CHOICE</span><span class="bar-track"><span class="bar-fill" style="width:70.55%;--c:var(--s-2)"></span></span><span class="bar-value">0.706</span><span class="bar-n">n=761</span></div><div class="bar-row" title="NUMERIC · n=449 · 0.5632"><span class="bar-name">NUMERIC</span><span class="bar-track"><span class="bar-fill" style="width:56.32%;--c:var(--s-3)"></span></span><span class="bar-value">0.563</span><span class="bar-n">n=449</span></div></div></figure>
+<figure class="tbl"><table><thead><tr><th>题型</th><th class="num">n</th><th class="num">分数 s</th><th class="num">准确率</th><th class="num">盲猜基线</th></tr></thead><tbody><tr><td>BINARY</td><td class="num">689</td><td class="num">0.8397</td><td class="num">0.7837</td><td class="num">0.500</td></tr><tr><td>MULTIPLE_CHOICE</td><td class="num">761</td><td class="num">0.7055</td><td class="num">0.5926</td><td class="num">0.182</td></tr><tr><td>NUMERIC</td><td class="num">449</td><td class="num">0.5632</td><td class="num">—</td><td class="num">—</td></tr></tbody></table><figcaption>数值题不报准确率：与真值精确相等对连续量不是题目问的事，把它和选择题的准确率平均会把两种「对」混为一谈。</figcaption></figure>
+<h2>校准</h2>
+<figure class="chart"><p class="chart-title">校准曲线</p><p class="chart-sub">声称概率 → 实际命中率。对角线是完美校准，点在线下方即过度自信；圆面积表示题数。</p><svg viewBox="0 0 460 310" role="img" aria-label="校准曲线"><line x1="150.0" y1="246.0" x2="150.0" y2="16.0" class="grid"/><line x1="52.0" y1="188.5" x2="444.0" y2="188.5" class="grid"/><line x1="248.0" y1="246.0" x2="248.0" y2="16.0" class="grid"/><line x1="52.0" y1="131.0" x2="444.0" y2="131.0" class="grid"/><line x1="346.0" y1="246.0" x2="346.0" y2="16.0" class="grid"/><line x1="52.0" y1="73.5" x2="444.0" y2="73.5" class="grid"/><line x1="52.0" y1="246.0" x2="444.0" y2="16.0" class="diag"/><text x="310.7" y="218.4" class="tick">- - -  完美校准</text><polyline points="112.1,197.2 152.0,159.4 191.5,132.1 222.8,122.9 273.3,101.9 305.5,87.3 345.0,67.8 382.6,47.0 428.3,45.8" class="line"/><circle cx="112.1" cy="197.2" r="6.4" class="pt"><title>声称 0.153 → 实际 0.212  (33 题, 区间 [0.1,0.2))</title></circle><circle cx="152.0" cy="159.4" r="8.0" class="pt"><title>声称 0.255 → 实际 0.376  (93 题, 区间 [0.2,0.3))</title></circle><circle cx="191.5" cy="132.1" r="8.2" class="pt"><title>声称 0.356 → 实际 0.495  (103 题, 区间 [0.3,0.4))</title></circle><circle cx="222.8" cy="122.9" r="9.2" class="pt"><title>声称 0.436 → 实际 0.535  (157 题, 区间 [0.4,0.5))</title></circle><circle cx="273.3" cy="101.9" r="10.5" class="pt"><title>声称 0.565 → 实际 0.627  (249 题, 区间 [0.5,0.6))</title></circle><circle cx="305.5" cy="87.3" r="9.9" class="pt"><title>声称 0.647 → 实际 0.690  (200 题, 区间 [0.6,0.7))</title></circle><circle cx="345.0" cy="67.8" r="9.1" class="pt"><title>声称 0.747 → 实际 0.775  (151 题, 区间 [0.7,0.8))</title></circle><circle cx="382.6" cy="47.0" r="9.5" class="pt"><title>声称 0.843 → 实际 0.865  (178 题, 区间 [0.8,0.9))</title></circle><circle cx="428.3" cy="45.8" r="11.0" class="pt"><title>声称 0.960 → 实际 0.871  (286 题, 区间 [0.9,1))</title></circle><line x1="52.0" y1="246.0" x2="444.0" y2="246.0" class="axis"/><line x1="52.0" y1="246.0" x2="52.0" y2="16.0" class="axis"/><text x="52.0" y="262.0" class="tick mid">0</text><text x="44.0" y="250.0" class="tick end">0</text><text x="150.0" y="262.0" class="tick mid">0.25</text><text x="44.0" y="192.5" class="tick end">0.25</text><text x="248.0" y="262.0" class="tick mid">0.5</text><text x="44.0" y="135.0" class="tick end">0.5</text><text x="346.0" y="262.0" class="tick mid">0.75</text><text x="44.0" y="77.5" class="tick end">0.75</text><text x="444.0" y="262.0" class="tick mid">1</text><text x="44.0" y="20.0" class="tick end">1</text><text x="248.0" y="306" class="tick mid">声称概率</text><text transform="translate(12,131.0) rotate(-90)" class="tick mid">实际命中率</text></svg><figcaption>二元化 Brier 与这条曲线是同一件事的两个视图，都是诊断列。</figcaption></figure>
+<figure class="tbl"><table><thead><tr><th>概率区间</th><th class="num">n</th><th class="num">平均声称</th><th class="num">实际命中</th><th class="num">差</th></tr></thead><tbody><tr><td>[0.1, 0.2)</td><td class="num">33</td><td class="num">0.153</td><td class="num">0.212</td><td class="num">+0.059</td></tr><tr><td>[0.2, 0.3)</td><td class="num">93</td><td class="num">0.255</td><td class="num">0.376</td><td class="num">+0.121</td></tr><tr><td>[0.3, 0.4)</td><td class="num">103</td><td class="num">0.356</td><td class="num">0.495</td><td class="num">+0.139</td></tr><tr><td>[0.4, 0.5)</td><td class="num">157</td><td class="num">0.436</td><td class="num">0.535</td><td class="num">+0.099</td></tr><tr><td>[0.5, 0.6)</td><td class="num">249</td><td class="num">0.565</td><td class="num">0.627</td><td class="num">+0.062</td></tr><tr><td>[0.6, 0.7)</td><td class="num">200</td><td class="num">0.647</td><td class="num">0.690</td><td class="num">+0.043</td></tr><tr><td>[0.7, 0.8)</td><td class="num">151</td><td class="num">0.747</td><td class="num">0.775</td><td class="num">+0.027</td></tr><tr><td>[0.8, 0.9)</td><td class="num">178</td><td class="num">0.843</td><td class="num">0.865</td><td class="num">+0.022</td></tr><tr><td>[0.9, 1)</td><td class="num">286</td><td class="num">0.960</td><td class="num">0.871</td><td class="num">-0.089</td></tr></tbody></table><figcaption>表格与图同源，供无法读图时使用。</figcaption></figure>
+<h2>分组</h2>
+<figure class="chart"><p class="chart-title">按领域</p><p class="chart-sub">单一色相：这里比的是量值，不是身份</p><div class="bars"><div class="bar-row" title="1 金融市场·宏观·加密 · n=714 · 0.6759"><span class="bar-name">1 金融市场·宏观·加密</span><span class="bar-track"><span class="bar-fill" style="width:67.59%;--c:var(--s-1)"></span></span><span class="bar-value">0.676</span><span class="bar-n">n=714</span></div><div class="bar-row" title="4 体育 · n=346 · 0.7319"><span class="bar-name">4 体育</span><span class="bar-track"><span class="bar-fill" style="width:73.19%;--c:var(--s-1)"></span></span><span class="bar-value">0.732</span><span class="bar-n">n=346</span></div><div class="bar-row" title="3 科学技术与 AI · n=256 · 0.6829"><span class="bar-name">3 科学技术与 AI</span><span class="bar-track"><span class="bar-fill" style="width:68.29%;--c:var(--s-1)"></span></span><span class="bar-value">0.683</span><span class="bar-n">n=256</span></div><div class="bar-row" title="2 政治治理与地缘 · n=196 · 0.8647"><span class="bar-name">2 政治治理与地缘</span><span class="bar-track"><span class="bar-fill" style="width:86.47%;--c:var(--s-1)"></span></span><span class="bar-value">0.865</span><span class="bar-n">n=196</span></div><div class="bar-row" title="6 天气气候能源环境 · n=179 · 0.7479"><span class="bar-name">6 天气气候能源环境</span><span class="bar-track"><span class="bar-fill" style="width:74.79%;--c:var(--s-1)"></span></span><span class="bar-value">0.748</span><span class="bar-n">n=179</span></div><div class="bar-row" title="5 娱乐·媒体·社会 · n=174 · 0.7308"><span class="bar-name">5 娱乐·媒体·社会</span><span class="bar-track"><span class="bar-fill" style="width:73.08%;--c:var(--s-1)"></span></span><span class="bar-value">0.731</span><span class="bar-n">n=174</span></div><div class="bar-row" title="8 其他（若干小类） · n=34 · 0.8006"><span class="bar-name">8 其他（若干小类）</span><span class="bar-track"><span class="bar-fill" style="width:80.06%;--c:var(--s-1)"></span></span><span class="bar-value">0.801</span><span class="bar-n">n=34</span></div></div></figure>
+<figure class="tbl"><table><thead><tr><th>领域</th><th class="num">n</th><th class="num">分数 s</th><th class="num">准确率</th><th class="num">盲猜基线</th></tr></thead><tbody><tr><td>1 金融市场·宏观·加密</td><td class="num">714</td><td class="num">0.6759</td><td class="num">0.6538</td><td class="num">0.374</td></tr><tr><td>4 体育</td><td class="num">346</td><td class="num">0.7319</td><td class="num">0.5896</td><td class="num">0.353</td></tr><tr><td>3 科学技术与 AI</td><td class="num">256</td><td class="num">0.6829</td><td class="num">0.7941</td><td class="num">0.330</td></tr><tr><td>2 政治治理与地缘</td><td class="num">196</td><td class="num">0.8647</td><td class="num">0.8469</td><td class="num">0.368</td></tr><tr><td>6 天气气候能源环境</td><td class="num">179</td><td class="num">0.7479</td><td class="num">0.6822</td><td class="num">0.161</td></tr><tr><td>5 娱乐·媒体·社会</td><td class="num">174</td><td class="num">0.7308</td><td class="num">0.7143</td><td class="num">0.220</td></tr><tr><td>8 其他（若干小类）</td><td class="num">34</td><td class="num">0.8006</td><td class="num">0.6667</td><td class="num">0.434</td></tr></tbody></table><figcaption>盲猜基线在各领域间差 2.8 倍，所以直接比准确率会把选项数读成能力差异；分数使用统一的 BS/2 显示尺度，盲猜 skill 另作诊断。</figcaption></figure>
+<figure class="tbl"><table><thead><tr><th>建题至预测时点的天数</th><th class="num">n</th><th class="num">分数 s</th><th class="num">准确率</th></tr></thead><tbody><tr><td>0</td><td class="num">1146</td><td class="num">0.6506</td><td class="num">0.5610</td></tr><tr><td>1-30</td><td class="num">419</td><td class="num">0.7982</td><td class="num">0.7566</td></tr><tr><td>31-180</td><td class="num">207</td><td class="num">0.8549</td><td class="num">0.8406</td></tr><tr><td>>180</td><td class="num">127</td><td class="num">0.8770</td><td class="num">0.8583</td></tr></tbody></table><figcaption>题目越老分数越高。一部分是真实的可预测性差异，一部分是老题的证据在网上留存更久——这两者本报告分不开。</figcaption></figure>
+<figure class="tbl"><table><thead><tr><th>有效 ΔT（天）</th><th class="num">n</th><th class="num">分数 s</th><th class="num">准确率</th></tr></thead><tbody><tr><td>3</td><td class="num">78</td><td class="num">0.7384</td><td class="num">0.6795</td></tr><tr><td>4</td><td class="num">115</td><td class="num">0.7379</td><td class="num">0.6422</td></tr><tr><td>5</td><td class="num">80</td><td class="num">0.6394</td><td class="num">0.5294</td></tr><tr><td>6</td><td class="num">113</td><td class="num">0.6718</td><td class="num">0.6582</td></tr><tr><td>7</td><td class="num">1513</td><td class="num">0.7263</td><td class="num">0.6989</td></tr></tbody></table><figcaption>ΔT 是上界不是定值：建题日晚于名义预测时点的题会被钳到建题日，所以一个 ΔT 臂内部是一个分布。跨 ΔT 比较要在同一子集里做。</figcaption></figure>
+<h2>这次运行的开销与边界</h2>
+<div class="tiles">
+<div class="tile"><p class="tile-label">工具调用中位数</p><p class="tile-value">25</p><p class="tile-note">全轮 53,954 次</p></div>
+<div class="tile"><p class="tile-label">LLM 调用中位数</p><p class="tile-value">26</p><p class="tile-note">全轮 54,990 次</p></div>
+<div class="tile"><p class="tile-label">中位耗时</p><p class="tile-value">8.8 分</p><p class="tile-note">p75 17.2 分</p></div>
+<div class="tile"><p class="tile-label">触到工具上限</p><p class="tile-value">333</p><p class="tile-note">其中被迫在上限提交 0 题</p></div>
+</div>
+<figure class="tbl"><table><thead><tr><th>项</th><th class="num">值</th></tr></thead><tbody><tr><td>运行任务数</td><td class="num">1900</td></tr><tr><td>status = success</td><td class="num">1900</td></tr><tr><td>不同 T_cut</td><td class="num">114</td></tr><tr><td>预测时点被钳到建题日</td><td class="num">386</td></tr><tr><td>有效 ΔT 分布</td><td class="num">3天×78, 4天×115, 5天×80, 6天×113, 7天×1514</td></tr></tbody></table><figcaption>边界逐题记录，所以一次回测可以复现到题级。</figcaption></figure>
+<figure class="tbl"><table><thead><tr><th>工具</th><th class="num">调用次数</th><th class="num">占比</th><th class="num">每题均次</th></tr></thead><tbody><tr><td>web_search</td><td class="num">33,636</td><td class="num">62.3%</td><td class="num">17.70</td></tr><tr><td>scrape_and_extract_info</td><td class="num">19,465</td><td class="num">36.1%</td><td class="num">10.24</td></tr></tbody></table></figure>
+<h2>rollout 与 context</h2>
+<div class="note"><p>这一节是为<b>跨 agent、跨模型的行为对比</b>准备的。分数说明答得对不对，这里说明它是<b>怎么答的</b>：走了几轮、context 涨到多大、有多少历史被压缩掉。两个系统可以在同一个分数上，一个 4 轮完成、一个 30 轮才收敛，只看中位数看不出这件事，所以每一行都给到 p95 和最大值。</p></div>
+<figure class="tbl"><table><thead><tr><th>项</th><th class="num">p25</th><th class="num">中位</th><th class="num">p75</th><th class="num">p95</th><th class="num">最大</th><th class="num">均值</th></tr></thead><tbody><tr><td><b>rollout 轮数</b><br/><span style='color:var(--muted)'>一轮 = 模型的一次发言：读取、决策，然后要么调工具要么提交</span></td><td class="num">18</td><td class="num">26</td><td class="num">41</td><td class="num">52</td><td class="num">54</td><td class="num">29</td></tr><tr><td><b>context 峰值 (token)</b><br/><span style='color:var(--muted)'>一题之内送进模型的最大输入估计量，含系统提示与工具返回</span></td><td class="num">8,558</td><td class="num">11,569</td><td class="num">15,024</td><td class="num">21,358</td><td class="num">266,792</td><td class="num">12,289</td></tr><tr><td><b>context 末轮 (token)</b><br/><span style='color:var(--muted)'>提交那一轮的输入量。和峰值差得远，说明中途压缩过</span></td><td class="num">8,558</td><td class="num">11,569</td><td class="num">15,024</td><td class="num">21,358</td><td class="num">266,792</td><td class="num">12,289</td></tr><tr><td><b>消息条数</b><br/><span style='color:var(--muted)'>完整对话历史的长度，包括未送进模型的部分</span></td><td class="num">37</td><td class="num">53</td><td class="num">83</td><td class="num">106</td><td class="num">110</td><td class="num">60</td></tr><tr><td><b>送进模型的消息</b><br/><span style='color:var(--muted)'>压缩之后实际进入请求的条数；它的上界由 keep_recent_tools 决定</span></td><td class="num">33</td><td class="num">47</td><td class="num">70</td><td class="num">86</td><td class="num">100</td><td class="num">51</td></tr></tbody></table><figcaption>逐题统计，覆盖这次运行的全部 1882 道题。</figcaption></figure>
+<figure class="tbl"><table><thead><tr><th>token</th><th class="num">全轮合计</th><th class="num">每题中位</th></tr></thead><tbody><tr><td>prompt</td><td class="num">396,098,700</td><td class="num">169,267</td></tr><tr><td>completion</td><td class="num">18,208,959</td><td class="num">7,471</td></tr><tr><td>cached（命中缓存的 prompt）</td><td class="num">0</td><td class="num">占 prompt 0.0%</td></tr></tbody></table><figcaption>prompt 合计远大于 context 峰值，因为每一轮都要重发一次历史：轮数越多，同样的 context 被重复计费的次数越多。cached 那一行是这件事被 prompt 缓存抵消掉的部分。</figcaption></figure>
+<div class="note"><p>本页由 <code>scripts/eval/render_metrics_html.py</code> 从 <code>metrics.json</code> 现算，无写死值。指标定义只有一处来源：<code>docs/SCORING_SPEC.md</code>。</p></div></div></body></html>

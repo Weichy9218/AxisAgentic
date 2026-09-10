@@ -1,0 +1,366 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>sample200 三臂对比</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,400;0,600;0,700;1,400&family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+:root{
+  --font-display:'Crimson Pro','Songti SC','Noto Serif CJK SC',Georgia,serif;
+  --font-body:'DM Sans',-apple-system,BlinkMacSystemFont,'PingFang SC','Segoe UI',sans-serif;
+  --font-mono:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+  --accent:#A63D38; --accent-light:#D4918C; --accent-dark:#8B3A36;
+  --ink:#0c1222; --ink-soft:#334155; --ink-muted:#64748b;
+  --surface:#fff; --raised:#f8fafc; --sunken:#f1f5f9; --border:#e2e8f0;
+  --cat1:#A63D38; --cat2:#1A6E9E; --cat3:#A2740F;
+  --r-sm:8px; --r-md:14px; --r-lg:20px;
+  --sh-sm:0 1px 3px rgba(15,23,42,.04),0 1px 2px rgba(15,23,42,.06);
+  --sh-md:0 4px 16px rgba(15,23,42,.06),0 2px 4px rgba(15,23,42,.04);
+  --sh-lg:0 12px 40px rgba(15,23,42,.08),0 4px 12px rgba(15,23,42,.04);
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--surface);color:var(--ink);
+  font:15px/1.7 var(--font-body);-webkit-font-smoothing:antialiased}
+main{max-width:1080px;margin:0 auto;padding:36px 24px 96px}
+a{color:var(--accent);text-decoration:none;border-bottom:1px solid rgba(166,61,56,.3)}
+a:hover{border-bottom-color:var(--accent)}
+p{margin:10px 0;color:var(--ink-soft)}
+ul{color:var(--ink-soft);padding-left:22px} li{margin:6px 0}
+code{font:0.88em var(--font-mono);background:var(--sunken);padding:2px 6px;
+  border-radius:4px;color:var(--accent-dark);white-space:nowrap}
+pre{background:#0c1222;color:#e2e8f0;padding:18px 20px;border-radius:var(--r-sm);
+  overflow:auto;font:12.5px/1.7 var(--font-mono);box-shadow:var(--sh-sm)}
+pre code{background:none;color:inherit;padding:0;white-space:pre}
+
+/* ---- hero ---- */
+.hero{text-align:center;padding:18px 0 26px;position:relative;margin-bottom:8px}
+.hero h1{font-family:var(--font-display);font-size:40px;line-height:1.18;
+  margin:0 0 10px;font-weight:700;letter-spacing:-.01em}
+.hero .sub{color:var(--ink-muted);font-size:14px;letter-spacing:.04em;margin:0}
+.hero::after{content:'';position:absolute;bottom:0;left:12%;right:12%;height:2px;
+  background:linear-gradient(90deg,transparent,var(--accent-light) 20%,
+    var(--accent) 50%,var(--accent-light) 80%,transparent);opacity:.55}
+.crumbs{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin-top:16px}
+.crumb{display:inline-flex;align-items:center;gap:7px;padding:8px 16px;
+  border:1px solid var(--border);border-radius:var(--r-sm);font-size:13px;
+  font-weight:600;box-shadow:var(--sh-sm);color:var(--ink-soft);
+  transition:all .3s cubic-bezier(.22,1,.36,1)}
+.crumb:hover{border-color:var(--accent);color:var(--accent);
+  transform:translateY(-2px);box-shadow:var(--sh-md)}
+
+/* ---- section rhythm ---- */
+h2{font-family:var(--font-display);font-size:26px;margin:52px 0 6px;font-weight:600;
+  letter-spacing:-.005em}
+h2 .num{color:var(--accent);font-size:.7em;font-family:var(--font-body);
+  font-weight:700;letter-spacing:.08em;display:block;margin-bottom:6px;
+  text-transform:uppercase}
+h3{font-family:var(--font-display);font-size:19px;margin:30px 0 8px;font-weight:600}
+h4{font-size:13px;margin:22px 0 6px;color:var(--accent);font-weight:700;
+  letter-spacing:.07em;text-transform:uppercase;font-family:var(--font-body)}
+hr.rule{border:0;height:2px;margin:52px 0 0;opacity:.45;
+  background:linear-gradient(90deg,transparent,var(--accent-light) 20%,
+    var(--accent) 50%,var(--accent-light) 80%,transparent)}
+
+/* ---- callouts ---- */
+.note{background:var(--raised);border-radius:var(--r-sm);padding:16px 22px;
+  margin:20px 0;font-family:var(--font-display);font-size:15.5px;line-height:1.75;
+  color:var(--ink);box-shadow:var(--sh-sm);position:relative;overflow:hidden}
+.note::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;
+  background:linear-gradient(180deg,var(--accent),var(--accent-light));
+  border-radius:var(--r-sm) 0 0 var(--r-sm)}
+.note code{background:#fff}
+
+/* ---- stat cards ---- */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));
+  gap:14px;margin:26px 0}
+.card{background:var(--raised);border:1px solid var(--border);
+  border-radius:var(--r-sm);padding:16px 18px;position:relative;overflow:hidden;
+  box-shadow:var(--sh-sm);transition:all .3s cubic-bezier(.22,1,.36,1)}
+.card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;
+  background:linear-gradient(90deg,var(--accent),var(--accent-light))}
+.card:hover{transform:translateY(-3px);box-shadow:var(--sh-md)}
+.card b{display:block;font-family:var(--font-display);font-size:32px;
+  font-weight:700;line-height:1.1;
+  background:linear-gradient(135deg,var(--accent-dark),var(--accent),var(--accent-light));
+  -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.card span{display:block;margin-top:6px;font-size:12.5px;color:var(--ink-muted)}
+
+/* ---- tables ---- */
+.tw{border-radius:var(--r-sm);overflow:hidden;box-shadow:var(--sh-sm);
+  margin:14px 0 22px;border:1px solid var(--border)}
+.tw.scroll{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13.5px}
+th,td{padding:9px 14px;text-align:left;border-bottom:1px solid var(--border);
+  vertical-align:middle}
+th{background:linear-gradient(135deg,var(--accent-dark),var(--accent));color:#fff;
+  font-weight:600;font-size:12px;letter-spacing:.05em;text-transform:uppercase;
+  border-bottom:0;white-space:nowrap}
+tbody tr{transition:background .2s ease}
+tbody tr:hover{background:var(--raised)}
+tbody tr:last-child td{border-bottom:0}
+td.num{text-align:right;font-family:var(--font-mono);font-size:12.5px;
+  white-space:nowrap;color:var(--ink-soft)}
+td.bar{width:34%;padding-right:18px}
+
+/* ---- in-table magnitude bars (single series, one hue) ---- */
+.track{height:9px;background:var(--sunken);border-radius:4px;overflow:hidden}
+.track i{display:block;height:100%;border-radius:0 4px 4px 0;
+  background:linear-gradient(90deg,var(--accent-dark),var(--accent))}
+tr.thin td.slug{color:var(--ink-muted)}
+tr.thin .track i{background:var(--accent-light)}
+
+/* ---- diverging bars: a signed delta against a shared zero ---- */
+/* One axis, a neutral midpoint and two poles taken from the validated
+   categorical set, so a reader never has to decide whether a longer bar means
+   more or less — the side carries the sign and the number is printed beside it. */
+.dv{position:relative;height:11px;background:var(--sunken);border-radius:4px}
+.dv::before{content:'';position:absolute;left:50%;top:-3px;bottom:-3px;width:1px;
+  background:var(--border)}
+.dv i{position:absolute;top:0;height:100%;border-radius:3px}
+.dv i.neg{background:#A63D38}
+.dv i.pos{background:#1A6E9E}
+
+/* ---- stacked composition bars ---- */
+.legend{display:flex;gap:18px;flex-wrap:wrap;margin:14px 0 10px;font-size:12.5px;
+  color:var(--ink-soft)}
+.legend span{display:inline-flex;align-items:center;gap:7px}
+.legend i{width:11px;height:11px;border-radius:3px;display:inline-block}
+.stack{display:grid;grid-template-columns:150px 1fr 56px;gap:12px;
+  align-items:center;margin:9px 0;font-size:13px}
+.stack .lbl{color:var(--ink-soft);text-align:right;font-size:12.5px}
+.stack .tot{font-family:var(--font-mono);font-size:12px;color:var(--ink-muted)}
+.stack .segs{display:flex;height:16px;border-radius:4px;overflow:hidden;gap:2px;
+  background:var(--sunken)}
+.stack .segs i{display:block;position:relative;cursor:default}
+.stack .segs i:first-child{border-radius:4px 0 0 4px}
+.stack .segs i:last-child{border-radius:0 4px 4px 0}
+
+/* ---- hover tooltip, no JS, no external library ---- */
+[data-tip]{position:relative}
+[data-tip]:hover::after{content:attr(data-tip);position:absolute;bottom:calc(100% + 8px);
+  left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;
+  padding:6px 10px;border-radius:6px;font:11.5px/1.45 var(--font-body);
+  white-space:pre;z-index:20;box-shadow:var(--sh-md);pointer-events:none}
+
+/* ---- figures ---- */
+figure{margin:20px 0;background:var(--raised);border:1px solid var(--border);
+  border-radius:var(--r-sm);padding:20px 22px 14px;box-shadow:var(--sh-sm)}
+figure svg{display:block;width:100%;height:auto;overflow:visible}
+figcaption{margin-top:12px;font-size:12.5px;color:var(--ink-muted);line-height:1.65}
+.formula{background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--r-sm);padding:15px 18px;margin:14px 0;
+  font:13.5px/1.95 var(--font-mono);color:var(--ink)}
+.formula b{color:var(--accent);font-weight:500}
+.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:22px}
+.small{font-size:12.5px;color:var(--ink-muted)}
+
+/* ---- floating table of contents ---- */
+.toc{position:fixed;right:16px;top:96px;width:196px;max-height:calc(100vh - 150px);
+  overflow-y:auto;padding:16px;background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--r-md);box-shadow:var(--sh-lg);z-index:100;font-size:12px}
+.toc-t{font-size:10.5px;text-transform:uppercase;letter-spacing:.15em;
+  color:var(--ink-muted);margin-bottom:10px;font-weight:600}
+.toc-p{height:3px;background:var(--border);border-radius:2px;margin-bottom:12px;
+  overflow:hidden}
+.toc-p i{display:block;height:100%;width:0;background:var(--accent);border-radius:2px}
+.toc ol{list-style:none;padding:0;margin:0}
+.toc a{display:block;padding:6px 9px;color:var(--ink-muted);border-radius:6px;
+  border-left:2px solid transparent;line-height:1.4;border-bottom:0;
+  transition:all .2s ease}
+.toc a:hover{background:var(--sunken);color:var(--ink)}
+.toc a.on{background:var(--sunken);color:var(--accent);
+  border-left-color:var(--accent);font-weight:500}
+@media (max-width:1420px){.toc{display:none}}
+
+@media (max-width:720px){
+  main{padding:24px 16px 64px} .hero h1{font-size:30px}
+  .stack{grid-template-columns:96px 1fr 44px}
+  td.bar{display:none} th.bar{display:none}
+}
+@media (prefers-reduced-motion:reduce){
+  *{transition:none!important;animation:none!important}
+}
+
+.gb{margin:6px 0 4px}
+.gb .row{display:grid;grid-template-columns:var(--lblw,148px) 1fr;gap:14px;
+  align-items:center;margin:11px 0}
+.gb .cat{font-size:12.5px;color:var(--ink-soft);text-align:right;line-height:1.35}
+.gb .bars{display:flex;flex-direction:column;gap:2px}
+.gb .b{display:flex;align-items:center;gap:8px;height:15px}
+.gb .b .fill{height:15px;border-radius:0 4px 4px 0;min-width:2px}
+.gb .b .v{font:11.5px/1 var(--font-mono);color:var(--ink-muted);white-space:nowrap}
+.gb .axis{display:grid;grid-template-columns:var(--lblw,148px) 1fr;gap:14px;
+  margin-top:8px;font:11px var(--font-mono);color:var(--ink-muted)}
+.gb .axis .t{display:flex;justify-content:space-between}
+</style></head>
+<body>
+<main>
+<header class="hero">
+<h1>同一批 200 题，三个模型</h1>
+<p class="sub">AxisAgentic · serper · 三道门 · 194 题配对</p>
+<div class="crumbs"><a class="crumb" href="../README.md">offline_0901</a><a class="crumb" href="../filtering.html">时间过滤机制</a><a class="crumb" href="metrics.json">metrics.json</a></div>
+</header>
+
+<div class="note">gpt-5.6-sol 在它快照覆盖的那 120 题上确实分更高，但
+gpt-5.4 也是。gpt-5.4 的快照早于整个题集窗口，它记不住任何一题，前半后半仍差
++0.1557。所以那一半只是更容易。把这个共同的难度差扣掉之后，
+gpt-5.6-sol 相对 gpt-5.4 的领先在两半之间的变化是 +0.0342 量级的量，
+95% 区间跨过 0。这批题量不足以证实也不足以排除参数化泄漏，能确定的是它没有被现有证据
+支持。真正拉开的是工作量：gpt-5.6-sol 用大约一半的检索拿到了同一档分数。</div>
+
+<h2 id="s1"><span class="num">01</span>这一页比的是什么</h2>
+<p>三个臂跑同一个 runtime（AxisAgentic）、同一批题、同一个检索 provider（serper）、同一套
+三道门时间边界，最后由 Milkyway 的 <code>scripts/eval/score_offline.py</code> 统一记分。
+变的只有模型。记分不用 AxisAgentic 自己的代码，否则比出来的差里会混进记分器的差别。</p>
+
+<div class="stats">
+  <div class="card"><b>200</b><span>抽样题数，按题型和记分组分层</span></div>
+  <div class="card"><b>194</b><span>三臂都记上分的题，结论用这个分母</span></div>
+  <div class="card"><b>14</b><span>记分组，最小的 g.transport 只有 1 题</span></div>
+  <div class="card"><b>2026-04-01 起</b><span>结算窗口，至 2026-08-29</span></div>
+</div>
+<div class="tw "><table><thead><tr><th class="">模型</th><th class="">记分标签</th><th class="">训练快照</th><th class="">200 题里已在快照内结算的</th><th class="">运行目录</th></tr></thead><tbody><tr><td class=""><b style="color:#A63D38">gpt-5.4</b></td><td class=""><code>axis_gpt54</code></td><td class="">2026-03-05</td><td class="">0 / 200（0.0%）</td><td class=""><code>axis_strict_full</code></td></tr><tr><td class=""><b style="color:#1A6E9E">gpt-5.6-sol</b></td><td class=""><code>axis_gpt56_sol</code></td><td class="">2026-07-09</td><td class="">123 / 200（61.5%）</td><td class=""><code>sample200_gpt56</code></td></tr><tr><td class=""><b style="color:#A2740F">qwen3.5-397b</b></td><td class=""><code>axis_qwen35_397b</code></td><td class="">未知</td><td class="">网关不回显日期</td><td class=""><code>sample200_qwen</code></td></tr></tbody></table></div>
+<p>快照那一列是这一页存在的理由。gpt-5.4 的快照比题集窗口的第一天还早
+27 天，所以它答对的每一题都只能来自检索和推理，
+不可能来自记忆。它是判断另外两个臂有没有靠记忆得分的参照物。</p>
+<p>分母有两种。记分脚本遇到解析不出答案的行会整行剔除，所以每个臂的
+<code>metrics.json</code> 里的分数是各算各的，答不出来的题越多分母越小，分数反而可能更
+好看。这一页的结论一律用 194 题的配对分母，各臂自己的分母只在
+<a href="#s7">第 7 节</a>核对。</p>
+
+<h2 id="s2"><span class="num">02</span>分数</h2>
+<h4>各臂自己的分母</h4>
+<div class="tw "><table><thead><tr><th class="">模型</th><th class="num">记分</th><th class="num">剔除</th><th class="num">分数</th><th class="num">准确率</th><th class="">剔除原因</th></tr></thead><tbody><tr><td class=""><b style="color:#A63D38">gpt-5.4</b></td><td class="num">199</td><td class="num">1</td><td class="num">0.6898</td><td class="num">0.5789</td><td class="">output_not_in_options 1</td></tr><tr><td class=""><b style="color:#1A6E9E">gpt-5.6-sol</b></td><td class="num">200</td><td class="num">0</td><td class="num">0.7239</td><td class="num">0.6863</td><td class="">无</td></tr><tr><td class=""><b style="color:#A2740F">qwen3.5-397b</b></td><td class="num">195</td><td class="num">5</td><td class="num">0.6801</td><td class="num">0.6040</td><td class="">submission_has_no_answer 5</td></tr></tbody></table></div>
+<h4>194 题配对分母</h4>
+<div class="tw "><table><thead><tr><th class="">模型</th><th class="num">分数</th><th class="num">准确率</th><th class="num">Brier 损失</th></tr></thead><tbody><tr><td class=""><b style="color:#A63D38">gpt-5.4</b></td><td class="num">0.6902</td><td class="num">0.5878</td><td class="num">0.2104</td></tr><tr><td class=""><b style="color:#1A6E9E">gpt-5.6-sol</b></td><td class="num">0.7243</td><td class="num">0.6959</td><td class="num">0.1712</td></tr><tr><td class=""><b style="color:#A2740F">qwen3.5-397b</b></td><td class="num">0.6786</td><td class="num">0.6014</td><td class="num">0.2195</td></tr></tbody></table></div>
+<div class="legend"><span><i style="background:#A63D38"></i>gpt-5.4</span><span><i style="background:#1A6E9E"></i>gpt-5.6-sol</span><span><i style="background:#A2740F"></i>qwen3.5-397b</span></div>
+<div class="gb" style="--lblw:148px"><div class="row"><div class="cat">BINARY</div><div class="bars"><div class="b" data-tip="gpt-5.4 · BINARY: 0.8445"><div class="fill" style="width:84.45%;background:#A63D38"></div><span class="v">0.8445</span></div><div class="b" data-tip="gpt-5.6-sol · BINARY: 0.8715"><div class="fill" style="width:87.15%;background:#1A6E9E"></div><span class="v">0.8715</span></div><div class="b" data-tip="qwen3.5-397b · BINARY: 0.8380"><div class="fill" style="width:83.80%;background:#A2740F"></div><span class="v">0.8380</span></div></div></div><div class="row"><div class="cat">MULTIPLE_CHOICE</div><div class="bars"><div class="b" data-tip="gpt-5.4 · MULTIPLE_CHOICE: 0.6205"><div class="fill" style="width:62.05%;background:#A63D38"></div><span class="v">0.6205</span></div><div class="b" data-tip="gpt-5.6-sol · MULTIPLE_CHOICE: 0.6978"><div class="fill" style="width:69.78%;background:#1A6E9E"></div><span class="v">0.6978</span></div><div class="b" data-tip="qwen3.5-397b · MULTIPLE_CHOICE: 0.6249"><div class="fill" style="width:62.49%;background:#A2740F"></div><span class="v">0.6249</span></div></div></div><div class="row"><div class="cat">NUMERIC</div><div class="bars"><div class="b" data-tip="gpt-5.4 · NUMERIC: 0.5637"><div class="fill" style="width:56.37%;background:#A63D38"></div><span class="v">0.5637</span></div><div class="b" data-tip="gpt-5.6-sol · NUMERIC: 0.5376"><div class="fill" style="width:53.76%;background:#1A6E9E"></div><span class="v">0.5376</span></div><div class="b" data-tip="qwen3.5-397b · NUMERIC: 0.5179"><div class="fill" style="width:51.79%;background:#A2740F"></div><span class="v">0.5179</span></div></div></div><div class="row"><div class="cat">总分</div><div class="bars"><div class="b" data-tip="gpt-5.4 · 总分: 0.6902"><div class="fill" style="width:69.02%;background:#A63D38"></div><span class="v">0.6902</span></div><div class="b" data-tip="gpt-5.6-sol · 总分: 0.7243"><div class="fill" style="width:72.43%;background:#1A6E9E"></div><span class="v">0.7243</span></div><div class="b" data-tip="qwen3.5-397b · 总分: 0.6786"><div class="fill" style="width:67.86%;background:#A2740F"></div><span class="v">0.6786</span></div></div></div><div class="axis"><div></div><div class="t"><span>0</span><span>1.0000</span></div></div></div>
+<p class="small">题型题数：BINARY 72、MULTIPLE_CHOICE 76、
+NUMERIC 46。三种题型的记分规则不同，CHOICE 是 1 − BS/2，NUMERIC 是论文
+Eq. 13，跨题型只能看同一列内部的比较。</p>
+<h4>配对差和它的 95% 区间</h4>
+<div class="tw "><table><thead><tr><th class="">比较</th><th class="num">配对差</th><th class="num">95% 区间</th><th class="">读法</th></tr></thead><tbody><tr><td class="">gpt-5.6-sol 减 gpt-5.4</td><td class="num">+0.0342</td><td class="num">-0.0055 .. +0.0738</td><td class="">区间跨过 0</td></tr><tr><td class="">gpt-5.6-sol 减 qwen3.5-397b</td><td class="num">+0.0457</td><td class="num">+0.0073 .. +0.0841</td><td class="">区间不含 0</td></tr><tr><td class="">gpt-5.4 减 qwen3.5-397b</td><td class="num">+0.0116</td><td class="num">-0.0318 .. +0.0549</td><td class="">区间跨过 0</td></tr></tbody></table></div>
+<p>194 题能分辨的最小差约 0.040。
+gpt-5.6-sol 领先 gpt-5.4 +0.0342，落在这个分辨力之内，
+所以这两个模型在这批题上分不出高下。qwen3.5-397b 是三臂里最低的，但它和 gpt-5.4 的差
+同样跨过 0。</p>
+
+<h2 id="s3"><span class="num">03</span>快照覆盖的那一半，是不是被记住了</h2>
+<p>gpt-5.6-sol 的快照是 2026-07-09。这 194 题里有 120 题在这个日期之前就已
+结算，这部分题的答案有可能已经在它的权重里。三道门只挡得住检索通道，挡不住权重。</p>
+<p>直觉的查法是看它在这一半上是不是分更高。这个查法本身不成立，因为那一半也可能只是
+更容易。所以要看的不是一个臂的高低，而是<b>臂之间的差在两半之间变了多少</b>。</p>
+<h4>先看安慰剂：三个臂在快照那一半都更高</h4>
+<div class="tw "><table><thead><tr><th class="">模型</th><th class="">快照是否覆盖前半</th><th class="num">前半分数</th><th class="num">后半分数</th><th class="num">前半减后半</th></tr></thead><tbody><tr><td class=""><b style="color:#A63D38">gpt-5.4</b></td><td class="">不覆盖</td><td class="num">0.7495</td><td class="num">0.5938</td><td class="num">+0.1557</td></tr><tr><td class=""><b style="color:#1A6E9E">gpt-5.6-sol</b></td><td class="">覆盖</td><td class="num">0.7951</td><td class="num">0.6096</td><td class="num">+0.1855</td></tr><tr><td class=""><b style="color:#A2740F">qwen3.5-397b</b></td><td class="">未知</td><td class="num">0.7333</td><td class="num">0.5899</td><td class="num">+0.1433</td></tr></tbody></table></div>
+<div class="legend"><span><i style="background:#A63D38"></i>gpt-5.4</span><span><i style="background:#1A6E9E"></i>gpt-5.6-sol</span><span><i style="background:#A2740F"></i>qwen3.5-397b</span></div>
+<div class="gb" style="--lblw:200px"><div class="row"><div class="cat">2026-07-09 前结算（120 题）</div><div class="bars"><div class="b" data-tip="gpt-5.4 · 2026-07-09 前结算（120 题）: 0.7495"><div class="fill" style="width:74.95%;background:#A63D38"></div><span class="v">0.7495</span></div><div class="b" data-tip="gpt-5.6-sol · 2026-07-09 前结算（120 题）: 0.7951"><div class="fill" style="width:79.51%;background:#1A6E9E"></div><span class="v">0.7951</span></div><div class="b" data-tip="qwen3.5-397b · 2026-07-09 前结算（120 题）: 0.7333"><div class="fill" style="width:73.33%;background:#A2740F"></div><span class="v">0.7333</span></div></div></div><div class="row"><div class="cat">2026-07-09 后结算（74 题）</div><div class="bars"><div class="b" data-tip="gpt-5.4 · 2026-07-09 后结算（74 题）: 0.5938"><div class="fill" style="width:59.38%;background:#A63D38"></div><span class="v">0.5938</span></div><div class="b" data-tip="gpt-5.6-sol · 2026-07-09 后结算（74 题）: 0.6096"><div class="fill" style="width:60.96%;background:#1A6E9E"></div><span class="v">0.6096</span></div><div class="b" data-tip="qwen3.5-397b · 2026-07-09 后结算（74 题）: 0.5899"><div class="fill" style="width:58.99%;background:#A2740F"></div><span class="v">0.5899</span></div></div></div><div class="axis"><div></div><div class="t"><span>0</span><span>1.0000</span></div></div></div>
+<div class="note">gpt-5.4 的快照是 2026-03-05，它记不住这 194 题里的任何一题，
+可它在前半的分数同样比后半高 +0.1557。
+所以"前半分数更高"是题目本身的性质，不是记忆的证据。前半更容易，或者后半更难。</div>
+<h4>再看差中差</h4>
+<p>把两半各自的臂间差相减。如果 gpt-5.6-sol 是靠记忆在前半得分，它对另外两个臂的领先
+应该在前半明显更大；如果它只是模型更强，领先在两半应该差不多。</p>
+<div class="tw "><table><thead><tr><th class="">比较</th><th class="num">前半的差</th><th class="num">后半的差</th><th class="num">差中差</th><th class="num">95% 区间</th></tr></thead><tbody><tr><td class="">gpt-5.6-sol 减 gpt-5.4</td><td class="num">+0.0455</td><td class="num">+0.0157</td><td class="num">+0.0298</td><td class="num">-0.0560 .. +0.1156</td></tr><tr><td class="">gpt-5.6-sol 减 qwen3.5-397b</td><td class="num">+0.0618</td><td class="num">+0.0196</td><td class="num">+0.0422</td><td class="num">-0.0435 .. +0.1278</td></tr></tbody></table></div>
+<p>对 gpt-5.4 的差中差是 +0.0298，95% 区间半宽 0.0858，区间跨过 0，这批题量测不出这个效应。
+点估计的方向是偏向记忆的，但 194 题撑不起这个判断：这个检验在当前题量下能分辨的
+最小差中差是 0.086，而我们关心的泄漏量级在 0.03 上下。
+<b>结论是这批数据既没有证实也没有排除 gpt-5.6-sol 的参数化泄漏，它只排除了那个最容易
+被误读的证据。</b></p>
+<h4>逐月</h4>
+<div class="legend"><span><i style="background:#A63D38"></i>gpt-5.4</span><span><i style="background:#1A6E9E"></i>gpt-5.6-sol</span><span><i style="background:#A2740F"></i>qwen3.5-397b</span></div>
+<figure><svg viewBox="0 0 880 250" role="img"><line x1="46" y1="216.0" x2="784" y2="216.0" stroke="#e2e8f0" stroke-width="1"/><text x="36" y="220.0" text-anchor="end" font-size="11" font-family="monospace" fill="#64748b">0.40</text><line x1="46" y1="165.5" x2="784" y2="165.5" stroke="#e2e8f0" stroke-width="1"/><text x="36" y="169.5" text-anchor="end" font-size="11" font-family="monospace" fill="#64748b">0.55</text><line x1="46" y1="115.0" x2="784" y2="115.0" stroke="#e2e8f0" stroke-width="1"/><text x="36" y="119.0" text-anchor="end" font-size="11" font-family="monospace" fill="#64748b">0.70</text><line x1="46" y1="64.5" x2="784" y2="64.5" stroke="#e2e8f0" stroke-width="1"/><text x="36" y="68.5" text-anchor="end" font-size="11" font-family="monospace" fill="#64748b">0.85</text><line x1="46" y1="14.0" x2="784" y2="14.0" stroke="#e2e8f0" stroke-width="1"/><text x="36" y="18.0" text-anchor="end" font-size="11" font-family="monospace" fill="#64748b">1.00</text><text x="46.0" y="238" text-anchor="middle" font-size="11.5" fill="#64748b">2026-04 (n=40)</text><text x="230.5" y="238" text-anchor="middle" font-size="11.5" fill="#64748b">2026-05 (n=35)</text><text x="415.0" y="238" text-anchor="middle" font-size="11.5" fill="#64748b">2026-06 (n=34)</text><text x="599.5" y="238" text-anchor="middle" font-size="11.5" fill="#64748b">2026-07 (n=20)</text><text x="784.0" y="238" text-anchor="middle" font-size="11.5" fill="#64748b">2026-08 (n=65)</text><path d="M46.0,98.2 L230.5,113.1 L415.0,68.2 L599.5,126.8 L784.0,157.1" fill="none" stroke="#A63D38" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/><circle cx="46.0" cy="98.2" r="4.5" fill="#A63D38" stroke="#fff" stroke-width="2"><title>gpt-5.4: 0.7500</title></circle><circle cx="230.5" cy="113.1" r="4.5" fill="#A63D38" stroke="#fff" stroke-width="2"><title>gpt-5.4: 0.7057</title></circle><circle cx="415.0" cy="68.2" r="4.5" fill="#A63D38" stroke="#fff" stroke-width="2"><title>gpt-5.4: 0.8390</title></circle><circle cx="599.5" cy="126.8" r="4.5" fill="#A63D38" stroke="#fff" stroke-width="2"><title>gpt-5.4: 0.6650</title></circle><circle cx="784.0" cy="157.1" r="4.5" fill="#A63D38" stroke="#fff" stroke-width="2"><title>gpt-5.4: 0.5748</title></circle><path d="M46.0,84.6 L230.5,84.5 L415.0,60.0 L599.5,139.7 L784.0,146.9" fill="none" stroke="#1A6E9E" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/><circle cx="46.0" cy="84.6" r="4.5" fill="#1A6E9E" stroke="#fff" stroke-width="2"><title>gpt-5.6-sol: 0.7904</title></circle><circle cx="230.5" cy="84.5" r="4.5" fill="#1A6E9E" stroke="#fff" stroke-width="2"><title>gpt-5.6-sol: 0.7905</title></circle><circle cx="415.0" cy="60.0" r="4.5" fill="#1A6E9E" stroke="#fff" stroke-width="2"><title>gpt-5.6-sol: 0.8635</title></circle><circle cx="599.5" cy="139.7" r="4.5" fill="#1A6E9E" stroke="#fff" stroke-width="2"><title>gpt-5.6-sol: 0.6266</title></circle><circle cx="784.0" cy="146.9" r="4.5" fill="#1A6E9E" stroke="#fff" stroke-width="2"><title>gpt-5.6-sol: 0.6052</title></circle><path d="M46.0,108.3 L230.5,116.1 L415.0,60.5 L599.5,167.9 L784.0,152.2" fill="none" stroke="#A2740F" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/><circle cx="46.0" cy="108.3" r="4.5" fill="#A2740F" stroke="#fff" stroke-width="2"><title>qwen3.5-397b: 0.7199</title></circle><circle cx="230.5" cy="116.1" r="4.5" fill="#A2740F" stroke="#fff" stroke-width="2"><title>qwen3.5-397b: 0.6967</title></circle><circle cx="415.0" cy="60.5" r="4.5" fill="#A2740F" stroke="#fff" stroke-width="2"><title>qwen3.5-397b: 0.8618</title></circle><circle cx="599.5" cy="167.9" r="4.5" fill="#A2740F" stroke="#fff" stroke-width="2"><title>qwen3.5-397b: 0.5428</title></circle><circle cx="784.0" cy="152.2" r="4.5" fill="#A2740F" stroke="#fff" stroke-width="2"><title>qwen3.5-397b: 0.5894</title></circle><text x="798.0" y="150.9" font-size="12" font-weight="600" fill="#1A6E9E">gpt-5.6-sol</text><text x="798.0" y="165.9" font-size="12" font-weight="600" fill="#A2740F">qwen3.5-397b</text><text x="798.0" y="180.9" font-size="12" font-weight="600" fill="#A63D38">gpt-5.4</text></svg>
+<figcaption>按结算月份的配对分数。三条线一起走高走低，说明月份之间的差异由题目决定。
+2026-07 是 gpt-5.6-sol 唯一低于 gpt-5.4 的月份，而这正是它快照所在的月份，与"靠记忆"
+的方向相反。该月只有 20 题，不构成结论。</figcaption></figure>
+<p class="small">另有 5 题落在更窄的一档：T_cut 早于快照、结算晚于快照，
+模型可能知道结算前的进展但不知道结果。题量太小，单列没有意义，已并入后半。</p>
+
+<h2 id="s4"><span class="num">04</span>工作量</h2>
+<p>分数分不出高下，工作量分得很开。这是这批运行里最大的一个差别。</p>
+<div class="tw "><table><thead><tr><th class="">模型</th><th class="num">耗时中位数</th><th class="num">耗时 p90</th><th class="num">轮数中位数</th><th class="num">工具调用中位数</th><th class="num">prompt token 合计</th><th class="num">上下文峰值中位数</th></tr></thead><tbody><tr><td class=""><b style="color:#A63D38">gpt-5.4</b></td><td class="num">560 s</td><td class="num">1,965 s</td><td class="num">21.0</td><td class="num">27.0</td><td class="num">43,868,010</td><td class="num">12,110</td></tr><tr><td class=""><b style="color:#1A6E9E">gpt-5.6-sol</b></td><td class="num">166 s</td><td class="num">515 s</td><td class="num">9.0</td><td class="num">11.5</td><td class="num">14,178,094</td><td class="num">6,353</td></tr><tr><td class=""><b style="color:#A2740F">qwen3.5-397b</b></td><td class="num">541 s</td><td class="num">1,781 s</td><td class="num">16.0</td><td class="num">18.0</td><td class="num">43,296,494</td><td class="num">14,965</td></tr></tbody></table></div>
+<div class="legend"><span><i style="background:#A63D38"></i>gpt-5.4</span><span><i style="background:#1A6E9E"></i>gpt-5.6-sol</span><span><i style="background:#A2740F"></i>qwen3.5-397b</span></div>
+<div class="two">
+<figure><div class="gb" style="--lblw:104px"><div class="row"><div class="cat">耗时中位数</div><div class="bars"><div class="b" data-tip="gpt-5.4 · 耗时中位数: 560 s"><div class="fill" style="width:92.59%;background:#A63D38"></div><span class="v">560 s</span></div><div class="b" data-tip="gpt-5.6-sol · 耗时中位数: 166 s"><div class="fill" style="width:27.49%;background:#1A6E9E"></div><span class="v">166 s</span></div><div class="b" data-tip="qwen3.5-397b · 耗时中位数: 541 s"><div class="fill" style="width:89.37%;background:#A2740F"></div><span class="v">541 s</span></div></div></div><div class="axis"><div></div><div class="t"><span>0</span><span>605 s</span></div></div></div>
+<figcaption>单题耗时中位数。gpt-5.6-sol 比 gpt-5.4 快 3.4 倍。</figcaption></figure>
+<figure><div class="gb" style="--lblw:104px"><div class="row"><div class="cat">轮数中位数</div><div class="bars"><div class="b" data-tip="gpt-5.4 · 轮数中位数: 21.0"><div class="fill" style="width:72.02%;background:#A63D38"></div><span class="v">21.0</span></div><div class="b" data-tip="gpt-5.6-sol · 轮数中位数: 9.0"><div class="fill" style="width:30.86%;background:#1A6E9E"></div><span class="v">9.0</span></div><div class="b" data-tip="qwen3.5-397b · 轮数中位数: 16.0"><div class="fill" style="width:54.87%;background:#A2740F"></div><span class="v">16.0</span></div></div></div><div class="row"><div class="cat">工具调用中位数</div><div class="bars"><div class="b" data-tip="gpt-5.4 · 工具调用中位数: 27.0"><div class="fill" style="width:92.59%;background:#A63D38"></div><span class="v">27.0</span></div><div class="b" data-tip="gpt-5.6-sol · 工具调用中位数: 11.5"><div class="fill" style="width:39.44%;background:#1A6E9E"></div><span class="v">11.5</span></div><div class="b" data-tip="qwen3.5-397b · 工具调用中位数: 18.0"><div class="fill" style="width:61.73%;background:#A2740F"></div><span class="v">18.0</span></div></div></div><div class="axis"><div></div><div class="t"><span>0</span><span>29.2</span></div></div></div>
+<figcaption>每题的 rollout 轮数和工具调用次数中位数，上限分别是 70 和 50，
+三个臂都没有触到上限。</figcaption></figure>
+</div>
+<h4>工作量随难度的调节</h4>
+<p>后半（74 题）对三个臂都更难。一个按需检索的 agent 应该在难的一半上多搜
+几轮。</p>
+<div class="tw "><table><thead><tr><th class="">模型</th><th class="num">前半轮数</th><th class="num">后半轮数</th><th class="num">轮数变化</th><th class="num">前半工具</th><th class="num">后半工具</th><th class="num">工具变化</th></tr></thead><tbody><tr><td class=""><b style="color:#A63D38">gpt-5.4</b></td><td class="num">20.0</td><td class="num">22.0</td><td class="num">+2.0</td><td class="num">24.0</td><td class="num">35.5</td><td class="num">+11.5</td></tr><tr><td class=""><b style="color:#1A6E9E">gpt-5.6-sol</b></td><td class="num">9.0</td><td class="num">10.0</td><td class="num">+1.0</td><td class="num">11.0</td><td class="num">12.0</td><td class="num">+1.0</td></tr><tr><td class=""><b style="color:#A2740F">qwen3.5-397b</b></td><td class="num">15.0</td><td class="num">17.5</td><td class="num">+2.5</td><td class="num">15.5</td><td class="num">20.0</td><td class="num">+4.5</td></tr></tbody></table></div>
+<p>gpt-5.4 和 qwen3.5-397b 在难的一半上都明显加大投入，gpt-5.6-sol 几乎不动。它用固定
+的、约为另外两个臂一半的检索量拿到了不低于它们的分数。这既可能是它更早判断证据够了，
+也可能是它更早停止搜索。这一页分不开这两种解释，但它是下一步该查的地方，
+比继续加题更有信息量。</p>
+<p class="small">和 gpt-5.4 的工作量比较带一个混杂：那一臂的 config 不同，见
+<a href="#s8">第 8 节</a>。gpt-5.6-sol 和 qwen3.5-397b 之间没有这个问题，两者跑的是同一份
+config，所以"gpt-5.6-sol 的工具调用是 qwen 的
+64%"这句话是干净的。</p>
+
+<h2 id="s5"><span class="num">05</span>校准</h2>
+<p>准确率和分数不是一回事。分数记的是整个选项分布，一个答对但过度自信的模型，和一个
+答错但留了余地的模型，在分数上的距离比在准确率上小。</p>
+<div class="tw "><table><thead><tr><th class="">模型</th><th class="num">平均置信度</th><th class="num">准确率</th><th class="num">过度自信</th></tr></thead><tbody><tr><td class=""><b style="color:#A63D38">gpt-5.4</b></td><td class="num">0.633</td><td class="num">0.588</td><td class="num">+0.045</td></tr><tr><td class=""><b style="color:#1A6E9E">gpt-5.6-sol</b></td><td class="num">0.672</td><td class="num">0.696</td><td class="num">-0.024</td></tr><tr><td class=""><b style="color:#A2740F">qwen3.5-397b</b></td><td class="num">0.695</td><td class="num">0.601</td><td class="num">+0.094</td></tr></tbody></table></div>
+<div class="legend"><span><i style="background:#A63D38"></i>gpt-5.4</span><span><i style="background:#1A6E9E"></i>gpt-5.6-sol</span><span><i style="background:#A2740F"></i>qwen3.5-397b</span></div>
+<figure><svg viewBox="0 0 640 300" role="img"><line x1="72" y1="218.0" x2="596" y2="218.0" stroke="#e2e8f0" stroke-width="1"/><text x="62" y="222.0" text-anchor="end" font-size="11" font-family="monospace" fill="#64748b">0.00</text><text x="72.0" y="292" text-anchor="middle" font-size="11" font-family="monospace" fill="#64748b">0.00</text><line x1="72" y1="168.5" x2="596" y2="168.5" stroke="#e2e8f0" stroke-width="1"/><text x="62" y="172.5" text-anchor="end" font-size="11" font-family="monospace" fill="#64748b">0.25</text><text x="203.0" y="292" text-anchor="middle" font-size="11" font-family="monospace" fill="#64748b">0.25</text><line x1="72" y1="119.0" x2="596" y2="119.0" stroke="#e2e8f0" stroke-width="1"/><text x="62" y="123.0" text-anchor="end" font-size="11" font-family="monospace" fill="#64748b">0.50</text><text x="334.0" y="292" text-anchor="middle" font-size="11" font-family="monospace" fill="#64748b">0.50</text><line x1="72" y1="69.5" x2="596" y2="69.5" stroke="#e2e8f0" stroke-width="1"/><text x="62" y="73.5" text-anchor="end" font-size="11" font-family="monospace" fill="#64748b">0.75</text><text x="465.0" y="292" text-anchor="middle" font-size="11" font-family="monospace" fill="#64748b">0.75</text><line x1="72" y1="20.0" x2="596" y2="20.0" stroke="#e2e8f0" stroke-width="1"/><text x="62" y="24.0" text-anchor="end" font-size="11" font-family="monospace" fill="#64748b">1.00</text><text x="596.0" y="292" text-anchor="middle" font-size="11" font-family="monospace" fill="#64748b">1.00</text><line x1="72" y1="218.0" x2="596" y2="20.0" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="5 4"/><text x="590.0" y="12.0" text-anchor="end" font-size="11" fill="#94a3b8">完美校准</text><path d="M248.2,148.9 L368.0,129.2 L409.6,62.4 L458.3,97.0 L514.8,62.4 L573.9,46.4" fill="none" stroke="#A63D38" stroke-width="2" stroke-linejoin="round" opacity="0.85"/><circle cx="248.2" cy="148.9" r="9.8" fill="#A63D38" stroke="#fff" stroke-width="2" opacity="0.9"><title>gpt-5.4 置信度 0.34 准确率 0.35 n=43</title></circle><circle cx="368.0" cy="129.2" r="8.6" fill="#A63D38" stroke="#fff" stroke-width="2" opacity="0.9"><title>gpt-5.4 置信度 0.56 准确率 0.45 n=29</title></circle><circle cx="409.6" cy="62.4" r="6.9" fill="#A63D38" stroke="#fff" stroke-width="2" opacity="0.9"><title>gpt-5.4 置信度 0.64 准确率 0.79 n=14</title></circle><circle cx="458.3" cy="97.0" r="7.4" fill="#A63D38" stroke="#fff" stroke-width="2" opacity="0.9"><title>gpt-5.4 置信度 0.74 准确率 0.61 n=18</title></circle><circle cx="514.8" cy="62.4" r="6.9" fill="#A63D38" stroke="#fff" stroke-width="2" opacity="0.9"><title>gpt-5.4 置信度 0.84 准确率 0.79 n=14</title></circle><circle cx="573.9" cy="46.4" r="8.7" fill="#A63D38" stroke="#fff" stroke-width="2" opacity="0.9"><title>gpt-5.4 置信度 0.96 准确率 0.87 n=30</title></circle><path d="M241.0,143.1 L358.5,97.0 L406.0,69.5 L459.1,53.0 L523.3,119.0 L586.9,29.7" fill="none" stroke="#1A6E9E" stroke-width="2" stroke-linejoin="round" opacity="0.85"/><circle cx="241.0" cy="143.1" r="9.3" fill="#1A6E9E" stroke="#fff" stroke-width="2" opacity="0.9"><title>gpt-5.6-sol 置信度 0.32 准确率 0.38 n=37</title></circle><circle cx="358.5" cy="97.0" r="7.4" fill="#1A6E9E" stroke="#fff" stroke-width="2" opacity="0.9"><title>gpt-5.6-sol 置信度 0.55 准确率 0.61 n=18</title></circle><circle cx="406.0" cy="69.5" r="7.7" fill="#1A6E9E" stroke="#fff" stroke-width="2" opacity="0.9"><title>gpt-5.6-sol 置信度 0.64 准确率 0.75 n=20</title></circle><circle cx="459.1" cy="53.0" r="8.1" fill="#1A6E9E" stroke="#fff" stroke-width="2" opacity="0.9"><title>gpt-5.6-sol 置信度 0.74 准确率 0.83 n=24</title></circle><circle cx="523.3" cy="119.0" r="6.0" fill="#1A6E9E" stroke="#fff" stroke-width="2" opacity="0.9"><title>gpt-5.6-sol 置信度 0.86 准确率 0.50 n=8</title></circle><circle cx="586.9" cy="29.7" r="9.6" fill="#1A6E9E" stroke="#fff" stroke-width="2" opacity="0.9"><title>gpt-5.6-sol 置信度 0.98 准确率 0.95 n=41</title></circle><path d="M245.4,201.5 L360.7,129.2 L411.8,92.0 L457.6,88.3 L521.3,61.3 L561.8,67.1" fill="none" stroke="#A2740F" stroke-width="2" stroke-linejoin="round" opacity="0.85"/><circle cx="245.4" cy="201.5" r="6.7" fill="#A2740F" stroke="#fff" stroke-width="2" opacity="0.9"><title>qwen3.5-397b 置信度 0.33 准确率 0.08 n=12</title></circle><circle cx="360.7" cy="129.2" r="8.6" fill="#A2740F" stroke="#fff" stroke-width="2" opacity="0.9"><title>qwen3.5-397b 置信度 0.55 准确率 0.45 n=29</title></circle><circle cx="411.8" cy="92.0" r="8.9" fill="#A2740F" stroke="#fff" stroke-width="2" opacity="0.9"><title>qwen3.5-397b 置信度 0.65 准确率 0.64 n=33</title></circle><circle cx="457.6" cy="88.3" r="8.6" fill="#A2740F" stroke="#fff" stroke-width="2" opacity="0.9"><title>qwen3.5-397b 置信度 0.74 准确率 0.66 n=29</title></circle><circle cx="521.3" cy="61.3" r="8.1" fill="#A2740F" stroke="#fff" stroke-width="2" opacity="0.9"><title>qwen3.5-397b 置信度 0.86 准确率 0.79 n=24</title></circle><circle cx="561.8" cy="67.1" r="7.8" fill="#A2740F" stroke="#fff" stroke-width="2" opacity="0.9"><title>qwen3.5-397b 置信度 0.93 准确率 0.76 n=21</title></circle><text x="334.0" y="276" text-anchor="middle" font-size="11" fill="#94a3b8">模型给出的置信度</text><text transform="translate(18,119.0) rotate(-90)" text-anchor="middle" font-size="11" fill="#94a3b8">实际准确率</text></svg>
+<figcaption>横轴是模型自己给的置信度，纵轴是这一档里实际的准确率，点面积随题数变化。
+点落在虚线下方表示过度自信。qwen3.5-397b 的平均置信度最高、准确率不是最高，
+它的分数低于另外两臂主要来自这里，不是来自答错更多。</figcaption></figure>
+
+<h2 id="s6"><span class="num">06</span>分记分组</h2>
+<p>七个大类太粗，读不出结果来自哪里。这里用 14 个记分组，每组的最高分标成该臂的颜色。
+不足 12 题的组用浅色排版，只作参考：按差值排序会把方差最大的组推到两端，
+那是排序造成的，不是发现。</p>
+<div class="tw "><table><thead><tr><th class="">记分组</th><th class="num">题数</th><th class="num">gpt-5.4</th><th class="num">gpt-5.6-sol</th><th class="num">qwen3.5-397b</th></tr></thead><tbody><tr><td class="">g.sports</td><td class="num">33</td><td class="num">0.6529</td><td class="num"><b style="color:#1A6E9E">0.6880</b></td><td class="num">0.6569</td></tr><tr><td class="">g.equity</td><td class="num">31</td><td class="num">0.6569</td><td class="num"><b style="color:#1A6E9E">0.8195</b></td><td class="num">0.8059</td></tr><tr><td class="">g.weather</td><td class="num">18</td><td class="num"><b style="color:#A63D38">0.7301</b></td><td class="num">0.7268</td><td class="num">0.5947</td></tr><tr><td class="">g.media</td><td class="num">17</td><td class="num">0.6987</td><td class="num">0.7395</td><td class="num"><b style="color:#A2740F">0.7408</b></td></tr><tr><td class="">g.politics</td><td class="num">15</td><td class="num">0.8012</td><td class="num"><b style="color:#1A6E9E">0.8515</b></td><td class="num">0.8250</td></tr><tr><td class="">g.commodity_fx</td><td class="num">15</td><td class="num">0.5691</td><td class="num"><b style="color:#1A6E9E">0.5763</b></td><td class="num">0.4837</td></tr><tr class="thin"><td class="">g.crypto</td><td class="num">11</td><td class="num">0.7088</td><td class="num"><b style="color:#1A6E9E">0.7468</b></td><td class="num">0.6659</td></tr><tr class="thin"><td class="">g.code</td><td class="num">10</td><td class="num"><b style="color:#A63D38">0.6676</b></td><td class="num">0.4885</td><td class="num">0.4387</td></tr><tr class="thin"><td class="">g.residual</td><td class="num">9</td><td class="num">0.8958</td><td class="num">0.8614</td><td class="num"><b style="color:#A2740F">0.9276</b></td></tr><tr class="thin"><td class="">g.ai</td><td class="num">9</td><td class="num">0.7296</td><td class="num"><b style="color:#1A6E9E">0.7450</b></td><td class="num">0.5802</td></tr><tr class="thin"><td class="">g.tech_other</td><td class="num">9</td><td class="num">0.7213</td><td class="num"><b style="color:#1A6E9E">0.8056</b></td><td class="num">0.7909</td></tr><tr class="thin"><td class="">g.macro</td><td class="num">8</td><td class="num">0.6885</td><td class="num"><b style="color:#1A6E9E">0.7221</b></td><td class="num">0.5191</td></tr><tr class="thin"><td class="">g.health</td><td class="num">8</td><td class="num">0.6629</td><td class="num">0.5936</td><td class="num"><b style="color:#A2740F">0.6881</b></td></tr><tr class="thin"><td class="">g.transport</td><td class="num">1</td><td class="num">0.0000</td><td class="num">0.0000</td><td class="num">0.0000</td></tr></tbody></table></div>
+
+<h2 id="s7"><span class="num">07</span>没记上分的题</h2>
+<p>记分脚本不给任何一题填补默认值。没有可解析答案的题被剔除并计原因，不按预测方向填
+0/1，那是以前一个记分器犯过的错，它不是加噪声，是让臂间比较产生偏差。</p>
+<div class="tw "><table><thead><tr><th class="">模型</th><th class="">题目 id</th><th class="">题型</th><th class="">状态</th><th class="">原因</th></tr></thead><tbody><tr><td class=""><b style="color:#A63D38">gpt-5.4</b></td><td class=""><code>UlhphdcuPz</code></td><td class="">MULTIPLE_CHOICE</td><td class="">excluded</td><td class="">output_not_in_options</td></tr><tr><td class=""><b style="color:#A2740F">qwen3.5-397b</b></td><td class=""><code>20260814080908103706</code></td><td class="">MULTIPLE_CHOICE</td><td class="">excluded</td><td class="">submission_has_no_answer</td></tr><tr><td class=""><b style="color:#A2740F">qwen3.5-397b</b></td><td class=""><code>20260819110422798101</code></td><td class="">MULTIPLE_CHOICE</td><td class="">excluded</td><td class="">submission_has_no_answer</td></tr><tr><td class=""><b style="color:#A2740F">qwen3.5-397b</b></td><td class=""><code>ANZzP9ACL5</code></td><td class="">MULTIPLE_CHOICE</td><td class="">excluded</td><td class="">submission_has_no_answer</td></tr><tr><td class=""><b style="color:#A2740F">qwen3.5-397b</b></td><td class=""><code>gh-kubernetes-kubernetes-issue_closed-2026-0…</code></td><td class="">NUMERIC</td><td class="">excluded</td><td class="">submission_has_no_answer</td></tr><tr><td class=""><b style="color:#A2740F">qwen3.5-397b</b></td><td class=""><code>t6CNNN52qs</code></td><td class="">BINARY</td><td class="">excluded</td><td class="">submission_has_no_answer</td></tr></tbody></table></div>
+<p>这 6 条把三臂共同可比的题数压到 194。
+qwen3.5-397b 的 5 题是跑完了检索和推理、最后一步没有按格式交答案，轮数和工具调用都正常，
+不是预算耗尽。</p>
+
+<h2 id="s8"><span class="num">08</span>这一页控制不了什么</h2>
+<h4>gpt-5.4 那一臂不是同一份 config</h4>
+<p>它的分数来自 1,900 题全量运行里对应的 194 题，那次运行的采样和重试设置与
+sample200 的两臂不同。</p>
+<div class="tw "><table><thead><tr><th class="">设置</th><th class="num">gpt-5.4</th><th class="num">gpt-5.6-sol</th><th class="num">qwen3.5-397b</th></tr></thead><tbody><tr><td class="">temperature</td><td class="num">0.2</td><td class="num">1.0</td><td class="num">1.0</td></tr><tr><td class="">top_p</td><td class="num">0.95</td><td class="num">1.0</td><td class="num">1.0</td></tr><tr><td class="">reasoning_effort</td><td class="num">medium</td><td class="num">high</td><td class="num">high</td></tr><tr><td class="">max_output_tokens</td><td class="num">12800</td><td class="num">16384</td><td class="num">16384</td></tr><tr><td class="">抓取失败重试 5xx</td><td class="num">重试</td><td class="num">不重试</td><td class="num">不重试</td></tr><tr><td class="">max_turns / 工具上限</td><td class="num">70 / 50</td><td class="num">70 / 50</td><td class="num">70 / 50</td></tr><tr><td class="">检索 provider</td><td class="num">serper</td><td class="num">serper</td><td class="num">serper</td></tr><tr><td class="">三道门 / judge_page_prose</td><td class="num">开 / 开</td><td class="num">开 / 开</td><td class="num">开 / 开</td></tr></tbody></table></div>
+<p>所以 gpt-5.4 作为"快照干净"的参照物是可靠的，快照日期与 config 无关；但把它的分数或
+工作量直接当作第三个模型的成绩来读不可靠。第 3 节的安慰剂论证只依赖前者。</p>
+<h4>qwen3.5-397b 的快照未知</h4>
+<p>apihy 网关回显 <code>Qwen3.5-397B-A17B</code>，不带日期。模型自报的训练截止不能当证据。
+所以它既没有 gpt-5.4 那样的证据，也没有 gpt-5.6-sol 那样的反证，它在参数化泄漏这一项上
+的位置是空的。</p>
+<h4>题量</h4>
+<p>194 题的配对标准误是 0.0202，能分辨的最小分差约 0.040，
+差中差检验能分辨的最小效应约 0.086。要把泄漏效应压到 0.03 的分辨力，需要大约 1,500 道
+配对题，也就是让 gpt-5.6-sol 跑完整的 1,900 题。</p>
+<h4>更省的一条路</h4>
+<p>比加题更直接的是闭卷探测：同样这两半题，不给任何检索工具，只留提交答案。检索被三道门
+限制在 T_cut 之前，闭卷时模型只剩权重。前半和后半的闭卷准确率差，就是参数化泄漏本身，
+不需要靠差中差从带工具的分数里把它剥出来。</p>
+<hr class="rule"><p class="small">生成于 2026-09-09 16:00，数据来自本目录的 metrics.json 与 per_task_scores.jsonl，工作量来自各臂运行目录的 task_summary.jsonl。</p>
+</main>
+<script>
+(function(){
+  var heads=[].slice.call(document.querySelectorAll('main h2[id]'));
+  if(heads.length<3||window.innerWidth<1420)return;
+  var nav=document.createElement('nav');nav.className='toc';
+  nav.innerHTML='<div class="toc-t">目录</div><div class="toc-p"><i></i></div><ol>'+
+    heads.map(function(h){return '<li><a href="#'+h.id+'">'+
+      (h.getAttribute('data-toc')||h.textContent).trim()+'</a></li>';}).join('')+'</ol>';
+  document.body.appendChild(nav);
+  var links=[].slice.call(nav.querySelectorAll('a')),bar=nav.querySelector('.toc-p i');
+  function sync(){
+    var top=window.scrollY,h=document.documentElement;
+    bar.style.width=Math.min(100,100*top/((h.scrollHeight-h.clientHeight)||1))+'%';
+    var cur=0;
+    heads.forEach(function(el,i){if(el.getBoundingClientRect().top<140)cur=i;});
+    links.forEach(function(a,i){a.className=i===cur?'on':'';});
+  }
+  addEventListener('scroll',sync,{passive:true});sync();
+})();
+</script>
+</body></html>

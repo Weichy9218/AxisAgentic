@@ -1,0 +1,57 @@
+run: /tmp/axis_export/axis_strict_full
+tasks: 1900   distinct T_cut in manifest: 114  ['2026-03-25', '2026-03-26', '2026-03-27', '2026-03-28', '2026-03-29', '2026-03-30']
+
+[1] INJECTION — did the runtime put T_cut on each search call?
+  search_web calls              : 0
+  carrying T_cut                : 0
+  carrying search_provider      : 0
+  T_cut != this task's manifest : 0  []
+
+[2] REQUEST — was T_cut compiled onto the provider request?
+  engine packets                : 33454   (soft-stopped: 0)
+  requested                     : {True: 33454}
+  distinct encoded values       : 114
+  granularity / semantics       : {'day': 33454} / {'inclusive': 33454}
+  distinct compiled ends        : 114  ['2026-03-24', '2026-03-25', '2026-03-26', '2026-03-27']
+  encoded != recomputed from T_cut: 0  []
+  any lower bound on the wire   : 0 (must be 0)
+
+[3] SCREEN — did the as-of screen run before this packet was written?
+  packets carrying provenance.as_of : 33454 / 33454
+  packets with NO screening record  : 0  (must be 0)  []
+  stamp names another task's T_cut  : 0  []
+  units seen / kept                 : 170871 / 144661
+  sent to the judge / requests      : 54397 / 47566   (cache hits: 6775)
+  blocked by gate                   : provider_date=12252 structured=124 judge=9205 unavailable=4629 overflow=0
+  sampled block reasons (≤10/packet): {'provider_date': 12252, 'judge': 9205, 'judge_unavailable': 4629, 'structured': 124}
+
+[4] ADMISSION — did any proven post-cutoff card reach context?
+  cards in context                  : 144661 (144661 carry a parsed date)
+  cards dated >= their task's T_cut : 0  (must be 0)
+
+[5] WRITE PATH — do persisted bodies contain post-cutoff dates?
+    (the screen runs before the write, so these files hold what it kept;
+     bash/grep read them directly, which is why they are checked at all)
+  files containing a date >= their task's T_cut: 2178
+    20260629110709444496   art-0035.search.json         T_cut=2026-06-29 n_late=1 e.g. ['2026-07-06']
+    20260629110709444496   art-0041.search.json         T_cut=2026-06-29 n_late=1 e.g. ['2026-07-03']
+    20260629110716293437   art-0028.search.json         T_cut=2026-06-29 n_late=2 e.g. ['2026-07-01', '2026-07-21']
+    20260629110716293437   art-0035.search.json         T_cut=2026-06-29 n_late=1 e.g. ['2026-09-04']
+    20260629110716293452   art-0001.search.json         T_cut=2026-06-29 n_late=1 e.g. ['2026-07-06']
+    20260629110716293452   art-0002.search.json         T_cut=2026-06-29 n_late=1 e.g. ['2026-07-06']
+    20260629110716293452   art-0003.search.json         T_cut=2026-06-29 n_late=1 e.g. ['2026-07-06']
+    20260629110716293452   art-0004.search.json         T_cut=2026-06-29 n_late=1 e.g. ['2026-07-06']
+    20260629110716293452   art-0005.search.json         T_cut=2026-06-29 n_late=1 e.g. ['2026-07-06']
+    20260629110716293452   art-0036.search.json         T_cut=2026-06-29 n_late=2 e.g. ['2026-07-06', '2026-07-20']
+    20260629110716293458   art-0001.search.json         T_cut=2026-06-29 n_late=1 e.g. ['2026-07-06']
+    20260629110716293458   art-0005.search.json         T_cut=2026-06-29 n_late=1 e.g. ['2026-07-06']
+
+  This is a PROXY, not a leak count: a pre-cutoff page may legitimately
+  name a future date (a schedule, a deadline). What matters is whether a
+  post-cutoff *observation* is present. Inspect the listed files to judge.
+
+=== verdict ===
+  FAIL the judge was unreachable on 1275 tool call(s); those units were blocked (fail-closed), so this run under-collected
+  FAIL 4629 unit(s) blocked because no verdict came back — evidence lost to an outage, not to the boundary
+
+[exit status 1]

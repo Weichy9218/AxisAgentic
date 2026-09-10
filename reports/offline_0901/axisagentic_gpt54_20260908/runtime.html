@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AxisAgentic 运行形态 · offline_0901</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,400;0,600;0,700;1,400&family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+:root{
+  --font-display:'Crimson Pro','Songti SC','Noto Serif CJK SC',Georgia,serif;
+  --font-body:'DM Sans',-apple-system,BlinkMacSystemFont,'PingFang SC','Segoe UI',sans-serif;
+  --font-mono:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+  --accent:#A63D38; --accent-light:#D4918C; --accent-dark:#8B3A36;
+  --ink:#0c1222; --ink-soft:#334155; --ink-muted:#64748b;
+  --surface:#fff; --raised:#f8fafc; --sunken:#f1f5f9; --border:#e2e8f0;
+  --cat1:#A63D38; --cat2:#1A6E9E; --cat3:#A2740F;
+  --r-sm:8px; --r-md:14px; --r-lg:20px;
+  --sh-sm:0 1px 3px rgba(15,23,42,.04),0 1px 2px rgba(15,23,42,.06);
+  --sh-md:0 4px 16px rgba(15,23,42,.06),0 2px 4px rgba(15,23,42,.04);
+  --sh-lg:0 12px 40px rgba(15,23,42,.08),0 4px 12px rgba(15,23,42,.04);
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--surface);color:var(--ink);
+  font:15px/1.7 var(--font-body);-webkit-font-smoothing:antialiased}
+main{max-width:1080px;margin:0 auto;padding:36px 24px 96px}
+a{color:var(--accent);text-decoration:none;border-bottom:1px solid rgba(166,61,56,.3)}
+a:hover{border-bottom-color:var(--accent)}
+p{margin:10px 0;color:var(--ink-soft)}
+ul{color:var(--ink-soft);padding-left:22px} li{margin:6px 0}
+code{font:0.88em var(--font-mono);background:var(--sunken);padding:2px 6px;
+  border-radius:4px;color:var(--accent-dark);white-space:nowrap}
+pre{background:#0c1222;color:#e2e8f0;padding:18px 20px;border-radius:var(--r-sm);
+  overflow:auto;font:12.5px/1.7 var(--font-mono);box-shadow:var(--sh-sm)}
+pre code{background:none;color:inherit;padding:0;white-space:pre}
+
+/* ---- hero ---- */
+.hero{text-align:center;padding:18px 0 26px;position:relative;margin-bottom:8px}
+.hero h1{font-family:var(--font-display);font-size:40px;line-height:1.18;
+  margin:0 0 10px;font-weight:700;letter-spacing:-.01em}
+.hero .sub{color:var(--ink-muted);font-size:14px;letter-spacing:.04em;margin:0}
+.hero::after{content:'';position:absolute;bottom:0;left:12%;right:12%;height:2px;
+  background:linear-gradient(90deg,transparent,var(--accent-light) 20%,
+    var(--accent) 50%,var(--accent-light) 80%,transparent);opacity:.55}
+.crumbs{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin-top:16px}
+.crumb{display:inline-flex;align-items:center;gap:7px;padding:8px 16px;
+  border:1px solid var(--border);border-radius:var(--r-sm);font-size:13px;
+  font-weight:600;box-shadow:var(--sh-sm);color:var(--ink-soft);
+  transition:all .3s cubic-bezier(.22,1,.36,1)}
+.crumb:hover{border-color:var(--accent);color:var(--accent);
+  transform:translateY(-2px);box-shadow:var(--sh-md)}
+
+/* ---- section rhythm ---- */
+h2{font-family:var(--font-display);font-size:26px;margin:52px 0 6px;font-weight:600;
+  letter-spacing:-.005em}
+h2 .num{color:var(--accent);font-size:.7em;font-family:var(--font-body);
+  font-weight:700;letter-spacing:.08em;display:block;margin-bottom:6px;
+  text-transform:uppercase}
+h3{font-family:var(--font-display);font-size:19px;margin:30px 0 8px;font-weight:600}
+h4{font-size:13px;margin:22px 0 6px;color:var(--accent);font-weight:700;
+  letter-spacing:.07em;text-transform:uppercase;font-family:var(--font-body)}
+hr.rule{border:0;height:2px;margin:52px 0 0;opacity:.45;
+  background:linear-gradient(90deg,transparent,var(--accent-light) 20%,
+    var(--accent) 50%,var(--accent-light) 80%,transparent)}
+
+/* ---- callouts ---- */
+.note{background:var(--raised);border-radius:var(--r-sm);padding:16px 22px;
+  margin:20px 0;font-family:var(--font-display);font-size:15.5px;line-height:1.75;
+  color:var(--ink);box-shadow:var(--sh-sm);position:relative;overflow:hidden}
+.note::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;
+  background:linear-gradient(180deg,var(--accent),var(--accent-light));
+  border-radius:var(--r-sm) 0 0 var(--r-sm)}
+.note code{background:#fff}
+
+/* ---- stat cards ---- */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));
+  gap:14px;margin:26px 0}
+.card{background:var(--raised);border:1px solid var(--border);
+  border-radius:var(--r-sm);padding:16px 18px;position:relative;overflow:hidden;
+  box-shadow:var(--sh-sm);transition:all .3s cubic-bezier(.22,1,.36,1)}
+.card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;
+  background:linear-gradient(90deg,var(--accent),var(--accent-light))}
+.card:hover{transform:translateY(-3px);box-shadow:var(--sh-md)}
+.card b{display:block;font-family:var(--font-display);font-size:32px;
+  font-weight:700;line-height:1.1;
+  background:linear-gradient(135deg,var(--accent-dark),var(--accent),var(--accent-light));
+  -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.card span{display:block;margin-top:6px;font-size:12.5px;color:var(--ink-muted)}
+
+/* ---- tables ---- */
+.tw{border-radius:var(--r-sm);overflow:hidden;box-shadow:var(--sh-sm);
+  margin:14px 0 22px;border:1px solid var(--border)}
+.tw.scroll{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13.5px}
+th,td{padding:9px 14px;text-align:left;border-bottom:1px solid var(--border);
+  vertical-align:middle}
+th{background:linear-gradient(135deg,var(--accent-dark),var(--accent));color:#fff;
+  font-weight:600;font-size:12px;letter-spacing:.05em;text-transform:uppercase;
+  border-bottom:0;white-space:nowrap}
+tbody tr{transition:background .2s ease}
+tbody tr:hover{background:var(--raised)}
+tbody tr:last-child td{border-bottom:0}
+td.num{text-align:right;font-family:var(--font-mono);font-size:12.5px;
+  white-space:nowrap;color:var(--ink-soft)}
+td.bar{width:34%;padding-right:18px}
+
+/* ---- in-table magnitude bars (single series, one hue) ---- */
+.track{height:9px;background:var(--sunken);border-radius:4px;overflow:hidden}
+.track i{display:block;height:100%;border-radius:0 4px 4px 0;
+  background:linear-gradient(90deg,var(--accent-dark),var(--accent))}
+tr.thin td.slug{color:var(--ink-muted)}
+tr.thin .track i{background:var(--accent-light)}
+
+/* ---- diverging bars: a signed delta against a shared zero ---- */
+/* One axis, a neutral midpoint and two poles taken from the validated
+   categorical set, so a reader never has to decide whether a longer bar means
+   more or less — the side carries the sign and the number is printed beside it. */
+.dv{position:relative;height:11px;background:var(--sunken);border-radius:4px}
+.dv::before{content:'';position:absolute;left:50%;top:-3px;bottom:-3px;width:1px;
+  background:var(--border)}
+.dv i{position:absolute;top:0;height:100%;border-radius:3px}
+.dv i.neg{background:#A63D38}
+.dv i.pos{background:#1A6E9E}
+
+/* ---- stacked composition bars ---- */
+.legend{display:flex;gap:18px;flex-wrap:wrap;margin:14px 0 10px;font-size:12.5px;
+  color:var(--ink-soft)}
+.legend span{display:inline-flex;align-items:center;gap:7px}
+.legend i{width:11px;height:11px;border-radius:3px;display:inline-block}
+.stack{display:grid;grid-template-columns:150px 1fr 56px;gap:12px;
+  align-items:center;margin:9px 0;font-size:13px}
+.stack .lbl{color:var(--ink-soft);text-align:right;font-size:12.5px}
+.stack .tot{font-family:var(--font-mono);font-size:12px;color:var(--ink-muted)}
+.stack .segs{display:flex;height:16px;border-radius:4px;overflow:hidden;gap:2px;
+  background:var(--sunken)}
+.stack .segs i{display:block;position:relative;cursor:default}
+.stack .segs i:first-child{border-radius:4px 0 0 4px}
+.stack .segs i:last-child{border-radius:0 4px 4px 0}
+
+/* ---- hover tooltip, no JS, no external library ---- */
+[data-tip]{position:relative}
+[data-tip]:hover::after{content:attr(data-tip);position:absolute;bottom:calc(100% + 8px);
+  left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;
+  padding:6px 10px;border-radius:6px;font:11.5px/1.45 var(--font-body);
+  white-space:pre;z-index:20;box-shadow:var(--sh-md);pointer-events:none}
+
+/* ---- figures ---- */
+figure{margin:20px 0;background:var(--raised);border:1px solid var(--border);
+  border-radius:var(--r-sm);padding:20px 22px 14px;box-shadow:var(--sh-sm)}
+figure svg{display:block;width:100%;height:auto;overflow:visible}
+figcaption{margin-top:12px;font-size:12.5px;color:var(--ink-muted);line-height:1.65}
+.formula{background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--r-sm);padding:15px 18px;margin:14px 0;
+  font:13.5px/1.95 var(--font-mono);color:var(--ink)}
+.formula b{color:var(--accent);font-weight:500}
+.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:22px}
+.small{font-size:12.5px;color:var(--ink-muted)}
+
+/* ---- floating table of contents ---- */
+.toc{position:fixed;right:16px;top:96px;width:196px;max-height:calc(100vh - 150px);
+  overflow-y:auto;padding:16px;background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--r-md);box-shadow:var(--sh-lg);z-index:100;font-size:12px}
+.toc-t{font-size:10.5px;text-transform:uppercase;letter-spacing:.15em;
+  color:var(--ink-muted);margin-bottom:10px;font-weight:600}
+.toc-p{height:3px;background:var(--border);border-radius:2px;margin-bottom:12px;
+  overflow:hidden}
+.toc-p i{display:block;height:100%;width:0;background:var(--accent);border-radius:2px}
+.toc ol{list-style:none;padding:0;margin:0}
+.toc a{display:block;padding:6px 9px;color:var(--ink-muted);border-radius:6px;
+  border-left:2px solid transparent;line-height:1.4;border-bottom:0;
+  transition:all .2s ease}
+.toc a:hover{background:var(--sunken);color:var(--ink)}
+.toc a.on{background:var(--sunken);color:var(--accent);
+  border-left-color:var(--accent);font-weight:500}
+@media (max-width:1420px){.toc{display:none}}
+
+@media (max-width:720px){
+  main{padding:24px 16px 64px} .hero h1{font-size:30px}
+  .stack{grid-template-columns:96px 1fr 44px}
+  td.bar{display:none} th.bar{display:none}
+}
+@media (prefers-reduced-motion:reduce){
+  *{transition:none!important;animation:none!important}
+}
+</style></head>
+<body>
+<main>
+<header class="hero">
+<h1>运行形态：拿到这个分数各自做了多少事</h1>
+<p class="sub">1951 题 · axisagentic · 与 galaxy serper_gate3 并列</p>
+<nav class="crumbs"><a href="results.html">results</a><a href="leakage.html">leakage</a><a href="cohort.html">cohort</a><a href="../filtering.html">filtering</a></nav>
+</header>
+<div class="stats"><div class="card"><b>0.7206</b><span>总分</span><span class="small">1899 题，排除 1</span></div><div class="card"><b>28.8</b><span>每题工具调用</span><span class="small">上限 50，触顶 19.3%</span></div><div class="card"><b>20.5</b><span>每题模型轮次</span><span class="small">参考臂 8.4 次 LLM 调用</span></div><div class="card"><b>13.5 分</b><span>每题串行耗时</span><span class="small">p90 31.5 分</span></div></div><h2>这一页回答什么</h2><div class="note"><p>两个运行时用同一个基准、同一个模型、同一个检索源、同一套时间边界，得到两个分数。分数本身在 <code>results.html</code>，边界的执行情况在 <code>leakage.html</code>。这一页写的是<b>两边为了拿到那个分数各自做了多少事</b> —— 工具清单不同、每题调用次数不同、时间花在哪里不同。不看这一页，分差会被读成推理质量的差距，而它的大头不是。</p><p>所有数字都从两个运行各自的落盘产物里算出来，没有一个是手填的。</p></div><h2>每题花了多少力气</h2><div class="tw "><table><thead><tr><th class="">项目</th><th class="num">AxisAgentic 均值</th><th class="num">p50</th><th class="num">p90</th><th class="num">max</th><th class="num">galaxy 均值</th></tr></thead><tbody><tr><td class="">工具调用次数</td><td class="num">28.8</td><td class="num">26.0</td><td class="num">50.0</td><td class="num">51.0</td><td class="num">17.0</td></tr><tr><td class="">模型轮次 / LLM 调用</td><td class="num">20.5</td><td class="num">20.0</td><td class="num">32.0</td><td class="num">47.0</td><td class="num">8.4</td></tr></tbody></table></div><div class="note"><p>调用上限两边都是一个整数，但它约束的程度差了一个量级。galaxy 声明 30，它自己的 <code>forced_tool_cap</code> 标记在 1,969 题里为真 0 次；AxisAgentic 声明 50，有 376 题（19.3%）打到上限。同一个整数在两边描述的不是同一个实验：那边是安全网，这边是主约束。所以这里报分布，不报上限。</p></div><h2>单题耗时，以及它如何变成吞吐</h2><div class="tw "><table><thead><tr><th class=""></th><th class="num">单题秒·均值</th><th class="num">p50</th><th class="num">p90</th><th class="num">max</th><th class="num">折算 题/小时</th><th class="num">实测 题/小时</th></tr></thead><tbody><tr><td class="">AxisAgentic</td><td class="num">809</td><td class="num">538</td><td class="num">1,890</td><td class="num">5,023</td><td class="num">142</td><td class="num">124</td></tr><tr><td class="">galaxy</td><td class="num">208</td><td class="num">197</td><td class="num">307</td><td class="num">599</td><td class="num">553</td><td class="num">530</td></tr></tbody></table></div><div class="note"><p>两边都是 4 分片 × 8 并发 = 32 路，所以吞吐差全部来自单题耗时，没有一点来自并发配置。「折算」是单题耗时除以并发数得到的上限，「实测」是各自运行日志里每小时完成数的中位数 —— 取中位数而不是总量除以时长，是因为本次运行中途崩过一次、停了五小时，跨过死区的平均值既不描述崩溃也不描述运行。</p><p>galaxy 的 <code>total_latency_seconds</code> 均值 6420 秒里有 6212 秒是排队等待，不是工作时间；这里用的是它自己的 <code>duration_seconds</code>。</p></div><h2>时间花在哪里</h2><div class="tw "><table><thead><tr><th class="">来源</th><th class="num">每题秒数</th><th class="num">占比</th><th class="bar">分布</th><th class="num">每题次数</th></tr></thead><tbody><tr><td class=""><code>scrape_and_extract_info</code></td><td class="num">469.3</td><td class="num">58.0%</td><td class="bar"><div class="track"><i style="width:100.0%"></i></div></td><td class="num">10.50</td></tr><tr><td class=""><code>web_search</code></td><td class="num">117.2</td><td class="num">14.5%</td><td class="bar"><div class="track"><i style="width:25.0%"></i></div></td><td class="num">18.34</td></tr><tr><td class="">模型推理与编排（差值）</td><td class="num">222.5</td><td class="num">27.5%</td><td class="bar"><div class="track"><i style="width:47.4%"></i></div></td><td class="num">—</td></tr></tbody></table></div><div class="note"><p>抓取是主导项，不是模型。把网关换快、把并发调高，动的都是最小的那一格。这条结论决定了下一次运行该改什么。</p></div><h2>token 花销</h2><div class="tw "><table><thead><tr><th class="">项目</th><th class="num">AxisAgentic 每题</th><th class="num">galaxy 每题</th><th class="">说明</th></tr></thead><tbody><tr><td class="">输入 token</td><td class="num">217,988</td><td class="num">109,964</td><td class="">我们的上下文一路累加，galaxy 在 128k 字符处做结构化压缩</td></tr><tr><td class="">输出 token</td><td class="num">9,862</td><td class="num">1,722</td><td class=""></td></tr><tr><td class="">其中命中缓存</td><td class="num">未记录该字段</td><td class="num">50,996</td><td class="">占 galaxy 输入的 46%；我们这边这项拿不到，所以成本对比只能到上面两行为止</td></tr></tbody></table></div><div class="note"><p>输入 token 的差距不是提示词写得长，是上下文管理策略不同：galaxy 把抓到的东西写进 workspace，只在需要时 <code>read_artifact</code> 读回来，并在 128k 字符处触发结构化压缩；AxisAgentic 把每次工具结果原样留在对话里。这同时解释了上面的轮次差和这里的输入 token 差 —— 是同一个设计选择的两个侧面。</p></div><h2>三道门，按通道分</h2><div class="tw "><table><thead><tr><th class="">计数器</th><th class="num">Axis 搜索通道</th><th class="num">Axis 页面通道</th><th class="num">galaxy 搜索通道</th></tr></thead><tbody><tr><td class=""><code>units</code></td><td class="num">179,128</td><td class="num">0</td><td class="num">74,204</td></tr><tr><td class=""><code>chunks</code></td><td class="num">0</td><td class="num">109,692</td><td class="num">0</td></tr><tr><td class=""><code>kept</code></td><td class="num">152,048</td><td class="num">98,939</td><td class="num">68,121</td></tr><tr><td class=""><code>blocked_provider_date</code></td><td class="num">12,263</td><td class="num">389</td><td class="num">3,291</td></tr><tr><td class=""><code>blocked_structured</code></td><td class="num">126</td><td class="num">0</td><td class="num">44</td></tr><tr><td class=""><code>blocked_judge</code></td><td class="num">9,860</td><td class="num">7,395</td><td class="num">2,731</td></tr><tr><td class=""><code>blocked_judge_unavailable</code></td><td class="num">4,831</td><td class="num">3,358</td><td class="num">17</td></tr><tr><td class=""><code>judge_requests</code></td><td class="num">51,338</td><td class="num">34,823</td><td class="num">12,937</td></tr><tr><td class=""><code>cache_hits</code></td><td class="num">7,710</td><td class="num">20,104</td><td class="num">1,153</td></tr></tbody></table></div><div class="note"><p><code>leakage.html</code> 的门统计只读 <code>*.search.json</code>，也就是只读搜索通道，两边因此可比。页面通道是 AxisAgentic 多做的一层：galaxy 抓下来的页面进 workspace，不经过 as-of 屏；我们抓下来的页面直接进 context，所以必须过屏。这多出来的拦截量记在这里，不混进那张表。</p></div><h2>判定器不可达时发生了什么</h2><div class="tw "><table><thead><tr><th class=""></th><th class="num">受影响题数</th><th class="num">被拦证据单元</th><th class="num">该子集均分</th><th class="num">其余题均分</th></tr></thead><tbody><tr><td class="">AxisAgentic</td><td class="num">217</td><td class="num">8,189</td><td class="num">0.6729</td><td class="num">0.7265</td></tr><tr><td class="">galaxy</td><td class="num">11</td><td class="num">17</td><td class="num">—</td><td class="num">—</td></tr></tbody></table></div><div class="note"><p>屏是 fail-closed 的：判定拿不回来就拦，不放行。这是对的默认值，也是没有泄露的原因，但它意味着这些题是在证据被扣掉的情况下作答的，而扣掉的理由和证据本身无关。两边都报，因为两边都有。受影响子集的均分放在旁边，读者可以自己判断它是否搬动了总分。</p></div><h2>小模型判了什么</h2><div class="tw "><table><thead><tr><th class="">判定</th><th class="num">AxisAgentic</th><th class="num">galaxy</th></tr></thead><tbody><tr><td class="">null（没落定任何事实，放行）</td><td class="num">58,640（60.6%）</td><td class="num">12,558（70.1%）</td></tr><tr><td class="">具体日期（交给代码比较）</td><td class="num">32,005（33.1%）</td><td class="num">4,501（25.1%）</td></tr><tr><td class="">unknown（落定了但无法定日，拦截）</td><td class="num">6,153（6.4%）</td><td class="num">862（4.8%）</td></tr></tbody></table></div><div class="note"><p>两边的判定器是同一个模型 （alice/gpt-5.4-mini / gpt-5.4-mini, gpt-5.4-nano），提示词里都不出现 T_cut，比较留在代码里。判定库按内容摘要寻址，跨任务复用，所以这里是<b>判定的分布</b>，不是某一次运行的拦截清单。两个仓库各有一份库，<code>leakage.html</code> 里那一节读的是 Milkyway 那份，不是我们这份 —— 我们这份在这里。</p></div><h2>不能忽略的四条不对称</h2><div class="tw scroll "><table><thead><tr><th class="">项目</th><th class="">AxisAgentic</th><th class="">galaxy</th><th class="">对读数的影响</th></tr></thead><tbody><tr><td class="">工具清单</td><td class="">web_search(35,779)、scrape_and_extract_info(20,482)</td><td class="">search_web(15,360)、read_webpage(11,604)、read_artifact(2,127)、submit_forecast(1,969)、grep(901)、read(497)</td><td class="">galaxy 能重读已抓到的证据，我们只能重抓；NUMERIC 还有一个确定性拟合工具</td></tr><tr><td class="">每题模型调用</td><td class="">20.5</td><td class="">8.4</td><td class="">差距主要来自上一行，不是推理深度</td></tr><tr><td class="">提示词缓存</td><td class="">未记录该字段</td><td class="">50,996 token/题</td><td class="">成本对比在补齐字段前只能做到输入/输出总量</td></tr><tr><td class="">页面通道过屏</td><td class="">是</td><td class="">否（抓取物进 workspace 不进 context）</td><td class="">我们的门计数天然更高，所以门的对比只看搜索通道</td></tr></tbody></table></div>
+</main>
+<script>
+(function(){
+  var heads=[].slice.call(document.querySelectorAll('main h2[id]'));
+  if(heads.length<3||window.innerWidth<1420)return;
+  var nav=document.createElement('nav');nav.className='toc';
+  nav.innerHTML='<div class="toc-t">目录</div><div class="toc-p"><i></i></div><ol>'+
+    heads.map(function(h){return '<li><a href="#'+h.id+'">'+
+      (h.getAttribute('data-toc')||h.textContent).trim()+'</a></li>';}).join('')+'</ol>';
+  document.body.appendChild(nav);
+  var links=[].slice.call(nav.querySelectorAll('a')),bar=nav.querySelector('.toc-p i');
+  function sync(){
+    var top=window.scrollY,h=document.documentElement;
+    bar.style.width=Math.min(100,100*top/((h.scrollHeight-h.clientHeight)||1))+'%';
+    var cur=0;
+    heads.forEach(function(el,i){if(el.getBoundingClientRect().top<140)cur=i;});
+    links.forEach(function(a,i){a.className=i===cur?'on':'';});
+  }
+  addEventListener('scroll',sync,{passive:true});sync();
+})();
+</script>
+</body></html>

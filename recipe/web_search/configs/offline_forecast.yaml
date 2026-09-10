@@ -112,7 +112,7 @@ agent:
   # calls across the cohort), so it can re-read a page it has, where this one
   # must search again. Report that alongside any score difference.
   max_turns: 70
-  max_tool_calls_per_task: 50
+  max_tool_calls_per_task: 100
   keep_tool_result: -1
   tool_result_role: tool
   forecast:
