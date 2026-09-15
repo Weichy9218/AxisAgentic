@@ -26,6 +26,7 @@ from agentic.tools.as_of.screen import (
     GATE_JUDGE_UNAVAILABLE,
     GATE_PROVIDER_DATE,
     GATE_STRUCTURED,
+    UNEXAMINED_MARKER,
     BlockedUnit,
     ScreenOutcome,
     screen_units,
@@ -34,6 +35,7 @@ from agentic.tools.as_of.structured import (
     REDACTION_MARKER,
     carries_post_cutoff_listing,
     mentions_late_date,
+    mentions_usable_date,
     prune_post_cutoff_records,
 )
 from agentic.tools.as_of.units import (
@@ -53,6 +55,7 @@ __all__ = [
     "GATE_JUDGE_UNAVAILABLE",
     "GATE_PROVIDER_DATE",
     "GATE_STRUCTURED",
+    "UNEXAMINED_MARKER",
     "POST_CUTOFF_GUARDRAIL",
     "REDACTION_MARKER",
     "UNDATABLE",
@@ -72,6 +75,7 @@ __all__ = [
     "is_after_cut",
     "judge_units",
     "mentions_late_date",
+    "mentions_usable_date",
     "needs_judgement",
     "prune_post_cutoff_records",
     "resolve_cutoff",

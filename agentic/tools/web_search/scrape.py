@@ -22,7 +22,7 @@ import threading
 import time
 from dataclasses import dataclass
 from datetime import date
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Final
 from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
 from agentic.contracts.messages import ToolResultStatus
@@ -31,10 +31,20 @@ from agentic.tools.as_of import (
     blocked_payload,
     chunk_document_text,
     is_after_cut,
+    mentions_usable_date,
     prune_post_cutoff_records,
     screen_units,
     stamp,
 )
+from agentic.tools.as_of import REDACTION_MARKER, UNEXAMINED_MARKER
+from agentic.tools.as_of.screen import (
+    GATE_JUDGE,
+    GATE_PROVIDER_DATE,
+    GATE_STRUCTURED,
+)
+from agentic.tools.as_of.structured import prune_markdown_tables
+from agentic.tools.web_search.body_shape import normalize_body
+from agentic.tools.web_search.md_blocks import KIND_PROSE, split_blocks
 from agentic.tools.as_of.units import CHANNEL_PAGE, EvidenceUnit
 from agentic.tools.base import CallableTool, ToolResult
 from agentic.tools.web_search._scrape_utils import (
@@ -282,6 +292,60 @@ def _is_cacheable_raw_scrape_result(result: ToolResult) -> bool:
     return result.status == ToolResultStatus.SUCCESS and result.metadata.get("success") is True and bool(result.content.strip())
 
 
+
+#: What the agent is told when the boundary removed every dated record on a page.
+#: It names the shape of the failure and the remedy, and carries no removed
+#: content: a live-quote endpoint publishes only the present, so the pre-boundary
+#: value was never on this URL to leak.
+_LIVE_ONLY_NOTICE: Final = (
+    "[as_of] Every dated record on this page falls after your information boundary, "
+    "and nothing dated before it remains. This URL serves current values only, so the "
+    "value you need was never published here. Look for the same source in dated form "
+    "\u2014 a query page that takes a date, a historical series file, or a publisher "
+    "that posts the series rather than the latest reading."
+)
+
+
+#: How deeply to judge one page body's prose. Separate from
+#: ``AS_OF_JUDGE_BUDGET_PER_CALL``, which is sized for a 200-character search
+#: card; a page body is an order of magnitude larger, and running it on the card
+#: budget left the tail of every long page unexamined. Measured on this runtime's
+#: own traces: 320,954 page chunks produced 162,843 judged verdicts (50.7%), and
+#: 12.1% of page calls carried chunks nothing had read — worst case 476 chunks
+#: with 12 judged.
+#:
+#: 96 matches galaxy's ``_PAGE_BODY_JUDGE_BUDGET``, chosen there from the
+#: per-body chunk distribution of 113 stamped bodies (p50=11, p90=35, p99=65,
+#: max=66). The cap is free until it binds: a body routes ``min(chunks, budget)``,
+#: so raising it bills nothing extra on any body already under it.
+_PAGE_BODY_JUDGE_BUDGET: Final = int(
+    os.environ.get("AS_OF_PAGE_BODY_JUDGE_BUDGET", "96")
+)
+
+#: Gates that reached their verdict by *looking* at the passage. Everything else
+#: — budget overflow, an unreachable judge — removed text nobody read, and saying
+#: a post-cutoff record was found there would manufacture a finding that was
+#: never established. Stated positively so a new fail-closed gate cannot silently
+#: inherit the stronger claim. Mirrors galaxy's ``document._EXAMINED_GATES``.
+_EXAMINED_GATES: Final = frozenset(
+    {GATE_PROVIDER_DATE, GATE_STRUCTURED, GATE_JUDGE}
+)
+
+
+def _markers_for(gates: frozenset[str]) -> list[str]:
+    """The marker(s) standing in for one consecutive run of removed chunks.
+
+    A run can mix reasons, and then both sentences are true of different parts of
+    it, so both are emitted rather than one speaking for the other.
+    """
+    markers: list[str] = []
+    if gates & _EXAMINED_GATES:
+        markers.append(REDACTION_MARKER)
+    if gates - _EXAMINED_GATES:
+        markers.append(UNEXAMINED_MARKER)
+    return markers
+
+
 async def apply_page_as_of_gates(
     *,
     content: str,
@@ -317,7 +381,28 @@ async def apply_page_as_of_gates(
         return None, counts
     counts["blocked_provider_date"] = 0
 
-    # Gate 2: arithmetic on anything with its own dates. Truncating, not blocking.
+    # One shape for every backend before any gate runs. Serper returns plain
+    # text, Jina returns markdown with pipe tables, the HTTP backend returns raw
+    # HTML; four shapes reaching one screen means the gates see something
+    # different depending on which backend answered. Where a table survives the
+    # backend, this puts it in the form that lets Gate 2 delete a record by
+    # deleting a line, which is the whole reason galaxy splits a body into blocks.
+    content = normalize_body(content)
+
+    # Gate 2, first pass: table rows, one record per row, exact. This runs
+    # *before* the line rule because the line rule cannot see a table — a `<tr>`
+    # is just a long line to it, so it would delete the row and write the marker
+    # inside the `<table>` block, leaving a table whose rows include a prose
+    # marker and reporting the deletion as a line rather than a record.
+    content, table_rows_removed, table_rows_seen = prune_markdown_tables(
+        content, T_cut=t_cut
+    )
+    counts["pruned_records"] = table_rows_removed
+    counts["records_seen"] = table_rows_seen
+
+    # Gate 2, second pass: whatever is left. Arithmetic on anything with its own
+    # dates, truncating rather than blocking.
+    original_content = content
     pruned, pruned_counts = prune_post_cutoff_records({"text": content}, T_cut=t_cut)
     if pruned_counts is not None:
         content = str(pruned.get("text") or "")
@@ -327,18 +412,93 @@ async def apply_page_as_of_gates(
         counts["pruned_lines"] = 0
         counts["pruned_structured"] = 0
 
+    # A page can be emptied of records by the boundary and still be a page the
+    # boundary has no quarrel with -- it simply only ever carried the other side
+    # of the timeline. Distinguishing that from "this page has no answer" is the
+    # difference between the agent changing its query and repeating it.
+    #
+    # The claim is that the page WAS a listing and every record in it fell outside
+    # the boundary, so the majority of its lines must be what went: measured on 80
+    # real pages, a looser test also fired on a prose article that lost three lines
+    # out of eighteen thousand characters, where the claim would have been false.
+    body_lines = sum(1 for line in original_content.splitlines() if line.strip())
+    counts["all_dated_records_post_cutoff"] = int(
+        bool(counts["pruned_lines"] or counts["pruned_structured"])
+        and not mentions_usable_date(content, t_cut)
+        and counts["pruned_lines"] * 2 >= body_lines
+    )
+
     if not judge_prose or not content.strip():
         counts["judged"] = 0
         return content, counts
 
     # Gate 3: the only gate that can see a leak with no date in it.
-    units = chunk_document_text(content, url=url, stated_date=page_date)
-    outcome = await screen_units(units, T_cut=t_cut)
+    # Gate 3 over the prose blocks only. Tables never reach it: Gate 2 already
+    # spoke for them by row, and prose-granularity deletion applied to a table
+    # takes out every row that shared the chunk. Chunking per block rather than across
+    # the whole body is what keeps a blocked chunk costing a passage instead of a
+    # document.
+    blocks = split_blocks(content)
+    units: list[EvidenceUnit] = []
+    owner: dict[int, int] = {}
+    for position, block in enumerate(blocks):
+        if block.kind != KIND_PROSE or not block.text.strip():
+            continue
+        for chunk in chunk_document_text(
+            block.text, url=url, stated_date=page_date
+        ):
+            owner[len(units)] = position
+            units.append(
+                EvidenceUnit(
+                    ordinal=len(units),
+                    channel=CHANNEL_PAGE,
+                    text=chunk.text,
+                    stated_date=page_date,
+                    url=url,
+                )
+            )
+
+    outcome = await screen_units(
+        units, T_cut=t_cut, judge_budget=_PAGE_BODY_JUDGE_BUDGET
+    )
     counts.update({key: value for key, value in outcome.counts.items() if key != "units"})
     counts["chunks"] = len(units)
-    if not outcome.kept:
-        return None, counts
-    return "\n\n".join(unit.text for unit in outcome.kept), counts
+
+    # Reassemble in original order, with a marker where something went rather
+    # than joining the survivors: a removal that leaves no trace is a hole the
+    # model reads as continuous prose. Measured on this runtime, 23,590 chunks
+    # were removed that way. Which marker appears depends on what the gate
+    # established — a table block passes through untouched, because Gate 2
+    # already spoke for it.
+    blocked_ordinals = outcome.blocked_ordinals
+    gate_of = {item.ordinal: item.gate for item in outcome.blocked}
+    parts: list[str] = []
+    for position, block in enumerate(blocks):
+        if block.kind != KIND_PROSE:
+            parts.append(block.text)
+            continue
+        own = [unit for unit in units if owner[unit.ordinal] == position]
+        if not own:
+            parts.append(block.text)
+            continue
+        pending: set[str] = set()
+        for unit in own:
+            if unit.ordinal in blocked_ordinals:
+                pending.add(gate_of.get(unit.ordinal, GATE_JUDGE))
+                continue
+            if pending:
+                parts.extend(_markers_for(frozenset(pending)))
+                pending = set()
+            parts.append(unit.text)
+        if pending:
+            parts.extend(_markers_for(frozenset(pending)))
+
+    # No whole-page refusal here. Gate 1 refuses a page whose declared date is
+    # past the boundary, where nothing is salvageable; Gate 3 works chunk by
+    # chunk, and upstream measurement put whole-page refusal at 77-81% of all
+    # refusals on bodies that were fine. A body reduced to markers alone still
+    # says truthfully that it held nothing admissible.
+    return "\n\n".join(part for part in parts if part.strip()), counts
 
 
 def _validate_raw_scrape_cache_options(options: RawScrapeCacheOptions) -> None:
@@ -1101,6 +1261,7 @@ def create_scrape_and_extract_tool(  # noqa: D417, PLR0913, PLR0915
         # model sees. Downstream of the raw cache, a blocked page would still be
         # replayable from the cache on the next call. Here there is one document.
         as_of_meta: dict[str, Any] = {}
+        live_only_page = False
         if t_cut is not None:
             gate_t0 = time.perf_counter()
             guarded, gate_counts = await apply_page_as_of_gates(
@@ -1112,6 +1273,7 @@ def create_scrape_and_extract_tool(  # noqa: D417, PLR0913, PLR0915
             )
             timing["as_of_gates"] = round((time.perf_counter() - gate_t0) * 1000.0, 1)
             as_of_meta[AS_OF_STAMP_KEY] = stamp(gate_counts, T_cut=t_cut, scope="page_body")
+            live_only_page = bool(gate_counts.get("all_dated_records_post_cutoff"))
             if guarded is None:
                 refusal = blocked_payload(tool_name=name, T_cut=t_cut)
                 return ToolResult(
@@ -1122,6 +1284,35 @@ def create_scrape_and_extract_tool(  # noqa: D417, PLR0913, PLR0915
             raw_content = guarded
 
         # --- Step 2: optionally call llm_extract sub-tool ---
+        #
+        # Skipped when the boundary emptied a listing page. What is left is
+        # headers and a disclaimer -- a median of 437 characters across the pages
+        # that trigger this -- so the extractor would spend a call to report that
+        # it found nothing, and that report would sit underneath a notice saying
+        # why. Returning the survivor verbatim is cheaper and says one thing.
+        if live_only_page:
+            content = _format_scrape_output(
+                output_options=output_opts,
+                success=True,
+                url=url,
+                content=_LIVE_ONLY_NOTICE + "\n\n" + raw_content,
+                error="",
+            )
+            return ToolResult(
+                content=content,
+                status=ToolResultStatus.SUCCESS,
+                metadata={
+                    **_meta(backend=backend),
+                    **raw_cache_meta,
+                    **as_of_meta,
+                    "success": True,
+                    "url": url,
+                    "all_dated_records_post_cutoff": True,
+                    "extraction_skipped": "all_dated_records_post_cutoff",
+                    "scrape_stats": scrape_stats,
+                },
+            )
+
         if llm_enabled and info_to_extract:
             llm_t0 = time.perf_counter()
             extract_result: ToolResult = await _llm_tool._fn(

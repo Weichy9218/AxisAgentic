@@ -69,6 +69,7 @@ __all__ = [
     "GATE_JUDGE_UNAVAILABLE",
     "GATE_PROVIDER_DATE",
     "GATE_STRUCTURED",
+    "UNEXAMINED_MARKER",
     "BlockedUnit",
     "ScreenOutcome",
     "screen_units",
@@ -79,6 +80,19 @@ GATE_STRUCTURED: Final = "structured"
 GATE_JUDGE: Final = "judge"
 GATE_JUDGE_UNAVAILABLE: Final = "judge_unavailable"
 GATE_JUDGE_OVERFLOW: Final = "judge_overflow"
+
+#: What replaces a passage dropped **without being read** — the suspicion budget
+#: ran out, or the judge could not be reached. Distinct from
+#: :data:`~agentic.tools.as_of.structured.REDACTION_MARKER`, which says a
+#: post-cutoff record was removed and is therefore a claim about content somebody
+#: examined. Reusing that sentence for an unread passage tells the model a
+#: boundary finding exists where the runtime merely ran out of budget, which is
+#: the one thing a boundary marker must not do: manufacture evidence of a
+#: violation that was never established.
+#:
+#: Kept byte-identical to galaxy's constant so a trace from either runtime reads
+#: the same and a model trained on one recognises the other.
+UNEXAMINED_MARKER: Final = "[as_of: passage removed without being examined]"
 
 
 def _int_env(name: str, default: int, *, floor: int = 1) -> int:
@@ -146,6 +160,12 @@ def _blocks(knowable_from: str | None, T_cut: date) -> bool:  # noqa: N803
     fact anyone had to wait for. :data:`~agentic.tools.as_of.judge.UNDATABLE` —
     settled but undatable — blocks, because a claim that cannot be placed in time
     cannot be shown to predate the boundary. A date is compared.
+
+    Passing ``UNDATABLE`` was tried and reverted. Measured on real pages it is
+    the verdict that catches live quote tables: rows of current prices carrying
+    no date token anywhere, which Gates 1 and 2 are structurally blind to. Eight
+    of fourteen ``unknown`` blocks in one audit were exactly that, on a currency
+    page fetched for a currency question.
     """
     if not knowable_from:
         return False
@@ -183,7 +203,14 @@ def _partition(units: Sequence[EvidenceUnit], T_cut: date) -> tuple[list, list, 
     return kept, blocked, must_judge, may_judge
 
 
-async def screen_units(units: Sequence[EvidenceUnit], *, T_cut: date, judge_enabled: bool = True) -> ScreenOutcome:  # noqa: N803
+async def screen_units(  # noqa: N803
+    units: Sequence[EvidenceUnit],
+    *,
+    T_cut: date,
+    judge_enabled: bool = True,
+    judge_budget: int | None = None,
+    overflow_policy: str = "keep",
+) -> ScreenOutcome:
     """Run the gates over one tool call's worth of evidence units.
 
     Args:
@@ -197,6 +224,17 @@ async def screen_units(units: Sequence[EvidenceUnit], *, T_cut: date, judge_enab
             two-gate run records ``judge_enabled: 0`` in its counts, so a reader
             can tell the two apart in the trace rather than having to infer it
             from the absence of judge requests.
+        judge_budget: Overrides the per-call suspicion budget. The default is
+            sized for a search card; a full page body is an order of magnitude
+            larger and needs its own number, or the tail of every long page goes
+            unexamined. Measured on this runtime's own traces: at the card
+            budget, 320,954 page chunks produced 162,843 judged verdicts, and
+            12.1% of page calls carried chunks nothing had read.
+        overflow_policy: What happens to undated-prose suspicion past the budget.
+            ``"keep"`` (default, for search cards) keeps it — suspicion that was
+            never examined is not evidence of anything. ``"prune"`` drops it
+            fail-closed, for a caller that would otherwise hand unexamined text
+            to a model as though it had passed.
     """
     if not units:
         return ScreenOutcome(T_cut=T_cut, counts={"units": 0})
@@ -224,12 +262,19 @@ async def screen_units(units: Sequence[EvidenceUnit], *, T_cut: date, judge_enab
         )
 
     hard_cap = _judge_hard_cap_per_call()
-    budget = max(0, _judge_budget_per_call() - len(must_judge))
+    suspicion_budget = (
+        judge_budget if judge_budget is not None else _judge_budget_per_call()
+    )
+    budget = max(0, suspicion_budget - len(must_judge))
     routed = must_judge[:hard_cap] + may_judge[:budget]
-    kept.extend(may_judge[budget:])
-    overflow = 0
+    if overflow_policy == "prune":
+        for unit in may_judge[budget:]:
+            blocked.append(
+                BlockedUnit(ordinal=unit.ordinal, gate=GATE_JUDGE_OVERFLOW, url=unit.url)
+            )
+    else:
+        kept.extend(may_judge[budget:])
     for unit in must_judge[hard_cap:]:
-        overflow += 1
         blocked.append(BlockedUnit(ordinal=unit.ordinal, gate=GATE_JUDGE_OVERFLOW, url=unit.url))
 
     cache = get_verdict_cache()
@@ -260,6 +305,7 @@ async def screen_units(units: Sequence[EvidenceUnit], *, T_cut: date, judge_enab
 
     judge_blocked = 0
     unavailable = 0
+    blocked_undatable = 0
     for unit in routed:
         verdict = verdicts.get(unit.digest)
         if verdict is None:
@@ -267,6 +313,8 @@ async def screen_units(units: Sequence[EvidenceUnit], *, T_cut: date, judge_enab
             blocked.append(BlockedUnit(ordinal=unit.ordinal, gate=GATE_JUDGE_UNAVAILABLE, url=unit.url))
             continue
         if _blocks(verdict.knowable_from, T_cut):
+            if verdict.knowable_from == UNDATABLE:
+                blocked_undatable += 1
             judge_blocked += 1
             blocked.append(
                 BlockedUnit(
@@ -289,8 +337,19 @@ async def screen_units(units: Sequence[EvidenceUnit], *, T_cut: date, judge_enab
         "blocked_provider_date": sum(1 for item in blocked if item.gate == GATE_PROVIDER_DATE),
         "blocked_structured": sum(1 for item in blocked if item.gate == GATE_STRUCTURED),
         "blocked_judge": judge_blocked,
+        # Of ``blocked_judge``, how many came from "settled but undatable" rather
+        # than from a date the judge could compare. The two are not equally
+        # reliable and a report that merges them hides which is which.
+        "blocked_judge_undatable": blocked_undatable,
         "blocked_judge_unavailable": unavailable,
-        "blocked_judge_overflow": overflow,
+        # Counted off `blocked` rather than a local, because there are two ways
+        # in: the must-judge hard cap, and — under `overflow_policy="prune"` —
+        # suspicion past the budget. A local only ever saw the first, so
+        # `units - kept` did not equal the sum of the reasons and the difference
+        # was silent.
+        "blocked_judge_overflow": sum(
+            1 for item in blocked if item.gate == GATE_JUDGE_OVERFLOW
+        ),
         "kept": len(kept),
     }
     if judge_failed:

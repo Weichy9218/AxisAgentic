@@ -66,6 +66,7 @@ __all__ = [
     "REDACTION_MARKER",
     "carries_post_cutoff_listing",
     "mentions_late_date",
+    "mentions_usable_date",
     "prune_post_cutoff_records",
 ]
 
@@ -98,6 +99,26 @@ def mentions_late_date(value: Any, T_cut: date) -> bool:  # noqa: N803
             return True
     return False
 
+
+def mentions_usable_date(value: Any, T_cut: date) -> bool:  # noqa: N803
+    """True when ``value`` contains a date token proven to end before ``T_cut``.
+
+    The complement of :func:`mentions_late_date`, and deliberately built from the
+    same token regex and the same interval parser. It answers one question the
+    gates could not previously ask: after pruning, does anything dated survive?
+    A page where the answer is no is not a page that failed to mention the
+    boundary's side of the timeline -- it is a page that only ever carried the
+    other side.
+    """
+    if isinstance(value, date):
+        return value < T_cut
+    if isinstance(value, (int, float, bool)) or value is None:
+        return False
+    for token in _DATE_TOKEN_RE.findall(str(value)):
+        span = parse_source_interval(token)
+        if span is not None and span[1] < T_cut:
+            return True
+    return False
 
 def _is_date_before(value: Any, T_cut: date) -> bool:  # noqa: N803
     """True when ``value`` *is* a date (not merely names one) before ``T_cut``.
@@ -345,3 +366,100 @@ def prune_post_cutoff_records(data: Mapping[str, Any], *, T_cut: date) -> tuple[
     if lines_removed or structured_removed:
         return guarded, {"lines": lines_removed, "structured": structured_removed}
     return dict(data), None
+
+
+# ------------------------------------------------- table rows, one at a time
+#
+# Ported from galaxy's `as_of/structured.py` unchanged, so a row deleted in one
+# runtime is deleted in the other. The form these read — `<table>` and `</table>`
+# each alone on a line, one `<tr>` per line — is what
+# `web_search.body_shape.normalize_body` emits for every backend that gives us
+# markup to work with.
+
+
+def _is_post_cutoff_record(element: Any, T_cut: date) -> bool:
+    """The one rule. True when this record is dated on/after ``T_cut``.
+
+    A cell that *is* a pre-cutoff date is the record's own timestamp, and it
+    settles the question: whatever later date another cell mentions is a
+    reference, not this record's time.
+    """
+    mentions_late = False
+    for cell in _cells_of(element):
+        if _is_date_before(cell, T_cut):
+            return False
+        if mentions_late_date(cell, T_cut):
+            mentions_late = True
+    return mentions_late
+
+
+# --------------------------------------------------------------- shape 1 and 2
+
+#: A list of scalars long enough to be a column rather than a short tuple of
+#: fields. Column-oriented series are the shape this threshold exists for; the
+#: floor keeps ``["Date Range", "2023-08-21 to 2026-08-19"]`` and other
+#: two-or-three-cell rows out of the columnar branch, where they belong to the
+#: record predicate instead.
+_MIN_COLUMN_LENGTH = 4
+
+
+def prune_markdown_tables(
+    markdown: str, *, T_cut: date
+) -> tuple[str, int, int]:
+    """Drop post-cutoff rows from the tables in a persisted body. Prose untouched.
+
+    Returns ``(markdown, removed, seen)``.
+
+    This is the whole reason a body is split into blocks before either gate runs.
+    The rows removed here are the rows Gate 3 used to take out a 1,100-character
+    chunk at a time, along with every legitimate row that shared the chunk.
+
+    ``seen`` is returned because this gate is the one that had a numerator and no
+    denominator: "18,919 records pruned" cannot be read without knowing whether it
+    walked twenty thousand rows or two hundred thousand. It is free here — these
+    are the rows this function already parses — and counting it in the caller
+    instead means splitting and parsing the whole body a second time, on every
+    fetch, on bodies that now carry their JSON-LD too.
+
+    A table that loses every row is replaced by the marker rather than left as a
+    header with no records: an empty shell reads as a bad fetch, which is the
+    loop :data:`FUTURE_ONLY_NOTICE` exists to break.
+    """
+    # Imported here rather than at module scope: `web_search.scrape` imports
+    # this package, so a top-level import of a `web_search` module would close a
+    # dependency cycle.
+    from agentic.tools.web_search.md_blocks import (
+        KIND_PROSE,
+        KIND_TABLE,
+        Block,
+        drop_rows,
+        join_blocks,
+        split_blocks,
+        table_rows,
+    )
+
+    if not markdown:
+        return markdown, 0, 0
+    out: list[Block] = []
+    removed = 0
+    seen = 0
+    for block in split_blocks(markdown):
+        if block.kind != KIND_TABLE:
+            out.append(block)
+            continue
+        rows = table_rows(block)
+        seen += len(rows)
+        doomed = {
+            index for index, cells in rows if _is_post_cutoff_record(cells, T_cut)
+        }
+        if not doomed:
+            out.append(block)
+            continue
+        removed += len(doomed)
+        pruned = drop_rows(block, doomed)
+        if pruned is not None:
+            out.append(pruned)
+        out.append(Block(KIND_PROSE, REDACTION_MARKER))
+    if not removed:
+        return markdown, 0, seen
+    return join_blocks(out), removed, seen
