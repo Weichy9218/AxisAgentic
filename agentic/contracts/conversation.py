@@ -71,6 +71,9 @@ class RollbackReason(StrEnum):
     TOKEN_EXHAUSTION = "token_exhaustion"  # noqa: S105
     """Rollback triggered after a length-truncated assistant generation."""
 
+    EMPTY_RESPONSE = "empty_response"
+    """Rollback triggered after the provider returned no usable choice (empty response)."""
+
 
 class FinalizationTrigger(StrEnum):
     """Reason why the runtime is force-finalizing the conversation.
@@ -82,6 +85,7 @@ class FinalizationTrigger(StrEnum):
     CONTEXT_LIMIT = "context_limit"
     TURN_LIMIT = "turn_limit"
     TOOLS_EXHAUSTED = "tools_exhausted"
+    EMPTY_RESPONSE = "empty_response"
 
 
 class ConversationStage(StrEnum):

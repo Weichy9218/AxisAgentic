@@ -21,7 +21,7 @@ from agentic.config.models import ModelClientConfig
 from agentic.contracts import ConversationMessage, ModelResponse, TokenUsage, ToolCall, ToolCallSpec
 from agentic.model_assets import infer_endpoint_profile
 from agentic.model_clients.base import ModelClient
-from agentic.model_clients.errors import ModelContextLimitError
+from agentic.model_clients.errors import EmptyModelResponseError, ModelContextLimitError
 
 DEFAULT_REASONING_RESPONSE_FIELDS = ("reasoning_content", "reasoning", "reasoning_details")
 DEFAULT_TRANSIENT_ENDPOINT_ERROR_STATUS_CODES = (408, 429, 500, 502, 503, 504)
@@ -198,6 +198,8 @@ class OpenAICompatibleModelClient(ModelClient):
         self._reset_endpoint_error_window()
         raw_response = response.model_dump() if hasattr(response, "model_dump") else response
         if not response.choices:
+            envelope_status = self._error_envelope_status_code(raw_response)
+            msg = f"Model '{self._config.model}' returned no choices."
             if self.request_logger is not None and request_id is not None and request_started_at is not None:
                 self.request_logger.log(
                     request_id=request_id,
@@ -205,11 +207,14 @@ class OpenAICompatibleModelClient(ModelClient):
                     elapsed_ms=(time.perf_counter() - request_start) * 1000.0,
                     request=request_payload,
                     response=raw_response,
-                    error={"type": "ValueError", "message": f"Model '{self._config.model}' returned no choices."},
+                    error={"type": "EmptyModelResponseError", "message": msg},
                     metadata={"client": "OpenAICompatibleModelClient"},
                 )
-            msg = f"Model '{self._config.model}' returned no choices."
-            raise ValueError(msg)
+            raise EmptyModelResponseError(
+                message=msg,
+                status_code=envelope_status,
+                original_error_type="empty_choices",
+            )
         choice = response.choices[0]
         tool_calls = self._assistant_tool_calls(choice.message)
         usage = self._token_usage(response.usage)
@@ -558,6 +563,25 @@ class OpenAICompatibleModelClient(ModelClient):
         response = getattr(exc, "response", None)
         response_status = getattr(response, "status_code", None)
         return response_status if isinstance(response_status, int) else None
+
+    @staticmethod
+    def _error_envelope_status_code(raw_response: Any) -> int | None:
+        """Status code from a 200-wrapped ``{"error": {...}}`` envelope, if any.
+
+        Some gateways return HTTP 200 with an error envelope and no choices (a
+        masked 5xx). Surfacing the code lets the empty-response error carry it
+        for logging without changing the transient-retry decision.
+        """
+        if not isinstance(raw_response, dict):
+            return None
+        error = raw_response.get("error")
+        if not isinstance(error, dict):
+            return None
+        for key in ("status_code", "code", "status"):
+            value = error.get(key)
+            if isinstance(value, int):
+                return value
+        return None
 
     @staticmethod
     def _is_context_length_error(exc: Exception) -> bool:

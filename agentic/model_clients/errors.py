@@ -79,3 +79,29 @@ class ModelContextLimitError(RuntimeError):
             "context_window": self.context_window,
             "original_error_type": self.original_error_type,
         }
+
+
+@dataclass
+class EmptyModelResponseError(RuntimeError):
+    """Typed error for a response that carried no usable choice.
+
+    A gateway hiccup can return HTTP 200 with an empty ``choices`` list, or a
+    200 wrapping an ``{"error": {...}}`` envelope with no choices. Both are
+    transient and should be retried, not terminated on — see
+    ``RetryingModelClient`` for the retry and the web-search orchestrator for
+    the force-finalize taken once retries are exhausted.
+    """
+
+    message: str
+    status_code: int | None = None
+    original_error_type: str | None = None
+
+    def __post_init__(self) -> None:
+        RuntimeError.__init__(self, self.message)
+
+    def to_info(self) -> dict[str, object]:
+        return {
+            "message": self.message,
+            "status_code": self.status_code,
+            "original_error_type": self.original_error_type,
+        }

@@ -15,7 +15,7 @@ import pytest
 
 from agentic.contracts import ConversationMessage, MessageRole, ModelResponse, ToolCall, ToolCallSpec
 from agentic.model_clients.base import ModelClient
-from agentic.model_clients.errors import ModelContextLimitError
+from agentic.model_clients.errors import EmptyModelResponseError, ModelContextLimitError
 from agentic.model_clients.openai_client import (
     DEFAULT_TRANSIENT_ENDPOINT_ERROR_STATUS_CODES,
     OpenAICompatibleModelClient,
@@ -694,8 +694,8 @@ def test_no_usage_in_response() -> None:
     assert result.usage is None
 
 
-def test_no_choices_raises_value_error() -> None:
-    """An empty choices list should raise ValueError."""
+def test_no_choices_raises_empty_model_response_error() -> None:
+    """An empty choices list should raise EmptyModelResponseError."""
     client = _make_client()
     mock_response = _MockResponse(choices=[], usage=None)
 
@@ -703,8 +703,41 @@ def test_no_choices_raises_value_error() -> None:
     mock_openai.chat.completions.create = AsyncMock(return_value=mock_response)
     client._client = mock_openai
 
-    with pytest.raises(ValueError, match="returned no choices"):
+    with pytest.raises(EmptyModelResponseError, match="returned no choices"):
         asyncio.run(client.acomplete([ConversationMessage.user("test")]))
+
+
+def test_retrying_client_recovers_from_transient_empty_response() -> None:
+    """RetryingModelClient retries an empty response and returns the next good one."""
+    client = _make_client()
+    empty = _MockResponse(choices=[], usage=None)
+    good = _MockResponse(choices=[_MockChoice(message=_MockMessage(content="done"), finish_reason="stop")], usage=_MockUsage())
+
+    mock_openai = AsyncMock()
+    mock_openai.chat.completions.create = AsyncMock(side_effect=[empty, good])
+    client._client = mock_openai
+
+    retrying = RetryingModelClient(client, max_retries=3, retry_wait_seconds=0.0)
+    result = asyncio.run(retrying.acomplete([ConversationMessage.user("test")]))
+
+    assert result.message.content == "done"
+    assert mock_openai.chat.completions.create.call_count == 2
+
+
+def test_retrying_client_raises_after_persistent_empty_response() -> None:
+    """When every attempt is empty, the typed error propagates after the budget is spent."""
+    client = _make_client()
+    empty = _MockResponse(choices=[], usage=None)
+
+    mock_openai = AsyncMock()
+    mock_openai.chat.completions.create = AsyncMock(side_effect=[empty, empty, empty])
+    client._client = mock_openai
+
+    retrying = RetryingModelClient(client, max_retries=3, retry_wait_seconds=0.0)
+    with pytest.raises(EmptyModelResponseError):
+        asyncio.run(retrying.acomplete([ConversationMessage.user("test")]))
+    assert mock_openai.chat.completions.create.call_count == 3
+
 
 
 def test_tool_calls_disabled_via_config() -> None:

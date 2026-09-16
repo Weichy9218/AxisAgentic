@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 from agentic.model_clients.base import CallableModelClient, ModelClient
-from agentic.model_clients.errors import ModelContextLimitError
+from agentic.model_clients.errors import EmptyModelResponseError, ModelContextLimitError
 from agentic.model_clients.gpu_utils import select_least_utilized_gpus
 from agentic.model_clients.openai_client import OpenAICompatibleModelClient, OpenAICompatibleModelClientConfig
 from agentic.model_clients.request_logger import ModelRequestLogger
@@ -11,6 +11,7 @@ from agentic.model_clients.sglang_client import SGLangModelClient, SGLangModelCl
 
 __all__ = [
     "CallableModelClient",
+    "EmptyModelResponseError",
     "ModelClient",
     "ModelContextLimitError",
     "ModelRequestLogger",
