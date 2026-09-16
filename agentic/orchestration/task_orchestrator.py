@@ -17,6 +17,7 @@ from agentic.contracts import (
     ConversationStepResult,
     FinalizationTrigger,
     MessageRole,
+    RollbackReason,
     StepAction,
     TokenUsage,
     ToolRequest,
@@ -29,7 +30,7 @@ from agentic.contracts.markers import (
 )
 from agentic.contracts.messages import ToolCall, ToolCallSpec, ToolResultStatus
 from agentic.conversations.conversation_runtime import ConversationRuntime
-from agentic.model_clients.errors import ModelContextLimitError
+from agentic.model_clients.errors import EmptyModelResponseError, ModelContextLimitError
 from agentic.rewards import RewardContext, RewardEvaluator, ToolCallRewardEvaluator
 
 if TYPE_CHECKING:
@@ -627,10 +628,54 @@ class TaskOrchestrator:
                 turn_idx=turn_idx,
                 error=error,
             )
+        if isinstance(error, EmptyModelResponseError):
+            return self._handle_empty_response_error(
+                runtime=runtime,
+                step_result=step_result,
+                task_id=task_id,
+                turn_idx=turn_idx,
+                error=error,
+            )
         reason = f"model_error: {error}"
         self._log_step(task_id, turn_idx, "orchestrator.error", reason, emoji="❌")
         info: dict[str, Any] = {"model_error": str(error)}
         return step_result, 0.0, True, reason, info
+
+    def _handle_empty_response_error(
+        self,
+        *,
+        runtime: ConversationRuntime,
+        step_result: ConversationStepResult,
+        task_id: str,
+        turn_idx: int,
+        error: EmptyModelResponseError,
+    ) -> tuple[ConversationStepResult, float, bool, str | None, dict[str, Any]]:
+        """Force-finalize after the provider kept returning no usable choice.
+
+        The response-retry budget is already spent by the time this fires (see
+        ``RetryingModelClient``), so rather than terminating the task with
+        ``model_error`` — which drops the whole question — roll back the latest
+        tool exchange and re-enter forced-final generation to submit from the
+        evidence gathered so far. If there is nothing to roll back (e.g. the very
+        first turn came back empty), terminate cleanly.
+        """
+        self._log_step(task_id, turn_idx, "orchestrator.empty_response_error", str(error), emoji="🫧")
+        t0 = time.perf_counter()
+        recovered = runtime.rollback_latest_tool_exchange_and_force_finalize(
+            reason=RollbackReason.EMPTY_RESPONSE,
+            finalization_trigger=FinalizationTrigger.EMPTY_RESPONSE,
+        )
+        if recovered is None:
+            info: dict[str, Any] = {"empty_model_response_error": error.to_info(), "empty_response_recovery_failed": True}
+            return step_result, 0.0, True, "terminated_empty_response", info
+        runtime_elapsed_ms = (time.perf_counter() - t0) * 1000
+        self._sync_trace(task_id, recovered.appended_messages)
+        self._log_runtime_step(task_id, turn_idx, recovered, elapsed_ms=runtime_elapsed_ms)
+        info = dict(recovered.info)
+        info["empty_model_response_error"] = error.to_info()
+        if recovered.action == StepAction.CALL_MODEL:
+            return recovered, 0.0, False, None, info
+        return recovered, 0.0, True, "terminated_empty_response", info
 
     def _handle_model_context_limit_error(
         self,
@@ -663,6 +708,8 @@ class TaskOrchestrator:
                 return "terminated_turn_limit"
             if trigger == FinalizationTrigger.TOOLS_EXHAUSTED:
                 return "terminated_tools_exhausted"
+            if trigger == FinalizationTrigger.EMPTY_RESPONSE:
+                return "terminated_empty_response"
             return "terminated_force_completed"
         if stage == ConversationStage.ASSISTANT_TOOL_CALLS_REJECTED_FORCE_FINAL:
             return "assistant_tool_calls_rejected_due_to_force_finalization"
@@ -790,7 +837,7 @@ class TaskOrchestrator:
         for keyword in step_info.get("wrong_tool_call_format_keywords") or []:
             rollback_stats["format_error_keywords"][keyword] = rollback_stats["format_error_keywords"].get(keyword, 0) + 1
 
-        for key in ("model_context_limit_error", "context_limit_estimate"):
+        for key in ("model_context_limit_error", "context_limit_estimate", "empty_model_response_error"):
             if key in step_info:
                 run_info[key] = step_info[key]
 

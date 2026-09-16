@@ -9,6 +9,7 @@ import logging
 from typing import TYPE_CHECKING, Any
 
 from agentic.model_clients.base import ModelClient
+from agentic.model_clients.errors import EmptyModelResponseError
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -109,12 +110,29 @@ class RetryingModelClient(ModelClient):
                 merged_extra.update(extra_body_override)
                 kwargs["extra_body_override"] = merged_extra
 
-            response = await self._inner.acomplete_raw(
-                messages,
-                tools=tools,
-                tool_choice=tool_choice,
-                **kwargs,
-            )
+            try:
+                response = await self._inner.acomplete_raw(
+                    messages,
+                    tools=tools,
+                    tool_choice=tool_choice,
+                    **kwargs,
+                )
+            except EmptyModelResponseError as exc:
+                # A gateway hiccup returned no usable choice. These are transient
+                # bursts, so retry within the same budget as other response
+                # retries; only after the budget is spent does the typed error
+                # propagate, which the orchestrator turns into a force-finalize.
+                if attempt < self.max_retries - 1:
+                    logger.warning(
+                        "Empty model response (%s), retrying (attempt %d/%d)",
+                        exc,
+                        attempt + 1,
+                        self.max_retries,
+                    )
+                    await asyncio.sleep(self.retry_wait_seconds)
+                    continue
+                logger.warning("Empty model response persists after %d attempts, giving up", self.max_retries)
+                raise
 
             if response.finish_reason == "length":
                 if attempt < self.max_retries - 1:

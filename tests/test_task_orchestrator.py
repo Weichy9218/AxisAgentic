@@ -6,7 +6,7 @@ from typing import Any
 
 from agentic.config import AssistantRollbackConfig, ConversationConfig, FormatErrorConfig, OrchestrationConfig
 from agentic.contracts import ConversationMessage, ConversationStage, FormatErrorStrategy, ModelResponse, ToolCall, ToolCallSpec
-from agentic.model_clients import CallableModelClient, ModelContextLimitError
+from agentic.model_clients import CallableModelClient, EmptyModelResponseError, ModelContextLimitError
 from agentic.observability import TaskLogger
 from agentic.orchestration import TaskOrchestrator
 from agentic.rewards import ToolCallRewardEvaluator
@@ -235,6 +235,46 @@ async def _run_runner_with_endpoint_context_limit_recovery() -> Any:
     return await orchestrator.run("solve it")
 
 
+async def _run_runner_with_empty_response_recovery() -> Any:
+    calls = 0
+
+    async def _complete_with_empty_response(
+        _messages: list[ConversationMessage],
+        _tools: list[dict[str, Any]] | None,
+        _tool_choice: str | None,
+    ) -> ModelResponse:
+        nonlocal calls
+        calls += 1
+        if calls == 1:
+            return ModelResponse(
+                message=ConversationMessage.assistant(tool_calls=[ToolCall(function=ToolCallSpec(name="echo", arguments={"text": "done"}))])
+            )
+        if calls == 2:
+            raise EmptyModelResponseError(message="Model 'x' returned no choices.")
+        return ModelResponse(message=ConversationMessage.assistant("Final answer after empty rollback"))
+
+    tool = CallableTool(
+        name="echo",
+        description="Return the provided text.",
+        parameters={
+            "type": "object",
+            "properties": {"text": {"type": "string"}},
+            "required": ["text"],
+            "additionalProperties": False,
+        },
+        fn=lambda text: ToolResult(content=text),
+    )
+    orchestrator = TaskOrchestrator(
+        config=OrchestrationConfig(
+            name="planner",
+            conversation=ConversationConfig(context_window=4096, context_safety_margin=0),
+        ),
+        model_client=CallableModelClient(_complete_with_empty_response, context_window=4096, max_output_tokens=512),
+        tool_manager=ToolManager(tools=[tool]),
+    )
+    return await orchestrator.run("solve it")
+
+
 async def _run_runner_with_user_role_tool_results() -> tuple[Any, list[list[ConversationMessage]]]:
     captured_messages: list[list[ConversationMessage]] = []
 
@@ -404,6 +444,15 @@ def test_task_orchestrator_recovers_endpoint_context_limit_error() -> None:
     assert result.output == "Final answer after rollback"
     assert result.info["model_context_limit_error"]["input_tokens"] == 95
     assert result.info["context_limit_estimate"]["provider_error"]["context_window"] == 100
+
+
+def test_task_orchestrator_recovers_empty_response_error() -> None:
+    result = asyncio.run(_run_runner_with_empty_response_recovery())
+
+    assert result.reason == "terminated_empty_response"
+    assert result.output == "Final answer after empty rollback"
+    assert "returned no choices" in result.info["empty_model_response_error"]["message"]
+    assert result.done is True
 
 
 def test_task_orchestrator_indents_log_messages_by_level() -> None:

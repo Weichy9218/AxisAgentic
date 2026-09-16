@@ -725,12 +725,19 @@ class ConversationRuntime:
             )
             return self._build_step_result(appended_messages=appended_messages, stage_path=stage_path, info=info)
 
-    def rollback_latest_tool_exchange_and_force_finalize(self, *, reason: str = RollbackReason.TOKEN_EXHAUSTION) -> ConversationStepResult | None:
+    def rollback_latest_tool_exchange_and_force_finalize(
+        self,
+        *,
+        reason: str = RollbackReason.TOKEN_EXHAUSTION,
+        finalization_trigger: FinalizationTrigger = FinalizationTrigger.CONTEXT_LIMIT,
+    ) -> ConversationStepResult | None:
         """Roll back the latest tool exchange and re-enter force-final generation.
 
         This recovery is intentionally explicit rather than part of the normal
         stage flow. Orchestrators can use it after provider-side generation
         limits, keeping the generic runtime independent of attempt policy.
+        ``finalization_trigger`` names why the finalization was forced; it
+        defaults to ``CONTEXT_LIMIT`` so existing callers are unchanged.
         """
         with self._measure_runtime_step_elapsed():
             self._ensure_initialized()
@@ -748,7 +755,7 @@ class ConversationRuntime:
             self._append_messages([rollback_marker])
             appended_messages.append(rollback_marker)
             self._transit_stage(ConversationStage.CONTEXT_LIMIT_ROLLBACK, stage_path=stage_path)
-            info = self._inject_force_finalization(FinalizationTrigger.CONTEXT_LIMIT, stage_path=stage_path, appended_messages=appended_messages)
+            info = self._inject_force_finalization(finalization_trigger, stage_path=stage_path, appended_messages=appended_messages)
             info["rollback_message_count"] = rollback_message_count
             info["rollback_reason"] = reason
             info["force_finalization_recovery"] = True
@@ -756,6 +763,8 @@ class ConversationRuntime:
                 info["token_exhaustion_recovery"] = True
             elif reason == RollbackReason.CONTEXT_LIMIT:
                 info["context_limit_error_recovery"] = True
+            elif reason == RollbackReason.EMPTY_RESPONSE:
+                info["empty_response_recovery"] = True
             return self._build_step_result(appended_messages=appended_messages, stage_path=stage_path, info=info)
 
     def _force_finalize_due_to_context_limit(
