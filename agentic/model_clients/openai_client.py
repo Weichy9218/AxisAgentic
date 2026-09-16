@@ -393,13 +393,31 @@ class OpenAICompatibleModelClient(ModelClient):
         ]
 
     @staticmethod
-    def _token_usage(usage: Any) -> TokenUsage | None:
+    def _usage_detail(usage: Any, group: str, field: str) -> int:
+        """One nested usage counter, or zero when the provider omits it.
+
+        Providers disagree about whether these arrive as objects or dicts and
+        about whether they arrive at all, and a missing count is not an error --
+        it means this provider does not report it.
+        """
+        detail = getattr(usage, group, None)
+        if detail is None and isinstance(usage, dict):
+            detail = usage.get(group)
+        if detail is None:
+            return 0
+        value = detail.get(field) if isinstance(detail, dict) else getattr(detail, field, None)
+        return int(value) if isinstance(value, (int, float)) else 0
+
+    @classmethod
+    def _token_usage(cls, usage: Any) -> TokenUsage | None:
         if usage is None:
             return None
         return TokenUsage(
             input_tokens=usage.prompt_tokens,
             output_tokens=usage.completion_tokens,
             total_tokens=usage.total_tokens,
+            reasoning_tokens=cls._usage_detail(usage, "completion_tokens_details", "reasoning_tokens"),
+            cached_tokens=cls._usage_detail(usage, "prompt_tokens_details", "cached_tokens"),
         )
 
     def _assistant_content(self, message: Any) -> str | None:

@@ -128,6 +128,11 @@ _ISO_DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 #: boundary, so :func:`~agentic.tools.as_of.screen._blocks` blocks it — while
 #: ``null`` (nothing settled) passes. Collapsing the two is what makes a judge
 #: either leak undated outcomes or starve every forward-looking page.
+#:
+#: Measured rather than assumed: in an 82-page audit this verdict accounted for
+#: fourteen blocks, and eight were live quote tables — current prices with no
+#: date token for Gates 1 and 2 to read — on a page fetched for a question about
+#: that very rate. Releasing it was tried and reverted.
 UNDATABLE: Final = "unknown"
 
 

@@ -155,6 +155,12 @@ class TokenUsage(BaseModel):
     input_tokens: int = 0
     output_tokens: int = 0
     total_tokens: int = 0
+    #: Of ``output_tokens``, how many the provider spent thinking. Zero when the
+    #: provider does not report it. For a model whose reasoning text is withheld
+    #: this is the only per-call evidence that ``reasoning_effort`` took effect.
+    reasoning_tokens: int = 0
+    #: Of ``input_tokens``, how many were served from the provider's prompt cache.
+    cached_tokens: int = 0
 
 
 class ModelResponse(BaseModel):

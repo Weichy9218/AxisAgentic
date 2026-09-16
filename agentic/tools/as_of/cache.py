@@ -37,7 +37,11 @@ __all__ = ["CACHE_SCHEMA_VERSION", "CachedVerdict", "VerdictCache", "get_verdict
 #: Bump when the judge prompt or its output contract changes in a way that makes
 #: stored verdicts wrong. Entries from an older version are ignored, not deleted:
 #: a concurrent reader on the old layout should miss, not crash.
-CACHE_SCHEMA_VERSION: Final = 1
+#: The prompt was edited and reverted while pricing two candidate rules; both
+#: were withdrawn, so the wording is back to v1. The version stays ahead of it
+#: rather than returning to 1, because verdicts stored during those trials are on
+#: disk and must not be served.
+CACHE_SCHEMA_VERSION: Final = 6
 
 _MEMORY_ENTRIES: Final = 8192
 

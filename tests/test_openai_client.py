@@ -19,6 +19,7 @@ from agentic.model_clients.errors import ModelContextLimitError
 from agentic.model_clients.openai_client import (
     DEFAULT_TRANSIENT_ENDPOINT_ERROR_STATUS_CODES,
     OpenAICompatibleModelClient,
+    OpenAICompatibleModelClient,
     OpenAICompatibleModelClientConfig,
 )
 from agentic.model_clients.request_logger import ModelRequestLogger
@@ -1202,3 +1203,45 @@ def test_length_retry_can_skip_local_context_token_cap() -> None:
     asyncio.run(client.acomplete([ConversationMessage.user("test")]))
 
     assert inner.max_tokens_seen == [50, 55]
+
+def test_reasoning_and_cached_tokens_are_read_from_the_nested_usage_details() -> None:
+    """The only per-call evidence that reasoning_effort took, for models that
+    withhold the reasoning text.
+
+    Measured on three gpt-5.4 gateways: the effort setting is honoured -- the
+    count rises from about 50 to about 90 between low and high -- while none of
+    them returns the text and all reject the OpenRouter-style ``reasoning``
+    parameter. Dropping the count left nothing in the trace to check the setting
+    against.
+    """
+
+    class Details:
+        reasoning_tokens = 90
+
+    class Cached:
+        cached_tokens = 1024
+
+    class Usage:
+        prompt_tokens = 38
+        completion_tokens = 101
+        total_tokens = 139
+        completion_tokens_details = Details()
+        prompt_tokens_details = Cached()
+
+    usage = OpenAICompatibleModelClient._token_usage(Usage())
+    assert usage.output_tokens == 101
+    assert usage.reasoning_tokens == 90
+    assert usage.cached_tokens == 1024
+
+
+def test_a_provider_that_reports_no_reasoning_detail_yields_zero_not_an_error() -> None:
+    """Silence means the provider does not account for it, which is not a failure."""
+
+    class Usage:
+        prompt_tokens = 10
+        completion_tokens = 20
+        total_tokens = 30
+
+    usage = OpenAICompatibleModelClient._token_usage(Usage())
+    assert usage.reasoning_tokens == 0
+    assert usage.cached_tokens == 0

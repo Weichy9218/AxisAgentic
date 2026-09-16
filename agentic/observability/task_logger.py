@@ -215,6 +215,8 @@ class TokenUsageRecord:
     input_tokens: int = 0
     output_tokens: int = 0
     total_tokens: int = 0
+    reasoning_tokens: int = 0
+    cached_tokens: int = 0
     per_step: list[dict[str, int]] = field(default_factory=list)
 
 
@@ -265,6 +267,8 @@ class TaskTrace:
             input_tokens=tu.get("input_tokens", 0),
             output_tokens=tu.get("output_tokens", 0),
             total_tokens=tu.get("total_tokens", 0),
+            reasoning_tokens=tu.get("reasoning_tokens", 0),
+            cached_tokens=tu.get("cached_tokens", 0),
             per_step=tu.get("per_step", []),
         )
         return cls(
@@ -451,14 +455,37 @@ class TaskLogger:
             trace = self._get_live_trace(task_id)
             trace.conversation.extend(conversation)
 
-    def add_token_usage(self, task_id: str, *, input_tokens: int, output_tokens: int, total_tokens: int) -> None:
-        """Accumulate token usage from a single model call into the task trace."""
+    def add_token_usage(
+        self,
+        task_id: str,
+        *,
+        input_tokens: int,
+        output_tokens: int,
+        total_tokens: int,
+        reasoning_tokens: int = 0,
+        cached_tokens: int = 0,
+    ) -> None:
+        """Accumulate token usage from a single model call into the task trace.
+
+        The last two default to zero because not every provider reports them, and
+        a provider that stays silent is not an error -- it is a provider whose
+        reasoning accounting is unavailable, which is itself worth being able to
+        see in the trace.
+        """
         with self._measure(task_id):
             trace = self._get_live_trace(task_id)
             trace.token_usage.input_tokens += input_tokens
             trace.token_usage.output_tokens += output_tokens
             trace.token_usage.total_tokens += total_tokens
-            trace.token_usage.per_step.append({"input_tokens": input_tokens, "output_tokens": output_tokens, "total_tokens": total_tokens})
+            trace.token_usage.reasoning_tokens += reasoning_tokens
+            trace.token_usage.cached_tokens += cached_tokens
+            trace.token_usage.per_step.append({
+                "input_tokens": input_tokens,
+                "output_tokens": output_tokens,
+                "total_tokens": total_tokens,
+                "reasoning_tokens": reasoning_tokens,
+                "cached_tokens": cached_tokens,
+            })
 
     def add_tool_trace(self, task_id: str, tool_trace: ToolTrace, *, level: int = 0) -> None:
         with self._measure(task_id):

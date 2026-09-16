@@ -627,6 +627,19 @@ def create_jina_scrape_tool(
     resolved_serper_url = serper_scrape_url or os.environ.get("SERPER_SCRAPE_URL", DEFAULT_SERPER_SCRAPE_URL)
     shared_client = create_async_client(follow_redirects=True, limits=DEFAULT_HTTP_LIMITS)
 
+    # Egress split: only the Jina Reader hop may need a proxy. On egress-restricted
+    # hosts (e.g. tyyun_4) ``r.jina.ai`` is unreachable directly, so a dead JINA_PROXY
+    # turns every Cloudflare/403 rescue into a hard failure; ordinary hosts, the
+    # Content-Type probe, and the direct-HTTP fallback reach the network fine and stay
+    # on the un-proxied ``shared_client`` (no need to funnel them through the tunnel).
+    # ``JINA_PROXY`` unset => ``jina_client is shared_client``, behavior unchanged.
+    jina_proxy = os.environ.get("JINA_PROXY", "").strip() or None
+    jina_client = (
+        create_async_client(follow_redirects=True, limits=DEFAULT_HTTP_LIMITS, proxy=jina_proxy)
+        if jina_proxy
+        else shared_client
+    )
+
     async def _serper_backend(url: str) -> ToolResult:
         t0 = time.perf_counter()
         result = await scrape_with_serper(
@@ -730,7 +743,7 @@ def create_jina_scrape_tool(
             url,
             jina_api_key=api_key,
             jina_base_url=base_url,
-            client=shared_client,
+            client=jina_client,
             custom_headers=custom_headers,
             max_chars=max_content_length,
             timeout=timeout,
@@ -801,6 +814,66 @@ def create_jina_scrape_tool(
         strict_mode=False,
         emoji="📄",
     )
+
+
+async def jina_self_check(probe_url: str = "https://example.com/") -> dict[str, Any]:
+    """One-shot probe of the Jina Reader path, for a run to call at startup.
+
+    Jina is the escape hatch for Cloudflare/403 HTML pages; when its egress is
+    down — on egress-restricted hosts (e.g. tyyun_4) that means the ``JINA_PROXY``
+    tunnel is not up — every such fetch turns into a hard failure and the scrape
+    tool's failure rate spikes. A run should learn that once, up front, instead of
+    one dead page at a time, so this returns and logs an explicit UP/DOWN verdict.
+
+    Uses the same proxy split as ``create_jina_scrape_tool``: the probe goes
+    through ``JINA_PROXY`` when set, matching how real Jina fetches egress.
+    """
+    api_key = os.environ.get("JINA_API_KEY", "").strip()
+    base_url = os.environ.get("JINA_BASE_URL", DEFAULT_JINA_BASE_URL)
+    proxy = os.environ.get("JINA_PROXY", "").strip() or None
+    proxy_label = proxy or "(none)"
+
+    if not api_key:
+        logger.warning(
+            "jina self-check: DOWN — JINA_API_KEY not set; jina fallback disabled this run"
+        )
+        return {"ok": False, "kind": "jina_not_configured", "proxy": proxy_label}
+
+    client = create_async_client(
+        follow_redirects=True, limits=DEFAULT_HTTP_LIMITS, proxy=proxy
+    )
+    started = time.monotonic()
+    try:
+        result = await scrape_with_jina(
+            probe_url, jina_api_key=api_key, jina_base_url=base_url, client=client
+        )
+    finally:
+        await client.aclose()
+    latency_s = round(time.monotonic() - started, 3)
+
+    if result.get("success"):
+        logger.info(
+            "jina self-check: UP via proxy=%s in %.3fs — Cloudflare/403 HTML pages can be rescued",
+            proxy_label,
+            latency_s,
+        )
+        return {"ok": True, "kind": "ok", "proxy": proxy_label, "latency_s": latency_s}
+
+    detail = str(result.get("error") or "")[:200]
+    logger.warning(
+        "jina self-check: DOWN via proxy=%s in %.3fs — Cloudflare/403 HTML pages will "
+        "HARD-FAIL this run; %s",
+        proxy_label,
+        latency_s,
+        detail,
+    )
+    return {
+        "ok": False,
+        "kind": "jina_error",
+        "proxy": proxy_label,
+        "latency_s": latency_s,
+        "detail": detail,
+    }
 
 
 # ===========================================================================

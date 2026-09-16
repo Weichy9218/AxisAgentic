@@ -41,6 +41,7 @@ from agentic.tools.as_of import (
 from agentic.tools.as_of import screen as screen_module
 from agentic.tools.as_of.judge import _SYSTEM_PROMPT, _parse_verdicts
 from agentic.tools.as_of.screen import _blocks
+from agentic.tools.web_search.scrape import apply_page_as_of_gates
 
 T_CUT = date(2026, 6, 29)
 
@@ -135,7 +136,15 @@ def test_null_passes_because_a_passage_that_settles_nothing_waits_for_nothing() 
 
 
 def test_unknown_blocks_because_an_undatable_settled_claim_cannot_be_shown_to_predate() -> None:
-    """Collapsing this into ``null`` is what makes a judge leak undated outcomes."""
+    """Collapsing this into ``null`` is what makes a judge leak undated outcomes.
+
+    Releasing it was tried and reverted. An 82-page audit produced fourteen
+    ``unknown`` blocks; eight were live quote tables — "Crude Oil 101.725",
+    "USDCNY 6.71293", "traded at 4.92547 this Thursday September 10th" — ten
+    weeks past their boundary, on a page fetched for a question about that rate.
+    Such rows print no date token, so Gates 1 and 2 cannot see them and this
+    verdict is the only thing between them and the model.
+    """
     assert _blocks(UNDATABLE, T_CUT) is True
 
 
@@ -342,6 +351,29 @@ def test_the_judge_verdict_decides_the_rest(cache, monkeypatch) -> None:
     assert outcome.blocked[0].knowable_from == "2026-07-05"
 
 
+def test_an_undatable_settled_claim_is_blocked_and_counted(cache, monkeypatch) -> None:
+    """Blocked, and counted apart from a block that came from a date comparison.
+
+    The two halves of ``blocked_judge`` were measured at different precisions --
+    roughly nine in ten for a dated block, eight in fourteen for an undatable one
+    -- so a report that merges them cannot say which half is worth arguing about.
+    """
+    units = [
+        EvidenceUnit(0, "page", "The merger has now closed.", stated_date=None),
+        EvidenceUnit(1, "page", "The vote is scheduled.", stated_date=None),
+    ]
+    outcome = _screen(
+        units,
+        verdicts={"The merger has now closed.": UNDATABLE, "The vote is scheduled.": None},
+        cache=cache,
+        monkeypatch=monkeypatch,
+    )
+    assert [u.ordinal for u in outcome.kept] == [1]
+    assert [b.gate for b in outcome.blocked] == [GATE_JUDGE]
+    assert outcome.counts["blocked_judge_undatable"] == 1
+    assert outcome.counts["blocked_judge"] == 1
+
+
 def test_an_unreachable_judge_blocks_rather_than_passing(cache, monkeypatch) -> None:
     """A blip that silently converts a truncated arm into an open-book one is the worst outcome."""
     units = [EvidenceUnit(0, "page", "Something settled.", stated_date=None)]
@@ -390,3 +422,45 @@ def test_an_empty_batch_still_reports_that_the_gate_ran(cache, monkeypatch) -> N
     """"Yes, and it held nothing" is a different answer from silence."""
     outcome = _screen([], cache=cache, monkeypatch=monkeypatch)
     assert outcome.counts == {"units": 0}
+
+def test_a_listing_emptied_by_the_boundary_is_reported_as_such() -> None:
+    """The page was a record listing and every record fell outside the boundary.
+
+    Gate 2 is right to take those rows, but the agent then receives headers and a
+    disclaimer and reads it as "no answer here", so it fetches another live-quote
+    page and repeats. The counter lets the tool say which of the two happened.
+    """
+    body = "\n".join(
+        ["Bank rate table", "currency buy sell published"]
+        + [f"CCY{i} {700 + i}.42 {710 + i}.11 2026/09/11 01:51:54" for i in range(45)]
+        + ["Rates are indicative only."]
+    )
+    _, counts = asyncio.run(apply_page_as_of_gates(
+        content=body, url="http://t.test", page_date=None, t_cut=T_CUT, judge_prose=False))
+    assert counts["pruned_lines"] == 45
+    assert counts["all_dated_records_post_cutoff"] == 1
+
+
+def test_an_article_that_loses_a_few_lines_is_not_called_a_quote_page() -> None:
+    """A looser rule fired here, on a prose article that lost three lines of
+    eighteen thousand characters, and would have told the agent the URL serves
+    current values only. The claim is about a listing, so the test is on lines."""
+    body = "\n".join(
+        [f"Paragraph {i}, carrying no date at all." for i in range(60)]
+        + ["A recall was announced 2026/09/02.", "Another on 2026/09/05.", "A third on 2026/09/07."]
+    )
+    _, counts = asyncio.run(apply_page_as_of_gates(
+        content=body, url="http://t.test", page_date=None, t_cut=T_CUT, judge_prose=False))
+    assert counts["pruned_lines"] == 3
+    assert counts["all_dated_records_post_cutoff"] == 0
+
+
+def test_a_page_keeping_pre_cutoff_records_is_not_reported_as_emptied() -> None:
+    body = "\n".join(
+        [f"EUR {770 + i}.42 2026/06/{1 + i:02d} 00:00:00" for i in range(10)]
+        + [f"EUR {790 + i}.00 2026/09/{1 + i:02d} 00:00:00" for i in range(5)]
+    )
+    _, counts = asyncio.run(apply_page_as_of_gates(
+        content=body, url="http://t.test", page_date=None, t_cut=T_CUT, judge_prose=False))
+    assert counts["pruned_lines"] == 5
+    assert counts["all_dated_records_post_cutoff"] == 0

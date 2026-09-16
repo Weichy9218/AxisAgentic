@@ -56,10 +56,16 @@ def create_async_client(
     follow_redirects: bool = True,
     limits: httpx.Limits = DEFAULT_HTTP_LIMITS,
     timeout: float | httpx.Timeout | None = None,
+    proxy: str | None = None,
 ) -> httpx.AsyncClient:
     """Create an ``httpx.AsyncClient`` with optional HTTP/2 support.
 
     Falls back to HTTP/1.1 if the ``h2`` package is not installed.
+
+    ``proxy`` routes this client's traffic through the given proxy URL. It exists
+    for the Jina Reader hop on egress-restricted hosts (e.g. tyyun_4, which cannot
+    reach ``r.jina.ai`` directly and only escapes via a local ``JINA_PROXY``
+    tunnel). ``None`` (the default) means a direct client, unchanged.
     """
     kwargs: dict[str, Any] = {
         "follow_redirects": follow_redirects,
@@ -67,6 +73,8 @@ def create_async_client(
     }
     if timeout is not None:
         kwargs["timeout"] = timeout
+    if proxy:
+        kwargs["proxy"] = proxy
     try:
         return httpx.AsyncClient(http2=True, **kwargs)
     except ImportError:

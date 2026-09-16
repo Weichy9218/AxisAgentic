@@ -2193,7 +2193,23 @@ def _attach_runtime_retry_configs(args: argparse.Namespace) -> None:
     args.code_exec_retry = _retry(getattr(args, "code_exec_retry_json", None))
 
 
+def _load_project_env() -> None:
+    """Load the repo ``.env`` before args are parsed.
+
+    argparse defaults and tool factories read ``os.environ`` directly (API keys,
+    ``JINA_PROXY``, ...); axis had no ``.env`` loading, so those had to be exported
+    by hand. Load the repo ``.env`` here — shell-exported vars still win
+    (``override=False``). No-op if python-dotenv or the file is absent.
+    """
+    try:
+        from dotenv import find_dotenv, load_dotenv
+    except Exception:
+        return
+    load_dotenv(find_dotenv(usecwd=True), override=False)
+
+
 def main(argv: list[str] | None = None) -> None:
+    _load_project_env()
     args = parse_args(argv)
     logging.basicConfig(level=getattr(logging, args.log_level), format="%(asctime)s %(name)s %(levelname)s %(message)s")
     asyncio.run(run_evaluation(args))

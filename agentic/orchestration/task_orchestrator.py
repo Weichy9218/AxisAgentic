@@ -832,6 +832,8 @@ class TaskOrchestrator:
                 input_tokens=usage.input_tokens,
                 output_tokens=usage.output_tokens,
                 total_tokens=usage.total_tokens,
+                reasoning_tokens=getattr(usage, "reasoning_tokens", 0),
+                cached_tokens=getattr(usage, "cached_tokens", 0),
             )
 
     def _start_trace(
